@@ -7,8 +7,7 @@ to store the data for an :term:`instrument`.
 Spec
 ----
 
-The data must be stored in a YAML format file (indentation matters!) with the
-following structure:
+The data must be stored in a YAML format file with the following structure:
 
 .. parsed-code-block:: yaml
     :emphasize-lines: 1,2,3,5,8,9,10,15,17
