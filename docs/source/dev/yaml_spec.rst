@@ -16,6 +16,7 @@ The data must be stored in a YAML format file with the following structure:
     :ref:`default_version<spec-default-version>`: :iref:target:`"version1"<spec-default-version-targ>`
     :ref:`version<spec-version>`\ :iref:target:`:<spec-version-targ>`
         version1:
+            :ref:`default_model<spec-default-model>`: :iref:target:`"model1"<spec-default-model-targ>`
             :ref:`models<spec-models>`\ :iref:target:`:<spec-models-targ>`
                 model1: "model1_v1"
                 model1_v1:
@@ -98,6 +99,22 @@ of a (YAML) dictionary. That said, though, this inner dictionary has less strict
 specification - the only requirement is that it contains a key called
 :ref:`models<spec-models>`. In fact, this space is encouraged to be used for
 storing shared data (see :ref:`spec-yaml-magic`).
+
+
+.. _spec-default-model:
+
+default_model
+^^^^^^^^^^^^^
+
+This key (:iref:ref:`see in spec<sspec-default-model-targ>`), found inside the
+(YAML) dictionary corresponding to a particular :term:`instrument`
+:term:`version` (see the :ref:`version key<spec-version>`), specifies the name
+of the :term:`model` that will be used by default when the user does not specify
+which :term:`model` they want to use, e.g. when calling
+:py:meth:`resolution_functions.instrument.Instrument.get_resolution_function`.
+
+The value of this key, specified as a string, **must** match one of the model
+keys (see :ref:`version<spec-models>`).
 
 
 .. _spec-models:
