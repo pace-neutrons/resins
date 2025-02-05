@@ -187,3 +187,58 @@ class InstrumentModel(ABC):
             The citation.
         """
         return self._citation
+
+    def _validate_settings(self,
+                           model_data: ModelData,
+                           settings: dict[str, int | float | None]
+                           ) -> dict[str, int | float]:
+        """
+        Validates the user-provided `settings` against the models restrictions and fills in defaults
+
+        Parameters
+        ----------
+        model_data
+            The data associated with the model for a given version of a given instrument.
+        settings
+            The user-provided :term:`settings<setting>`
+
+        Returns
+        -------
+        validated_settings
+            The user-provided settings that comply with the model's restrictions and with any `None`
+            values replaced with defaults.
+        """
+        out = {}
+        for name, setting in settings.items():
+            if setting is None:
+                try:
+                    out[name] = model_data.defaults[name]
+                except KeyError:
+                    raise InvalidInputError(f'Model "{type(self).__name__}" does not have a default'
+                                            f' value for the "{name}" setting, so one must be '
+                                            f'provided by the user.')
+                continue
+
+            try:
+                restriction = model_data.restrictions[name]
+            except KeyError:
+                out[name] = setting
+                continue
+
+            if isinstance(restriction, list):
+                if len(restriction) == 2:
+                    if not restriction[0] <= setting <= restriction[1]:
+                        raise InvalidInputError(f'The provided value for the "{name}" setting '
+                                                f'({setting}) must be within the {restriction} '
+                                                f'boundaries.')
+                elif setting not in range(*restriction):
+                    raise InvalidInputError(f'The provided value for the "{name}" setting '
+                                            f'({setting}) must be one of the following values: '
+                                            f'{list(range(*restriction))}')
+            elif setting not in restriction:
+                raise InvalidInputError(f'The provided value for the "{name}" setting ({setting}) '
+                                        f'must be one of the following values: {restriction}')
+
+            out[name] = setting
+
+        return out

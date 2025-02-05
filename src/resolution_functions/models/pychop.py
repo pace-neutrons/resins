@@ -979,15 +979,10 @@ class PyChopModelFermi(PyChopModel):
                  fitting_order: int = 4,
                  **_):
         super().__init__(model_data)
-        
-        if chopper_frequency is None:
-            chopper_frequency = model_data.default_chopper_frequency
-        elif chopper_frequency not in range(*model_data.allowed_chopper_frequencies):
-            raise InvalidInputError(f'The provided chopper frequency ({chopper_frequency}) is not '
-                                    f'allowed; only the following frequencies are possible: '
-                                    f'{list(range(*model_data.allowed_chopper_frequencies))}')
 
-        e_init = self._validate_e_init(e_init, model_data)
+        settings = self._validate_settings(model_data,
+                                           {'e_init': e_init, 'chopper_frequency': chopper_frequency})
+        e_init, chopper_frequency = settings['e_init'], settings['chopper_frequency']
 
         fake_frequencies, resolution = self._precompute_resolution(model_data, e_init, [chopper_frequency])
         self._polynomial = Polynomial.fit(fake_frequencies, resolution, fitting_order)
@@ -1064,45 +1059,6 @@ class PyChopModelNonFermi(PyChopModel, ABC):
     data_class = PyChopModelDataNonFermi
 
     @staticmethod
-    def _validate_chopper_frequency(chopper_frequencies: list[int | None],
-                                    model_data: PyChopModelDataNonFermi) -> list[int]:
-        """
-        Validates that the user-provided `chopper_frequencies` are among the allowed values for the instrument.
-
-        Parameters
-        ----------
-        chopper_frequencies
-            A list of chopper frequencies corresponding to the choppers with tunable frequencies.
-            The list must have the same length and order as the
-            `PyChopModelDataNonFermi.allowed_chopper_frequencies` for that instrument. Each entry
-            which contains a ``None`` instead of a value will be replaced with the default value
-            for the corresponding chopper.
-        model_data
-            The data for a particular INS instrument.
-
-        Returns
-        -------
-        chopper_frequencies
-            The valid chopper frequencies.
-
-        Raises
-        ------
-        InvalidInputError
-            If any of the provided `chopper_frequencies` is invalid.
-        """
-        for i, (frequency, allowed_chopper_frequencies) in (
-                enumerate(zip(chopper_frequencies, model_data.allowed_chopper_frequencies))):
-            if frequency is None:
-                chopper_frequencies[i] = model_data.default_chopper_frequency[i]
-            elif frequency not in range(*allowed_chopper_frequencies):
-                raise InvalidInputError(
-                    f'The provided chopper frequency ({frequency}) is not allowed; only the'
-                    f' following frequencies are possible: '
-                    f'{list(range(*allowed_chopper_frequencies))}')
-
-        return chopper_frequencies
-
-    @staticmethod
     def get_long_frequency(frequencies: list[int],
                            model_data: PyChopModelDataNonFermi
                            ) -> Float[np.ndarray, 'chopper_frequencies']:
@@ -1128,7 +1084,6 @@ class PyChopModelNonFermi(PyChopModel, ABC):
         all_frequencies
             The frequency of each chopper, in the order of increasing distance from the moderator.
         """
-        frequencies += model_data.default_chopper_frequency[len(frequencies):]
         frequency_matrix = np.array(model_data.frequency_matrix)
 
         return np.dot(frequency_matrix, frequencies) + model_data.constant_frequencies
@@ -1332,10 +1287,13 @@ class PyChopModelCNCS(PyChopModelNonFermi):
                  **_):
         super().__init__(model_data)
 
-        chopper_frequencies = [resolution_disk_frequency, fermi_frequency]
-        chopper_frequencies = self._validate_chopper_frequency(chopper_frequencies, model_data)
+        settings = {'e_init': e_init,
+                    'resolution_disk_frequency': resolution_disk_frequency,
+                    'fermi_frequency': fermi_frequency}
+        settings = self._validate_settings(model_data, settings)
 
-        e_init = self._validate_e_init(e_init, model_data)
+        e_init = settings['e_init']
+        chopper_frequencies = [settings['resolution_disk_frequency'], settings['fermi_frequency']]
 
         frequencies, resolution = self._precompute_resolution(model_data, e_init, chopper_frequencies)
         self._polynomial = Polynomial.fit(frequencies, resolution, fitting_order)
@@ -1407,10 +1365,14 @@ class PyChopModelLET(PyChopModelNonFermi):
                  **_):
         super().__init__(model_data)
 
-        chopper_frequencies = [resolution_frequency, pulse_remover_frequency]
-        chopper_frequencies = self._validate_chopper_frequency(chopper_frequencies, model_data)
+        settings = {'e_init': e_init,
+                    'resolution_frequency': resolution_frequency,
+                    'pulse_remover_frequency': pulse_remover_frequency}
+        settings = self._validate_settings(model_data, settings)
 
-        e_init = self._validate_e_init(e_init, model_data)
+        e_init = settings['e_init']
+        chopper_frequencies = [settings['resolution_frequency'],
+                               settings['pulse_remover_frequency']]
 
         frequencies, resolution = self._precompute_resolution(model_data, e_init, chopper_frequencies)
         self._polynomial = Polynomial.fit(frequencies, resolution, fitting_order)

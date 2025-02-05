@@ -206,7 +206,8 @@ def let_data():
 def test_fermi_invalid_chopper_frequency(
     chopper_frequency, mari_data: tuple[PyChopModelDataFermi, PyChopInstrument]
 ):
-    with pytest.raises(InvalidInputError, match="The provided chopper frequency"):
+    with pytest.raises(InvalidInputError,
+                       match='The provided value for the "chopper_frequency" setting'):
         PyChopModelFermi(mari_data[0], chopper_frequency=chopper_frequency)
 
 
@@ -216,56 +217,56 @@ def test_fermi_invalid_chopper_frequency(
 def test_fermi_invalid_e_init(
     e_init, mari_data: tuple[PyChopModelDataFermi, PyChopInstrument]
 ):
-    with pytest.raises(InvalidInputError, match="The provided incident energy"):
+    with pytest.raises(InvalidInputError, match='The provided value for the "e_init" setting'):
         PyChopModelFermi(mari_data[0], e_init=e_init)
 
 @pytest.mark.parametrize(
-    "chopper_frequency",
+    'chopper_frequency,match',
     [
-        [59.99999, 60],
-        [-0.048] * 2,
-        [-np.inf, 0],
-        [120, 300.00017],
-        [np.inf, np.inf],
-        [300, np.nan],
-        [60.5, 60],
-        [180, 67.5],
-        [600, 600],
-        [130, 130],
-    ],
+        ([59.99999, 60], 'resolution_disk_frequency'),
+        ([-0.048] * 2, 'resolution_disk_frequency'),
+        ([-np.inf, 0], 'resolution_disk_frequency'),
+        ([120, 300.00017], 'fermi_frequency'),
+        ([np.inf, np.inf], 'resolution_disk_frequency'),
+        ([300, np.nan], 'fermi_frequency'),
+        ([60.5, 60], 'resolution_disk_frequency'),
+        ([180, 67.5], 'fermi_frequency'),
+        ([600, 600], 'resolution_disk_frequency'),
+        ([135, 135], 'resolution_disk_frequency')
+    ]
 )
-def test_cncs_invalid_chopper_frequency(chopper_frequency, cncs_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match="The provided chopper frequency"):
+def test_cncs_invalid_chopper_frequency(chopper_frequency, match, cncs_data: PyChopModelDataNonFermi):
+    with pytest.raises(InvalidInputError, match=f'The provided value for the "{match}" setting'):
         PyChopModelCNCS(cncs_data, resolution_disk_frequency=chopper_frequency[0], fermi_frequency=chopper_frequency[1])
 
 
 @pytest.mark.parametrize('e_init', [-5, -0.00048, -np.inf, 80.1, np.inf, 13554.1654, np.nan])
 def test_cncs_invalid_e_init(e_init, cncs_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match="The provided incident energy"):
+    with pytest.raises(InvalidInputError, match='The provided value for the "e_init" setting'):
         PyChopModelCNCS(cncs_data, e_init=e_init)
 
 
 @pytest.mark.parametrize(
-    'chopper_frequency',
-    [[59.99999, 60],
-     [-0.048] * 2,
-     [-np.inf, 0],
-     [120, 300.00017],
-     [np.inf, np.inf],
-     [300, np.nan],
-     [60.5, 60],
-     [180, 67.5],
-     [600, 600],
-     [135, 135]]
+    'chopper_frequency,match',
+    [([59.99999, 60], 'resolution_frequency'),
+     ([-0.048] * 2, 'resolution_frequency'),
+     ([-np.inf, 0], 'resolution_frequency'),
+     ([120, 300.00017], 'pulse_remover_frequency'),
+     ([np.inf, np.inf], 'resolution_frequency'),
+     ([300, np.nan], 'pulse_remover_frequency'),
+     ([60.5, 60], 'resolution_frequency'),
+     ([180, 67.5], 'pulse_remover_frequency'),
+     ([600, 600], 'resolution_frequency'),
+     ([135, 135], 'resolution_frequency')]
 )
-def test_let_invalid_chopper_frequency(chopper_frequency, let_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match="The provided chopper frequency"):
+def test_let_invalid_chopper_frequency(chopper_frequency, match, let_data: PyChopModelDataNonFermi):
+    with pytest.raises(InvalidInputError, match=f'The provided value for the "{match}" setting'):
         PyChopModelLET(let_data, resolution_frequency=chopper_frequency[0], pulse_remover_frequency=chopper_frequency[1])
 
 
 @pytest.mark.parametrize('e_init', [-5, -0.00048, -np.inf, 30.0001, np.inf, 13554.1654, np.nan])
 def test_let_invalid_e_init(e_init, let_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match="The provided incident energy"):
+    with pytest.raises(InvalidInputError, match='The provided value for the "e_init" setting'):
         PyChopModelLET(let_data, e_init=e_init)
 
 
