@@ -81,11 +81,6 @@ class PyChopModelData(ModelData):
         Width of aperture at moderator face in meters (m)
     theta
         The angle that the beamline makes with the moderator face in degrees.
-    default_e_init
-        The default value for the initial energy (``e_init``) in meV.
-    allowed_e_init
-        The limits (lower and upper bound) for the allowed initial energies (``e_init``). This
-        should correspond to the physical limitations of the INS instrument.
     frequency_matrix
         A matrix mapping the relationship between the user-provided parameter ``chopper_frequency``
         or its equivalent (depending on model) to the frequency of each chopper in the instrument.
@@ -104,8 +99,6 @@ class PyChopModelData(ModelData):
     d_sample_detector: float
     aperture_width: float
     theta: float
-    default_e_init: float
-    allowed_e_init: list[float]
     frequency_matrix: list[list[float]]
     choppers: dict[str, FermiChopper | DiskChopper]
     moderator: Moderator
@@ -140,11 +133,6 @@ class PyChopModelDataFermi(PyChopModelData):
         Width of aperture at :term:`moderator` face in meters (m)
     theta
         The angle that the beamline makes with the :term:`moderator` face in degrees.
-    default_e_init
-        The default value for the initial energy (``e_init``) in meV.
-    allowed_e_init
-        The limits (lower and upper bound) for the allowed initial energies (``e_init``). This
-        should correspond to the physical limitations of the INS :term:`instrument`.
     frequency_matrix
         A matrix mapping the relationship between the user-provided parameter ``chopper_frequency``
         to the frequency of each :term:`chopper` in the :term:`instrument`.
@@ -158,12 +146,6 @@ class PyChopModelDataFermi(PyChopModelData):
         Data for the :term:`sample`. See `Sample` for more info.
     tjit
         The jitter time in microseconds (us).
-    default_chopper_frequency
-        The default value for the :term:`Fermi chopper` frequency (``chopper_frequency``) in Hz.
-    allowed_chopper_frequencies
-        The allowed values for the :term:`Fermi chopper` frequency (``chopper_frequency``) in Hz.
-        `allowed_chopper_frequencies` defines the (start, stop, step), which is converted into a
-        list at runtime.
     pslit
         Width of the neutron-transparent slit in meters (m).
     radius
@@ -171,8 +153,6 @@ class PyChopModelDataFermi(PyChopModelData):
     rho
         Curvature of the :term:`chopper` package in meters (m).
     """
-    default_chopper_frequency: int
-    allowed_chopper_frequencies: list[int]
     pslit: float
     radius: float
     rho: float
@@ -207,11 +187,6 @@ class PyChopModelDataNonFermi(PyChopModelData):
         Width of aperture at :term:`moderator` face in meters (m)
     theta
         The angle that the beamline makes with the :term:`moderator` face in degrees.
-    default_e_init
-        The default value for the initial energy (``e_init``) in meV.
-    allowed_e_init
-        The limits (lower and upper bound) for the allowed initial energies (``e_init``). This
-        should correspond to the physical limitations of the INS :term:`instrument`.
     frequency_matrix
         A matrix mapping the relationship between all user-provided :term:`chopper` frequency
         parameters (i.e. the choppers with user control) to the frequency of each :term:`chopper` in
@@ -226,13 +201,6 @@ class PyChopModelDataNonFermi(PyChopModelData):
         Data for the :term:`sample`. See `Sample` for more info.
     tjit
         The jitter time in microseconds (us).
-    default_chopper_frequency
-        The default value for the :term:`chopper` frequency of each user-controlled :term:`chopper`
-        in Hz.
-    allowed_chopper_frequencies
-        The allowed values for the :term:`chopper` frequency of each user-controlled
-        :term:`chopper`, in Hz. Each value defines the (start, stop, step), which is converted into
-        a list at runtime.
     constant_frequencies
         The frequency of each :term:`chopper` in Hz, with those run at a constant frequency having
         non-zero values.
@@ -241,8 +209,6 @@ class PyChopModelDataNonFermi(PyChopModelData):
     n_frame
         Number of frames to calculate time-distance diagram for.
     """
-    default_chopper_frequency: list[int]
-    allowed_chopper_frequencies: list[list[int]]
     constant_frequencies: list[int]
     source_frequency: float
     n_frame: int
