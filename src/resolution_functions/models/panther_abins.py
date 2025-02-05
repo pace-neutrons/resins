@@ -34,6 +34,13 @@ class PantherAbINSModelData(ModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     abs
         Polynomial coefficients for the energy transfer (frequencies) polynomial.
     ei_dependence
@@ -41,8 +48,6 @@ class PantherAbINSModelData(ModelData):
     ei_energy_product
         Polynomial coefficients for the product of initial energy and energy transfer (frequencies)
         polynomial.
-    restrictions
-    defaults
     """
     abs: list[float]
     ei_dependence: list[float]

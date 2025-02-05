@@ -82,43 +82,17 @@ class ModelData(ABC):
         The citation for a particular model. Please use this to look up more details and cite the
         model.
     restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
     defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     """
     function: str
     citation: list[str]
-
-    @property
-    def restrictions(self) -> dict[str, list[int | float]]:
-        """
-        The restrictions that the corresponding :term:`model` places on each :term:`setting`.
-
-        This is provided via a dictionary where the keys are the name of the :term:`setting`,
-        and the values are the restriction for that :term:`setting`. The restrictions can be the
-        upper or lower bounds, or even a list of allowed values. If an invalid input is passed in, a
-        `InvalidInputError` will be raised.
-
-        Returns
-        -------
-        restrictions
-            A mapping of :term:`setting` to its corresponding restriction.
-        """
-        return {}
-
-    @property
-    def defaults(self) -> dict[str, Any]:
-        """
-        The defaults for each :term:`setting` for the corresponding :term:`model`.
-
-        This is provided as a dictionary where the keys are the name of the :term:`setting`,
-        and the values are the default for that :term:`setting`. The default will be used when a
-        particular :term:`setting` is not passed in to the :term:`model`
-
-        Returns
-        -------
-        defaults
-            A mapping of :term:`settings<setting>` to their corresponding default values.
-        """
-        return {}
+    defaults: dict[str, int | float]
+    restrictions: dict[str, list[int | float], set[int | float]]
 
 
 class InstrumentModel(ABC):

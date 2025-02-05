@@ -66,6 +66,13 @@ class PyChopModelData(ModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     d_chopper_sample
         Distance from the final chopper to sample in meters (m).
     d_sample_detector
@@ -92,8 +99,6 @@ class PyChopModelData(ModelData):
         Data for the sample. See `Sample` for more info.
     tjit
         The jitter time in microseconds (us).
-    restrictions
-    defaults
     """
     d_chopper_sample: float
     d_sample_detector: float
@@ -120,6 +125,13 @@ class PyChopModelDataFermi(PyChopModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     d_chopper_sample
         Distance from the final :term:`chopper` to :term:`sample` in meters (m).
     d_sample_detector
@@ -158,22 +170,12 @@ class PyChopModelDataFermi(PyChopModelData):
         Radius of the :term:`chopper` package in meters (m).
     rho
         Curvature of the :term:`chopper` package in meters (m).
-    restrictions
-    defaults
     """
     default_chopper_frequency: int
     allowed_chopper_frequencies: list[int]
     pslit: float
     radius: float
     rho: float
-
-    @property
-    def restrictions(self) -> dict[str, list[int | float]]:
-        return {'e_init': self.allowed_e_init, 'chopper_frequency': self.allowed_chopper_frequencies}
-
-    @property
-    def defaults(self) -> dict:
-        return {'e_init': self.default_e_init, 'chopper_frequency': self.default_chopper_frequency}
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True)
@@ -190,6 +192,13 @@ class PyChopModelDataNonFermi(PyChopModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     d_chopper_sample
         Distance from the final :term:`chopper` to :term:`sample` in meters (m).
     d_sample_detector
@@ -231,22 +240,12 @@ class PyChopModelDataNonFermi(PyChopModelData):
         The frequency of the neutron :term:`source` in Hz.
     n_frame
         Number of frames to calculate time-distance diagram for.
-    restrictions
-    defaults
     """
     default_chopper_frequency: list[int]
     allowed_chopper_frequencies: list[list[int]]
     constant_frequencies: list[int]
     source_frequency: float
     n_frame: int
-
-    @property
-    def restrictions(self) -> dict[str, list[int | float]]:
-        return {'e_init': self.allowed_e_init, 'chopper_frequency': self.allowed_chopper_frequencies}
-
-    @property
-    def defaults(self) -> dict:
-        return {'e_init': self.default_e_init, 'chopper_frequency': self.default_chopper_frequency}
 
 
 class FermiChopper(TypedDict):

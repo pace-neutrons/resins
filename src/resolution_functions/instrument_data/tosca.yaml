@@ -4,6 +4,8 @@ default_version: 'TOSCA'
 version:
     TFXA:
         constants: &tfxa_constants
+            defaults: {}
+            restrictions: {}
             final_neutron_energy: 32.0  # Final energy on the crystal analyser in cm-1
             scattering_angle: 2.356  # Angle of the crystal analyser radians (NO LONGER USED)
             energy_bin_width: 1.0  # Default bin width in wavenumber
@@ -35,6 +37,8 @@ version:
                 configurations: *tfxa_configurations
     TOSCA1:
         constants: &tosca1_constants
+            defaults: {}
+            restrictions: {}
             final_neutron_energy: 32.0  # Final energy on the crystal analyser in cm-1
             scattering_angle: 2.356  # Angle of the crystal analyser radians (NO LONGER USED)
             energy_bin_width: 1.0  # Default bin width in wavenumber
@@ -67,6 +71,8 @@ version:
                 configurations: *tosca1_configurations
     TOSCA:
         constants: &tosca_constants
+            defaults: {}
+            restrictions: {}
             primary_flight_path: 17.  # m
             primary_flight_path_uncertainty: 0.0021  # m
             sample_thickness: 0.002  # m
@@ -94,6 +100,8 @@ version:
                 citation: [""]
                 #original_parameters: [2.5, 0.005, 0.0000001] wavenumber
                 parameters:
+                    defaults: {}
+                    restrictions: {}
                     fit: [ 0.3099604960830007, 0.005, 8.065543937349209e-07 ]  # meV
                 configurations: {}
             book: "book_v1"
