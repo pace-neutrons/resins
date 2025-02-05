@@ -604,11 +604,22 @@ def _test_precompute_resolution(e_init, chopper_frequency, cls, data, pychop):
     try:
         pychop.chopper_system.setFrequency(chopper_frequency)
     except ValueError as e:
+        try:
+            pychop.chopper_system.setEi(e_init)
+        except ValueError as e:
+            if f'Ei={e_init} is outside limits ' in str(e):
+                with pytest.raises(InvalidInputError,
+                                   match=rf'The provided value for the "e_init" setting \({e_init}\)'):
+                    cls(model_data=data, chopper_frequency=chopper_frequency, e_init=e_init)
+                return
+            raise
+
         if 'Value of frequencies outside maximum allowed' in str(e):
             # Energy out of range for Pychop: make sure the model agrees
             with pytest.raises(
                     InvalidInputError,
-                    match=rf"The provided chopper frequency \(\[{chopper_frequency[0]}\]\) is not allowed"):
+                    match=rf'The provided value for the "chopper_frequency" setting '
+                          rf'\(\[{chopper_frequency[0]}\]\) must be within'):
                 cls(model_data=data, chopper_frequency=chopper_frequency, e_init=e_init)
 
             return
