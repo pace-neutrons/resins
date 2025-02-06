@@ -216,7 +216,7 @@ class InstrumentModel(ABC):
                 except KeyError:
                     raise InvalidInputError(f'Model "{type(self).__name__}" does not have a default'
                                             f' value for the "{name}" setting, so one must be '
-                                            f'provided by the user.')
+                                            'provided by the user.')
                 continue
 
             try:
@@ -230,11 +230,13 @@ class InstrumentModel(ABC):
                     if not restriction[0] <= setting <= restriction[1]:
                         raise InvalidInputError(f'The provided value for the "{name}" setting '
                                                 f'({setting}) must be within the {restriction} '
-                                                f'boundaries.')
-                elif setting not in range(*restriction):
-                    raise InvalidInputError(f'The provided value for the "{name}" setting '
-                                            f'({setting}) must be one of the following values: '
-                                            f'{list(range(*restriction))}')
+                                                'boundaries.')
+                else:
+                    start, stop, step = restriction
+                    if setting not in range(start, stop, step):
+                        raise InvalidInputError(f'The provided value for the "{name}" setting '
+                                                f'({setting}) must be one of the following values: '
+                                                f'{list(range(*restriction))}')
             elif setting not in restriction:
                 raise InvalidInputError(f'The provided value for the "{name}" setting ({setting}) '
                                         f'must be one of the following values: {restriction}')

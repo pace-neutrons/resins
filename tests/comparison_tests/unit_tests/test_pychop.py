@@ -221,7 +221,7 @@ def test_fermi_invalid_e_init(
         PyChopModelFermi(mari_data[0], e_init=e_init)
 
 @pytest.mark.parametrize(
-    'chopper_frequency,match',
+    'chopper_frequency,invalid_setting',
     [
         ([59.99999, 60], 'resolution_disk_frequency'),
         ([-0.048] * 2, 'resolution_disk_frequency'),
@@ -235,8 +235,8 @@ def test_fermi_invalid_e_init(
         ([135, 135], 'resolution_disk_frequency')
     ]
 )
-def test_cncs_invalid_chopper_frequency(chopper_frequency, match, cncs_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match=f'The provided value for the "{match}" setting'):
+def test_cncs_invalid_chopper_frequency(chopper_frequency, invalid_setting, cncs_data: PyChopModelDataNonFermi):
+    with pytest.raises(InvalidInputError, match=f'The provided value for the "{invalid_setting}" setting'):
         PyChopModelCNCS(cncs_data, resolution_disk_frequency=chopper_frequency[0], fermi_frequency=chopper_frequency[1])
 
 
@@ -247,7 +247,7 @@ def test_cncs_invalid_e_init(e_init, cncs_data: PyChopModelDataNonFermi):
 
 
 @pytest.mark.parametrize(
-    'chopper_frequency,match',
+    'chopper_frequency,invalid_setting',
     [([59.99999, 60], 'resolution_frequency'),
      ([-0.048] * 2, 'resolution_frequency'),
      ([-np.inf, 0], 'resolution_frequency'),
@@ -259,8 +259,8 @@ def test_cncs_invalid_e_init(e_init, cncs_data: PyChopModelDataNonFermi):
      ([600, 600], 'resolution_frequency'),
      ([135, 135], 'resolution_frequency')]
 )
-def test_let_invalid_chopper_frequency(chopper_frequency, match, let_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match=f'The provided value for the "{match}" setting'):
+def test_let_invalid_chopper_frequency(chopper_frequency, invalid_setting, let_data: PyChopModelDataNonFermi):
+    with pytest.raises(InvalidInputError, match=f'The provided value for the "{invalid_setting}" setting'):
         PyChopModelLET(let_data, resolution_frequency=chopper_frequency[0], pulse_remover_frequency=chopper_frequency[1])
 
 
