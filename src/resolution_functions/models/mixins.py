@@ -26,9 +26,9 @@ class GaussianKernel1DMixin:
     Gaussian kernel should use this mixin.
     """
     def get_kernel(self: InstrumentModel,
-                   mesh: Float[np.ndarray, 'energy_mesh'],
-                   omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
-                   ) -> Float[np.ndarray, 'energy_transfer energy_mesh']:
+                   mesh: Float[np.ndarray, 'mesh'],
+                   omega_q: Float[np.ndarray, 'sample dimension=1']
+                   ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Gaussian kernel on the provided `mesh` at each value of the `omega_q` energy
         transfer.
@@ -36,7 +36,8 @@ class GaussianKernel1DMixin:
         Parameters
         ----------
         mesh
-            The mesh on which to evaluate the kernel.
+            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
+            entire energy transfer space of interest.
         omega_q
             The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
             array where N is the number of energy transfers.
@@ -44,11 +45,11 @@ class GaussianKernel1DMixin:
         Returns
         -------
         kernel
-            The Gaussian kernel as given by this model, computed on the `mesh` and for each value
-            of `energy_transfer`.
+            The Gaussian kernel at each value of `omega_q` as given by this model, computed on the
+            `mesh` and centered on the corresponding energy transfer.
         """
         new_mesh = np.zeros((len(omega_q), len(mesh)))
         new_mesh[:, :] = mesh
 
         sigma = self.get_characteristics(omega_q)['sigma']
-        return norm.pdf(new_mesh, scale=sigma[:, np.newaxis])
+        return norm.pdf(new_mesh, loc=omega_q, scale=sigma[:, np.newaxis])
