@@ -18,6 +18,7 @@ import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
 from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
+from .mixins import GaussianKernel1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -49,7 +50,7 @@ class PantherAbINSModelData(ModelData):
     ei_energy_product: list[float]
 
 
-class PantherAbINSModel(InstrumentModel):
+class PantherAbINSModel(GaussianKernel1DMixin, InstrumentModel):
     """
     Model for the PANTHER :term:`instrument` originating from the AbINS software.
 
