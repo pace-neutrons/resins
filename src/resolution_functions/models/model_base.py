@@ -193,7 +193,29 @@ class InstrumentModel(ABC):
             The characteristics of the broadening function at each combination of independent
             variables.
         """
-        raise NotImplementedError()
+
+    @abstractmethod
+    def get_kernel(self,
+                   mesh: Float[np.ndarray, '...'],
+                   omega_q: Float[np.ndarray, 'sample dimension']
+                   ) -> Float[np.ndarray, '...']:
+        """
+        Computes the kernel on the provided `mesh` at each point in [Q, w] space (`omega_q`)
+        provided.
+
+        Parameters
+        ----------
+        mesh
+            The mesh on which to evaluate the kernel.
+        omega_q
+            The combinations of the independent variables [w, Q] at whose values to compute the
+            kernel.
+
+        Returns
+        -------
+        kernel
+            The normalised kernel representing the broadening.
+        """
 
     @abstractmethod
     def __call__(self, *args, **kwargs):

@@ -19,6 +19,7 @@ except ImportError:
 import numpy as np
 
 from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
+from .mixins import GaussianKernel1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -70,7 +71,7 @@ class VisionPaperModelData(ModelData):
     average_bragg_angle_graphite: float
 
 
-class VisionPaperModel(InstrumentModel):
+class VisionPaperModel(GaussianKernel1DMixin, InstrumentModel):
     """
     Model for TOSCA-like :term:`instruments<instrument>` from the [VISION paper]_.
 
