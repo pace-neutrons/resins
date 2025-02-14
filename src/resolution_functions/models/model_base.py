@@ -210,7 +210,8 @@ class InstrumentModel(ABC):
         Parameters
         ----------
         mesh
-            The mesh on which to evaluate the kernel.
+            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
+            entire [w, Q] space of interest.
         omega_q
             The combinations of the independent variables [w, Q] at whose values to compute the
             kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
@@ -220,7 +221,8 @@ class InstrumentModel(ABC):
         Returns
         -------
         kernel
-            The normalised kernel representing the broadening.
+            The normalised kernel representing the broadening, centered on its corresponding [w, Q]
+            value on the mesh.
         """
 
     @abstractmethod
