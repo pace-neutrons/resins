@@ -125,25 +125,27 @@ class VisionPaperModel(GaussianKernel1DMixin, InstrumentModel):
 
         self.final_term = self.e0 / np.tan(self.theta) / self.z2 * model_data.d_r
 
-    def get_characteristics(self, energy_transfer: Float[np.ndarray, 'energy_transfer']
+    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of `energy_transfer`.
+        Computes the broadening width at each value of energy transfer given by `omega_q`.
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        energy_transfer
-            The energy transfer in meV at which to compute the broadening.
+        omega_q
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        e1 = energy_transfer * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
+        e1 = omega_q[:, 0] * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
         z0 = self.l1 * (self.e0 / e1) ** 0.5
         one_over_z0 = 1 / z0
 

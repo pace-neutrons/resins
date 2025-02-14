@@ -177,15 +177,19 @@ class InstrumentModel(ABC):
         self._citation = model_data.citation
 
     @abstractmethod
-    def get_characteristics(self, *args) -> dict[str, Float[np.ndarray, '...']]:
+    def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension']
+                            ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
-        Computes the characteristics of the broadening function at each point in [Q, w] space
+        Computes the characteristics of the broadening function at each point in [w, Q] space
         provided.
 
         Parameters
         ----------
-        *args
-            The independent variables at whose values to evaluate the model.
+        omega_q
+            The combinations of the independent variables [w, Q] at whose values to compute the
+            characteristics of the kernel. This *must* be a ``sample`` x ``dimension`` 2D array
+            where ``sample`` is the number of [w, Q] combinations and ``dimension`` is the number of
+            independent variables as specified by ``InstrumentMode.input`` class variable.
 
         Returns
         -------
@@ -200,7 +204,7 @@ class InstrumentModel(ABC):
                    omega_q: Float[np.ndarray, 'sample dimension']
                    ) -> Float[np.ndarray, '...']:
         """
-        Computes the kernel on the provided `mesh` at each point in [Q, w] space (`omega_q`)
+        Computes the kernel on the provided `mesh` at each point in [w, Q] space (`omega_q`)
         provided.
 
         Parameters
@@ -209,7 +213,9 @@ class InstrumentModel(ABC):
             The mesh on which to evaluate the kernel.
         omega_q
             The combinations of the independent variables [w, Q] at whose values to compute the
-            kernel.
+            kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
+            number of [w, Q] combinations and ``dimension`` is the number of independent variables
+            as specified by ``InstrumentMode.input`` class variable.
 
         Returns
         -------
