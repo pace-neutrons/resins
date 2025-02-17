@@ -26,8 +26,8 @@ class GaussianKernel1DMixin:
     Gaussian kernel should use this mixin.
     """
     def get_kernel(self: InstrumentModel,
+                   omega_q: Float[np.ndarray, 'sample dimension=1'],
                    mesh: Float[np.ndarray, 'mesh'],
-                   omega_q: Float[np.ndarray, 'sample dimension=1']
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Gaussian kernel on the provided `mesh` at each value of the `omega_q` energy
@@ -35,12 +35,12 @@ class GaussianKernel1DMixin:
 
         Parameters
         ----------
-        mesh
-            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            `omega_q` transfer space of interest.
         omega_q
             The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
             array where N is the number of energy transfers.
+        mesh
+            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
+            `omega_q` transfer space of interest.
 
         Returns
         -------
@@ -57,18 +57,15 @@ class GaussianKernel1DMixin:
 
 class SimpleConvolve1DMixin:
     def convolve(self: InstrumentModel,
-                 mesh: Float[np.ndarray, 'mesh'],
                  omega_q: Float[np.ndarray, 'sample dimension=1'],
-                 data: Float[np.ndarray, 'data']
+                 data: Float[np.ndarray, 'data'],
+                 mesh: Float[np.ndarray, 'mesh'],
                  ) -> Float[np.ndarray, 'spectrum']:
         """
         Broadens the `data` on the full `mesh` using the straightforward scheme.
 
         Parameters
         ----------
-        mesh
-            The mesh to use for the broadening. This is a 1D array which *must* span the entire
-            `omega_q` space of interest.
         omega_q
             The independent variable (energy transfer or momentum scalar) whose `data` to broaden.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of w/Q values
@@ -76,6 +73,9 @@ class SimpleConvolve1DMixin:
             of the `data` array.
         data
             The intensities at the `omega_q` points.
+        mesh
+            The mesh to use for the broadening. This is a 1D array which *must* span the entire
+            `omega_q` space of interest.
 
         Returns
         -------

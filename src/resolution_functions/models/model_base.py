@@ -200,8 +200,8 @@ class InstrumentModel(ABC):
 
     @abstractmethod
     def get_kernel(self,
+                   omega_q: Float[np.ndarray, 'sample dimension'],
                    mesh: Float[np.ndarray, '...'],
-                   omega_q: Float[np.ndarray, 'sample dimension']
                    ) -> Float[np.ndarray, '...']:
         """
         Computes the kernel on the provided `mesh` at each point in [w, Q] space (`omega_q`)
@@ -209,14 +209,14 @@ class InstrumentModel(ABC):
 
         Parameters
         ----------
-        mesh
-            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            entire [w, Q] space of interest.
         omega_q
             The combinations of the independent variables [w, Q] at whose values to compute the
             kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
             number of [w, Q] combinations and ``dimension`` is the number of independent variables
             as specified by ``InstrumentModel.input`` class variable.
+        mesh
+            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
+            entire [w, Q] space of interest.
 
         Returns
         -------
@@ -227,18 +227,15 @@ class InstrumentModel(ABC):
 
     @abstractmethod
     def convolve(self,
-                 mesh: Float[np.ndarray, '...'],
                  omega_q: Float[np.ndarray, 'sample dimension'],
-                 data: Float[np.ndarray, 'data']
+                 data: Float[np.ndarray, 'data'],
+                 mesh: Float[np.ndarray, '...'],
                  ) -> Float[np.ndarray, '...']:
         """
         Broadens the `data` on the `mesh`.
 
         Parameters
         ----------
-        mesh
-            The mesh to use for the broadening. This is a 1D array which *must* span the entire
-            [w, Q] space of interest.
         omega_q
             The combinations of the independent variables [w, Q] whose `data` to broaden. This
             *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the number of
@@ -247,6 +244,9 @@ class InstrumentModel(ABC):
             match the length of the `data` array.
         data
             The intensities at the `omega_q` points.
+        mesh
+            The mesh to use for the broadening. This is a 1D array which *must* span the entire
+            [w, Q] space of interest.
 
         Returns
         -------
