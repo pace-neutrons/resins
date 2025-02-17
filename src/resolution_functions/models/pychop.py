@@ -40,7 +40,7 @@ from numpy.polynomial.polynomial import Polynomial
 from scipy.interpolate import interp1d
 
 from .model_base import InstrumentModel, ModelData, InvalidInputError, DEPRECATION_MSG
-from .mixins import GaussianKernel1DMixin
+from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -378,7 +378,7 @@ class Moderator(TypedDict):
     measured_width: NotRequired[list[float]]
 
 
-class PyChopModel(GaussianKernel1DMixin, InstrumentModel, ABC):
+class PyChopModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel, ABC):
     """
     Abstract base class for all PyChop models.
 

@@ -216,13 +216,42 @@ class InstrumentModel(ABC):
             The combinations of the independent variables [w, Q] at whose values to compute the
             kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
             number of [w, Q] combinations and ``dimension`` is the number of independent variables
-            as specified by ``InstrumentMode.input`` class variable.
+            as specified by ``InstrumentModel.input`` class variable.
 
         Returns
         -------
         kernel
             The normalised kernel representing the broadening, centered on its corresponding [w, Q]
             value on the mesh.
+        """
+
+    @abstractmethod
+    def convolve(self,
+                 mesh: Float[np.ndarray, '...'],
+                 omega_q: Float[np.ndarray, 'sample dimension'],
+                 data: Float[np.ndarray, 'data']
+                 ) -> Float[np.ndarray, '...']:
+        """
+        Broadens the `data` on the `mesh`.
+
+        Parameters
+        ----------
+        mesh
+            The mesh to use for the broadening. This is a 1D array which *must* span the entire
+            [w, Q] space of interest.
+        omega_q
+            The combinations of the independent variables [w, Q] whose `data` to broaden. This
+            *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the number of
+            [w, Q] combinations and ``dimension`` is the number of independent variables as
+            specified by ``InstrumentModel.input`` class variable. The ``sample`` dimension *must*
+            match the length of the `data` array.
+        data
+            The intensities at the `omega_q` points.
+
+        Returns
+        -------
+        spectrum
+            The broadened spectrum.
         """
 
     @abstractmethod

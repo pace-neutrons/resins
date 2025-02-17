@@ -19,7 +19,7 @@ except ImportError:
 import numpy as np
 
 from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
-from .mixins import GaussianKernel1DMixin
+from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -86,7 +86,7 @@ class ToscaBookModelData(ModelData):
     change_average_bragg_angle_graphite: float
 
 
-class ToscaBookModel(GaussianKernel1DMixin, InstrumentModel):
+class ToscaBookModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel):
     """
     Model for the TOSCA :term:`instrument` from the [INS book]_.
 

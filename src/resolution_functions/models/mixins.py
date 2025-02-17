@@ -37,7 +37,7 @@ class GaussianKernel1DMixin:
         ----------
         mesh
             The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            entire energy transfer space of interest.
+            `omega_q` transfer space of interest.
         omega_q
             The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
             array where N is the number of energy transfers.
@@ -53,3 +53,34 @@ class GaussianKernel1DMixin:
 
         sigma = self.get_characteristics(omega_q)['sigma']
         return norm.pdf(new_mesh, loc=omega_q, scale=sigma[:, np.newaxis])
+
+
+class SimpleConvolve1DMixin:
+    def convolve(self: InstrumentModel,
+                 mesh: Float[np.ndarray, 'mesh'],
+                 omega_q: Float[np.ndarray, 'sample dimension=1'],
+                 data: Float[np.ndarray, 'data']
+                 ) -> Float[np.ndarray, 'spectrum']:
+        """
+        Broadens the `data` on the full `mesh` using the straightforward scheme.
+
+        Parameters
+        ----------
+        mesh
+            The mesh to use for the broadening. This is a 1D array which *must* span the entire
+            `omega_q` space of interest.
+        omega_q
+            The independent variable (energy transfer or momentum scalar) whose `data` to broaden.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of w/Q values
+            for which there is `data`. Therefore, the ``sample`` dimension *must* match the length
+            of the `data` array.
+        data
+            The intensities at the `omega_q` points.
+
+        Returns
+        -------
+        spectrum
+            The broadened spectrum.
+        """
+        kernels = self.get_kernel(mesh, omega_q)
+        return np.dot(kernels.T, data)
