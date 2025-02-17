@@ -84,7 +84,8 @@ class VisionPaperModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentM
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `VisionPaperModelData` type.
     citation
