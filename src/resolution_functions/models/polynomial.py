@@ -9,15 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import ClassVar, TYPE_CHECKING
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
 
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
-from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
+from .model_base import InstrumentModel, ModelData
 from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
@@ -97,25 +93,6 @@ class PolynomialModel1D(GaussianKernel1DMixin, SimpleConvolve1DMixin, Instrument
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
         return {'sigma': self.polynomial(omega_q[:, 0])}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs
-                 ) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-        """
-        return self.get_characteristics(frequencies)['sigma']
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
@@ -239,26 +216,3 @@ class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleConvolve1DMixi
         result[omega_q > self.high_energy_cutoff] = self.high_energy_resolution
 
         return {'sigma': result * 0.5}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies']) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-
-        Raises
-        ------
-        AssertionError
-            If any of the widths are negative.
-        """
-        return self.get_characteristics(frequencies)['sigma']

@@ -24,11 +24,6 @@ if TYPE_CHECKING:
     from jaxtyping import Float
 
 
-DEPRECATION_MSG = 'The functionality of the __call__ method is going to soon change to return a ' \
-                  'convolution with data (see #10). For current functionality, use ' \
-                  'get_characteristics instead.'
-
-
 class InvalidInputError(Exception):
     """
     A custom Exception, common to all models, signalling invalid user input.
@@ -254,9 +249,34 @@ class InstrumentModel(ABC):
             The broadened spectrum.
         """
 
-    @abstractmethod
-    def __call__(self, *args, **kwargs):
-        raise NotImplementedError()
+    def __call__(self,
+                 omega_q: Float[np.ndarray, 'sample dimension'],
+                 data: Float[np.ndarray, 'data'],
+                 mesh: Float[np.ndarray, '...'],
+                 ) -> Float[np.ndarray, '...']:
+        """
+        Broadens the `data` on the `mesh`.
+
+        Parameters
+        ----------
+        omega_q
+            The combinations of the independent variables [w, Q] whose `data` to broaden. This
+            *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the number of
+            [w, Q] combinations and ``dimension`` is the number of independent variables as
+            specified by ``InstrumentModel.input`` class variable. The ``sample`` dimension *must*
+            match the length of the `data` array.
+        data
+            The intensities at the `omega_q` points.
+        mesh
+            The mesh to use for the broadening. This is a 1D array which *must* span the entire
+            [w, Q] space of interest.
+
+        Returns
+        -------
+        spectrum
+            The broadened spectrum.
+        """
+        return self.convolve(omega_q, data, mesh)
 
     def __str__(self) -> str:
         return f'{type(self).__name__}(citation={self.citation})'

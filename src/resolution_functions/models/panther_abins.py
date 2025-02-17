@@ -9,15 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
 
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
-from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
+from .model_base import InstrumentModel, ModelData
 from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
@@ -127,21 +123,3 @@ class PantherAbINSModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, Instrument
                       self.ei_dependence +
                       self.ei_energy_product(self.e_init * omega_q))
         return {'sigma': resolution / (2 * np.sqrt(2 * np.log(2)))}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-        """
-        return self.get_characteristics(frequencies)['sigma']
