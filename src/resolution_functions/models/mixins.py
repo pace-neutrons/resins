@@ -1,3 +1,12 @@
+"""
+Mixins providing generic implementations for
+`~resolution_functions.models.model_base.InstrumentModel` methods.
+
+The classes defined here are mixins to be used by specific models via multiple inheritance, allowing
+common code to be shared between models. Please note, however, that when doing this, the mixin
+**must** be the first base class (i.e. ``class Foo(Mixin, InstrumentModel)``) so that its
+implementation of a method overrides the abstract declaration in ``InstrumentModel``.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -56,6 +65,17 @@ class GaussianKernel1DMixin:
 
 
 class SimpleConvolve1DMixin:
+    """
+    A mixin providing the most simple implementation for the ``convolve`` method.
+
+    Implements `resolution_functions.models.model_base.InstrumentModel.convolve` method in the
+    most simple and basic way - the dot product between the matrix of kernels (obtained from the
+    ``get_kernel`` method) and the intensities.
+
+    This implementation should be mostly used as a reference method given that it is correct but
+    inefficient. It should be able to work with any model, so it may be used when other
+    implementations are unavailable.
+    """
     def convolve(self: InstrumentModel,
                  omega_q: Float[np.ndarray, 'sample dimension=1'],
                  data: Float[np.ndarray, 'data'],
