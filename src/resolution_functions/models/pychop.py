@@ -395,7 +395,8 @@ class PyChopModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel,
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelData` type.
     citation
@@ -978,7 +979,8 @@ class PyChopModelFermi(PyChopModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataFermi` type.
     citation
@@ -1331,7 +1333,8 @@ class PyChopModelCNCS(PyChopModelNonFermi):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataNonFermi` type.
     citation
@@ -1406,7 +1409,8 @@ class PyChopModelLET(PyChopModelNonFermi):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataNonFermi` type.
     citation
