@@ -30,16 +30,11 @@ try:
 except ImportError:
     from typing_extensions import NotRequired, TypedDict
 
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
-
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from scipy.interpolate import interp1d
 
-from .model_base import InstrumentModel, ModelData, InvalidInputError, DEPRECATION_MSG
+from .model_base import InstrumentModel, ModelData, InvalidInputError
 from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
@@ -431,25 +426,6 @@ class PyChopModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel,
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
         return {'sigma': self.polynomial(omega_q[:, 0])}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs
-                 ) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-        """
-        return self.get_characteristics(frequencies)['sigma']
 
     @property
     @abstractmethod

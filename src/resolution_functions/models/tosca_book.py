@@ -11,14 +11,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
 
 import numpy as np
 
-from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
+from .model_base import InstrumentModel, ModelData
 from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
@@ -173,21 +169,3 @@ class ToscaBookModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentMod
         result =  np.sqrt(time_dependent_term ** 2 + incident_flight_term ** 2 +
                           final_energy_term ** 2 + final_flight_term ** 2)
         return {'sigma': result}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-        """
-        return self.get_characteristics(frequencies)['sigma']

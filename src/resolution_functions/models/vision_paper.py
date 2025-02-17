@@ -11,14 +11,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
 
 import numpy as np
 
-from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
+from .model_base import InstrumentModel, ModelData
 from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
@@ -156,21 +152,3 @@ class VisionPaperModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentM
         sigma -= self.final_term
 
         return {'sigma': sigma}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies']) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Ikeda-Carpenter widths (FWHM).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        fwhm
-            The Ikeda-Carpenter widths at `frequencies` as predicted by this model.
-        """
-        return self.get_characteristics(frequencies)['sigma']
