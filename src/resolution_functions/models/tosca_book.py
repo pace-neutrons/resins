@@ -128,8 +128,8 @@ class ToscaBookModel(InstrumentModel):
                                            * self.REDUCED_PLANCK_SQUARED / self.NEUTRON_MASS)
 
         self.final_energy_factor = (2 * model_data.average_final_energy * dt / da) ** 2
-        angle_contrib = np.tan(theta * np.deg2rad(model_data.change_average_bragg_angle_graphite))
-        self.final_energy_factor += (2 * model_data.average_final_energy / angle_contrib) ** 2
+        angle_contrib = model_data.change_average_bragg_angle_graphite / np.tan(theta)
+        self.final_energy_factor += (2 * model_data.average_final_energy * angle_contrib) ** 2
         self.final_energy_factor **= 0.5
 
         self.final_flight_factor = 2 * dt / np.sin(theta)
