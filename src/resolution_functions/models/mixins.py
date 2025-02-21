@@ -102,5 +102,5 @@ class SimpleConvolve1DMixin:
         spectrum
             The broadened spectrum.
         """
-        kernels = self.get_kernel(mesh, omega_q)
+        kernels = self.get_kernel(omega_q, mesh)
         return np.dot(kernels.T, data)
