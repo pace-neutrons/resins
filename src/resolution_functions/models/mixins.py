@@ -34,10 +34,34 @@ class GaussianKernel1DMixin:
     ``get_kernel`` method. However, it is recommended that only models that actually model a
     Gaussian kernel should use this mixin.
     """
-    def get_kernel(self: InstrumentModel,
+    def get_kernel(self,
                    omega_q: Float[np.ndarray, 'sample dimension=1'],
                    mesh: Float[np.ndarray, 'mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
+        """
+        Computes the Gaussian kernel centered on zero on the provided `mesh` at each value of
+        `omega_q` (energy transfer or momentum scalar).
+
+        Parameters
+        ----------
+        omega_q
+            The energy transfer or momentum scalar for which to compute the kernel. This *must* be
+            a Nx1 2D array where N is the number of w/Q values.
+        mesh
+            The mesh on which to evaluate the kernel. A 1D array.
+
+        Returns
+        -------
+        kernel
+            The Gaussian kernel at each value of `omega_q` as given by this model, computed on the
+            `mesh` and centered on zero.
+        """
+        return self._get_kernel(omega_q, mesh, 0.)
+
+    def get_peak(self,
+                 omega_q: Float[np.ndarray, 'sample dimension=1'],
+                 mesh: Float[np.ndarray, 'mesh'],
+                 ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Gaussian kernel on the provided `mesh` at each value of the `omega_q` energy
         transfer.
@@ -57,11 +81,19 @@ class GaussianKernel1DMixin:
             The Gaussian kernel at each value of `omega_q` as given by this model, computed on the
             `mesh` and centered on the corresponding energy transfer.
         """
+        return self._get_kernel(omega_q, mesh, omega_q)
+
+    def _get_kernel(self: InstrumentModel,
+                    omega_q: Float[np.ndarray, 'sample dimension=1'],
+                    mesh: Float[np.ndarray, 'mesh'],
+                    displacement: float | Float[np.ndarray, 'sample'] = 0.
+                    ) -> Float[np.ndarray, 'sample mesh']:
+        """Computes the kernel using the specified `displacement`."""
         new_mesh = np.zeros((len(omega_q), len(mesh)))
         new_mesh[:, :] = mesh
 
         sigma = self.get_characteristics(omega_q)['sigma']
-        return norm.pdf(new_mesh, loc=omega_q, scale=sigma[:, np.newaxis])
+        return norm.pdf(new_mesh, loc=displacement, scale=sigma[:, np.newaxis])
 
 
 class SimpleConvolve1DMixin:

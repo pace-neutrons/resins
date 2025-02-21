@@ -205,8 +205,8 @@ class InstrumentModel(ABC):
                    mesh: Float[np.ndarray, '...'],
                    ) -> Float[np.ndarray, '...']:
         """
-        Computes the kernel on the provided `mesh` at each point in [w, Q] space (`omega_q`)
-        provided.
+        Computes the kernel centered on zero on the provided `mesh` at each point in [w, Q] space
+        (`omega_q`) provided.
 
         Parameters
         ----------
@@ -216,13 +216,38 @@ class InstrumentModel(ABC):
             number of [w, Q] combinations and ``dimension`` is the number of independent variables
             as specified by ``InstrumentModel.input`` class variable.
         mesh
-            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
+            The mesh on which to evaluate the kernel centered on zero. A 1D array.
+
+        Returns
+        -------
+        kernel
+            The normalised kernel representing the broadening, centered on zero..
+        """
+
+    @abstractmethod
+    def get_peak(self,
+                 omega_q: Float[np.ndarray, 'sample dimension'],
+                 mesh: Float[np.ndarray, '...'],
+                 ) -> Float[np.ndarray, '...']:
+        """
+        Computes the peak centered on `omega_q` on the provided `mesh` at each point in [w, Q]
+        space (`omega_q`) provided.
+
+        Parameters
+        ----------
+        omega_q
+            The combinations of the independent variables [w, Q] at whose values to compute the
+            kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
+            number of [w, Q] combinations and ``dimension`` is the number of independent variables
+            as specified by ``InstrumentModel.input`` class variable.
+        mesh
+            The mesh on which to evaluate the peak. This is a 1D array which *must* span the
             entire [w, Q] space of interest.
 
         Returns
         -------
         kernel
-            The normalised kernel representing the broadening, centered on its corresponding [w, Q]
+            The normalised peak representing the broadening, centered on its corresponding [w, Q]
             value on the mesh.
         """
 
