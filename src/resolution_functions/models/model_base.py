@@ -24,11 +24,6 @@ if TYPE_CHECKING:
     from jaxtyping import Float
 
 
-DEPRECATION_MSG = 'The functionality of the __call__ method is going to soon change to return a ' \
-                  'convolution with data (see #10). For current functionality, use ' \
-                  'get_characteristics instead.'
-
-
 class InvalidInputError(Exception):
     """
     A custom Exception, common to all models, signalling invalid user input.
@@ -142,17 +137,22 @@ class InstrumentModel(ABC):
         - These parameters should be ``Optional`` wherever possible, with the defaults for each
           instrument in the corresponding yaml files.
       - Any number of any other parameters is allowed, though ``__init__`` must not accept the
-        parameters that are passed in to ``__call__``.
-      - Each subclass must accept ``**kwargs``.
+        energy transfer/momentum ([w, Q]) parameter used in the other methods.
       - The ``__init__`` method should perform as much of the computation as possible, i.e. any
-        computation that does not involve the ``__call__`` parameters.
+        computation that does not involve the [w, Q] parameter.
       - No reference to the `ModelData` should be kept.
-    - The ``__call__`` method must be implemented.
-      - It must take the parameters that the particular model uses as argument. These can be any
-        combination of the energy transfer (i.e. frequencies), the momentum value (q), and the
-        momentum vector (q-vectors).
+    - The ``get_characteristics``, ``get_kernel``, and ``convolve`` methods must be implemented.
+      - Some or all of these may come as reusable code (as appropriate) via the use of the mixin
+        pattern (see `resolution_functions.models.mixins`).
+      - Each must take the ``omega_q`` argument, which must be a ``sample`` x ``dimension`` 2D
+        array, where ``sample`` is the number of [w, Q] values provided by the user and
+        ``dimension`` are the [w, Q] variables required by the model, as defined in the ``input``
+        class variable. These can be any combination of the energy transfer (i.e. frequencies),
+        the momentum value (q), and the momentum vector (q-vectors).
+        - For example, a model that uses the energy transfer and momentum scalar would have
+          ``dimension=2`` and ``input = ('energy transfer', 'momentum')``.
       - It must also take ``*args`` and ``**kwargs``.
-    - The `input` and `output` class variables must be given specific values.
+    - The `input` class variable must be given a specific value.
     - The `data_class` class variable must be assigned to the corresponding `ModelData` subclass.
     - Any additional defined methods should be private, but feel free to use your discretion.
 
@@ -164,7 +164,8 @@ class InstrumentModel(ABC):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         The `ModelData` subclass associated with this particular model.
     citation
@@ -177,15 +178,19 @@ class InstrumentModel(ABC):
         self._citation = model_data.citation
 
     @abstractmethod
-    def get_characteristics(self, *args) -> dict[str, Float[np.ndarray, '...']]:
+    def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension']
+                            ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
-        Computes the characteristics of the broadening function at each point in [Q, w] space
+        Computes the characteristics of the broadening function at each point in [w, Q] space
         provided.
 
         Parameters
         ----------
-        *args
-            The independent variables at whose values to evaluate the model.
+        omega_q
+            The combinations of the independent variables [w, Q] at whose values to compute the
+            characteristics of the kernel. This *must* be a ``sample`` x ``dimension`` 2D array
+            where ``sample`` is the number of [w, Q] combinations and ``dimension`` is the number of
+            independent variables as specified by ``InstrumentMode.input`` class variable.
 
         Returns
         -------
@@ -193,11 +198,116 @@ class InstrumentModel(ABC):
             The characteristics of the broadening function at each combination of independent
             variables.
         """
-        raise NotImplementedError()
 
     @abstractmethod
-    def __call__(self, *args, **kwargs):
-        raise NotImplementedError()
+    def get_kernel(self,
+                   omega_q: Float[np.ndarray, 'sample dimension'],
+                   mesh: Float[np.ndarray, '...'],
+                   ) -> Float[np.ndarray, '...']:
+        """
+        Computes the kernel centered on zero on the provided `mesh` at each point in [w, Q] space
+        (`omega_q`) provided.
+
+        Parameters
+        ----------
+        omega_q
+            The combinations of the independent variables [w, Q] at whose values to compute the
+            kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
+            number of [w, Q] combinations and ``dimension`` is the number of independent variables
+            as specified by ``InstrumentModel.input`` class variable.
+        mesh
+            The mesh on which to evaluate the kernel centered on zero. A 1D array.
+
+        Returns
+        -------
+        kernel
+            The normalised kernel representing the broadening, centered on zero..
+        """
+
+    @abstractmethod
+    def get_peak(self,
+                 omega_q: Float[np.ndarray, 'sample dimension'],
+                 mesh: Float[np.ndarray, '...'],
+                 ) -> Float[np.ndarray, '...']:
+        """
+        Computes the peak centered on `omega_q` on the provided `mesh` at each point in [w, Q]
+        space (`omega_q`) provided.
+
+        Parameters
+        ----------
+        omega_q
+            The combinations of the independent variables [w, Q] at whose values to compute the
+            kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
+            number of [w, Q] combinations and ``dimension`` is the number of independent variables
+            as specified by ``InstrumentModel.input`` class variable.
+        mesh
+            The mesh on which to evaluate the peak. This is a 1D array which *must* span the
+            entire [w, Q] space of interest.
+
+        Returns
+        -------
+        kernel
+            The normalised peak representing the broadening, centered on its corresponding [w, Q]
+            value on the mesh.
+        """
+
+    @abstractmethod
+    def convolve(self,
+                 omega_q: Float[np.ndarray, 'sample dimension'],
+                 data: Float[np.ndarray, 'data'],
+                 mesh: Float[np.ndarray, '...'],
+                 ) -> Float[np.ndarray, '...']:
+        """
+        Broadens the `data` on the `mesh`.
+
+        Parameters
+        ----------
+        omega_q
+            The combinations of the independent variables [w, Q] whose `data` to broaden. This
+            *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the number of
+            [w, Q] combinations and ``dimension`` is the number of independent variables as
+            specified by ``InstrumentModel.input`` class variable. The ``sample`` dimension *must*
+            match the length of the `data` array.
+        data
+            The intensities at the `omega_q` points.
+        mesh
+            The mesh to use for the broadening. This is a 1D array which *must* span the entire
+            [w, Q] space of interest.
+
+        Returns
+        -------
+        spectrum
+            The broadened spectrum.
+        """
+
+    def __call__(self,
+                 omega_q: Float[np.ndarray, 'sample dimension'],
+                 data: Float[np.ndarray, 'data'],
+                 mesh: Float[np.ndarray, '...'],
+                 ) -> Float[np.ndarray, '...']:
+        """
+        Broadens the `data` on the `mesh`.
+
+        Parameters
+        ----------
+        omega_q
+            The combinations of the independent variables [w, Q] whose `data` to broaden. This
+            *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the number of
+            [w, Q] combinations and ``dimension`` is the number of independent variables as
+            specified by ``InstrumentModel.input`` class variable. The ``sample`` dimension *must*
+            match the length of the `data` array.
+        data
+            The intensities at the `omega_q` points.
+        mesh
+            The mesh to use for the broadening. This is a 1D array which *must* span the entire
+            [w, Q] space of interest.
+
+        Returns
+        -------
+        spectrum
+            The broadened spectrum.
+        """
+        return self.convolve(omega_q, data, mesh)
 
     def __str__(self) -> str:
         return f'{type(self).__name__}(citation={self.citation})'
