@@ -18,6 +18,8 @@ version:
                 citation: [""]
                 configurations: {}
                 parameters:
+                    defaults: { }
+                    restrictions: { }
                     abs:
                         [9.776165626074981, 0.023616411911882462, 0.0006472263718719711, 1.4819832651359686e-06]  # abs_meV
                     ei_dependence:

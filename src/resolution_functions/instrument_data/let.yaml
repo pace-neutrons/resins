@@ -58,10 +58,14 @@ version:
             d_sample_detector: 3.5                  # Distance (x2) from sample to detector (m)
             aperture_width: 0.        # Width of aperture at moderator face (m)
             theta: 32.0                  # Angle beamline makes with moderator face (degrees)
-            default_e_init: 20  # meV
-            allowed_e_init: [ 0., 30. ]  # meV
-            default_chopper_frequency: [ 240, 120 ]
-            allowed_chopper_frequencies: [[10, 301, 10], [10, 301, 10]]
+            defaults:
+                e_init: 20  # meV
+                resolution_frequency: 240
+                pulse_remover_frequency: 120
+            restrictions:
+                e_init: [ 0., 30. ]  # meV
+                resolution_frequency: [10, 301, 10]
+                pulse_remover_frequency: [10, 301, 10]
             constant_frequencies: [0, 10, 0, 0, 0]
             source_frequency: 10   # Frequency of source (Hz)
             n_frame: 1  # Number of frames to calculate time-distance diagram for

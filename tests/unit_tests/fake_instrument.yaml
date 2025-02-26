@@ -17,6 +17,9 @@ version:
                     val1: 1
                     val2: 2
                 non_dict: 3
+            defaults: {}
+            restrictions:
+                kwarg2: [0]
         configurations: &version1_configurations
             config1:
                 default_option: "A"
@@ -59,7 +62,9 @@ version:
             empty_v1:
                 function: "none"
                 citation: [""]
-                parameters: {}
+                parameters:
+                    defaults: {}
+                    restrictions: {}
                 configurations: {}
     TEST:
         default_model: "invalid model"
@@ -68,5 +73,7 @@ version:
             mock_v1:
                 function: "mock"
                 citation: [""]
-                parameters: {}
+                parameters:
+                    defaults: {}
+                    restrictions: {}
                 configurations: {}

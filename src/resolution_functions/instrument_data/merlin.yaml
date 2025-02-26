@@ -3,14 +3,16 @@ default_version: 'MERLIN'
 
 version:
     MERLIN:
+        restrictions: &merlin_restrictions
+            chopper_frequency: [50, 601, 50]
         constants: &constants
             d_chopper_sample: 1.925               # Distance (x1) from final chopper to sample (m)
             d_sample_detector: 2.5                  # Distance (x2) from sample to detector (m)
             aperture_width: 0.06667         # Width of aperture at moderator face (m)
             theta: 26.7                   # Angle beamline makes with moderator face (degrees)
-            default_e_init: 400  # meV
-            default_chopper_frequency: 400
-            allowed_chopper_frequencies: [50, 601, 50]
+            defaults:
+                e_init: 400  # meV
+                chopper_frequency: 400
             frequency_matrix:
                 [ [ 0 ],                       # Only the Fermi frequency should be variable
                   [ 1 ] ]
@@ -52,13 +54,17 @@ version:
                     radius: 5.0e-3  # m
                     rho: 1000  # m
                     tjit: 0.0             # Jitter time (us)
-                    allowed_e_init: [0, 181]
+                    restrictions:
+                        <<: *merlin_restrictions
+                        e_init: [0, 181]
                 S:
                     pslit: 2.280e-3  # m
                     radius: 49.0e-3  # m
                     rho: 1.300  # m
                     tjit: 0.0             # Jitter time (us)
-                    allowed_e_init: [ 7, 2000 ]  # meV
+                    restrictions:
+                        <<: *merlin_restrictions
+                        e_init: [ 7, 2000 ]  # meV
         default_model: 'PyChop_fit'
         models:
             PyChop_fit: "PyChop_fit_v1"

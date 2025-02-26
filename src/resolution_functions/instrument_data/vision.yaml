@@ -4,6 +4,8 @@ default_version: 'VISION'
 version:
     VISION:
         constants: &vision_constants
+            defaults: {}
+            restrictions: {}
             primary_flight_path: 15.  # m
             primary_flight_path_uncertainty: null
             sample_thickness: 0.002  # m
