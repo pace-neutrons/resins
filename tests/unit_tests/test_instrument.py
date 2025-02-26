@@ -28,10 +28,6 @@ class MockModelData(ModelData):
     matrix: list[list[int]]
     dictionary: dict[str, dict[str, int] | int]
 
-    @property
-    def restrictions(self) -> dict[str, list[int | float]]:
-        return {'kwarg2': [0]}
-
 
 class MockModel(InstrumentModel):
     input = 1
