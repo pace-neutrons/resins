@@ -48,6 +48,7 @@ test = [
     "mantid >= 6.10.0",
     "pychop @ git+https://github.com/mducle/pychop.git",
     "more_itertools >= 10.5.0",
+    "pytest-mock >= 3.14.0",
 ]
 docs = [
     "sphinx >= 8.1.3",

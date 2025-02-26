@@ -947,7 +947,7 @@ def _format_table(contents: list[list[str]], padding: int = 4) -> str:
 {header_sep_line}
 {sep_nl.join(formatted)}
 {sep_line}
-    """
+"""
 
 
 def _split_on_model(contents: np.ndarray) -> Iterator[list[list[str]]]:
