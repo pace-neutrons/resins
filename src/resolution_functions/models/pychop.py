@@ -30,16 +30,12 @@ try:
 except ImportError:
     from typing_extensions import NotRequired, TypedDict
 
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
-
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from scipy.interpolate import interp1d
 
-from .model_base import InstrumentModel, ModelData, InvalidInputError, DEPRECATION_MSG
+from .model_base import InstrumentModel, ModelData, InvalidInputError
+from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -377,7 +373,7 @@ class Moderator(TypedDict):
     measured_width: NotRequired[list[float]]
 
 
-class PyChopModel(InstrumentModel, ABC):
+class PyChopModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel, ABC):
     """
     Abstract base class for all PyChop models.
 
@@ -399,7 +395,8 @@ class PyChopModel(InstrumentModel, ABC):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelData` type.
     citation
@@ -409,44 +406,27 @@ class PyChopModel(InstrumentModel, ABC):
 
     data_class = PyChopModelData
 
-    def get_characteristics(self, energy_transfer: Float[np.ndarray, 'energy_transfer']
+    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of `energy_transfer`.
+        Computes the broadening width at each value of energy transfer given by `omega_q`.
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        energy_transfer
-            The energy transfer in meV at which to compute the broadening in meV.
+        omega_q
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        return {'sigma': self.polynomial(energy_transfer)}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs
-                 ) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-        """
-        return self.get_characteristics(frequencies)['sigma']
+        return {'sigma': self.polynomial(omega_q[:, 0])}
 
     @property
     @abstractmethod
@@ -999,7 +979,8 @@ class PyChopModelFermi(PyChopModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataFermi` type.
     citation
@@ -1352,7 +1333,8 @@ class PyChopModelCNCS(PyChopModelNonFermi):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataNonFermi` type.
     citation
@@ -1427,7 +1409,8 @@ class PyChopModelLET(PyChopModelNonFermi):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataNonFermi` type.
     citation

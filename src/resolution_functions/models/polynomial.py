@@ -9,15 +9,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import ClassVar, TYPE_CHECKING
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
 
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
-from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
+from .model_base import InstrumentModel, ModelData
+from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -42,7 +39,7 @@ class PolynomialModelData(ModelData):
     fit: list[float]
 
 
-class PolynomialModel1D(InstrumentModel):
+class PolynomialModel1D(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel):
     """
     Model using a 1D polynomial to model an :term:`instrument`.
 
@@ -60,7 +57,8 @@ class PolynomialModel1D(InstrumentModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PolynomialModelData` type.
     polynomial : numpy.polynomial.polynomial.Polynomial
@@ -75,44 +73,27 @@ class PolynomialModel1D(InstrumentModel):
         super().__init__(model_data)
         self.polynomial = Polynomial(model_data.fit)
 
-    def get_characteristics(self, energy_transfer: Float[np.ndarray, 'energy_transfer']
+    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of `energy_transfer`.
+        Computes the broadening width at each value of energy transfer (`omega_q`).
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        energy_transfer
-            The energy transfer in meV at which to compute the broadening.
+        omega_q
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        return {'sigma': self.polynomial(energy_transfer)}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs
-                 ) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-        """
-        return self.get_characteristics(frequencies)['sigma']
+        return {'sigma': self.polynomial(omega_q[:, 0])}
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
@@ -150,7 +131,7 @@ class DiscontinuousPolynomialModelData(ModelData):
     high_energy_resolution: float = 0.
 
 
-class DiscontinuousPolynomialModel1D(InstrumentModel):
+class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel):
     """
     Model using a 1D polynomial to model an :term:`instrument`, but with values above and below
     certain energy transfer set to constant values.
@@ -173,7 +154,8 @@ class DiscontinuousPolynomialModel1D(InstrumentModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `DiscontinuousPolynomialModelData` type.
     polynomial : numpy.polynomial.polynomial.Polynomial
@@ -207,52 +189,32 @@ class DiscontinuousPolynomialModel1D(InstrumentModel):
         self.high_energy_cutoff = model_data.high_energy_cutoff
         self.high_energy_resolution = model_data.high_energy_resolution
 
-    def get_characteristics(self, energy_transfer: Float[np.ndarray, 'energy_transfer']
+    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of `energy_transfer`.
+        Computes the broadening width at each value of energy transfer given by `omega_q`.
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        energy_transfer
-            The energy transfer in meV at which to compute the broadening.
+        omega_q
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        result = self.polynomial(energy_transfer)
+        omega_q = omega_q[:, 0]
+        result = self.polynomial(omega_q)
 
         assert np.all(result > 0)
 
-        result[energy_transfer < self.low_energy_cutoff] = self.low_energy_resolution
-        result[energy_transfer > self.high_energy_cutoff] = self.high_energy_resolution
+        result[omega_q < self.low_energy_cutoff] = self.low_energy_resolution
+        result[omega_q > self.high_energy_cutoff] = self.high_energy_resolution
 
         return {'sigma': result * 0.5}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies']) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-
-        Raises
-        ------
-        AssertionError
-            If any of the widths are negative.
-        """
-        return self.get_characteristics(frequencies)['sigma']
