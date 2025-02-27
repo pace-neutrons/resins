@@ -216,7 +216,7 @@ class InstrumentModel(ABC):
                 except KeyError:
                     raise InvalidInputError(f'Model "{type(self).__name__}" does not have a default'
                                             f' value for the "{name}" setting, so one must be '
-                                            'provided by the user.')
+                                            'provided by the user.') from None
                 continue
 
             try:
