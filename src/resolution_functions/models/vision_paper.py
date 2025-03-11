@@ -35,6 +35,13 @@ class VisionPaperModelData(ModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     primary_flight_path
         Distance between the :term:`moderator` and the :term:`sample` in meters (m).
     primary_flight_path_uncertainty
@@ -55,8 +62,6 @@ class VisionPaperModelData(ModelData):
         Distance between the :term:`sample` and the analyser, in meters (m).
     average_bragg_angle_graphite
         Average Bragg angle of the graphite analyser, in degrees.
-    restrictions
-    defaults
     """
     primary_flight_path: float
     primary_flight_path_uncertainty: float

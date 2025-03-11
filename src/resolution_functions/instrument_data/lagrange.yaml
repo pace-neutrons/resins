@@ -32,5 +32,7 @@ version:
             AbINS_v1:
                 function: "discontinuous_polynomial"
                 citation: [""]
-                parameters: {}
+                parameters:
+                    defaults: {}
+                    restrictions: {}
                 configurations: *lagrange_configurations

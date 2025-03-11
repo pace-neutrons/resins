@@ -34,10 +34,15 @@ class PolynomialModelData(ModelData):
         The name of the function, i.e. the alias for `PolynomialModel1D`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     fit
         Polynomial coefficients.
-    restrictions
-    defaults
     """
     fit: list[float]
 
@@ -126,6 +131,13 @@ class DiscontinuousPolynomialModelData(ModelData):
         The name of the function, i.e. the alias for `DiscontinuousPolynomialModel1D`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     fit
         Polynomial coefficients.
     low_energy_cutoff
@@ -140,8 +152,6 @@ class DiscontinuousPolynomialModelData(ModelData):
     high_energy_resolution
         The value (in meV) to which ``sigma`` is set when the energy transfer is higher than
         `high_energy_cutoff`.
-    restrictions
-    defaults
     """
     fit: list[float]
     low_energy_cutoff: float = - np.inf

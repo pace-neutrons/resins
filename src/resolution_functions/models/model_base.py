@@ -82,43 +82,17 @@ class ModelData(ABC):
         The citation for a particular model. Please use this to look up more details and cite the
         model.
     restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
     defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     """
     function: str
     citation: list[str]
-
-    @property
-    def restrictions(self) -> dict[str, list[int | float]]:
-        """
-        The restrictions that the corresponding :term:`model` places on each :term:`setting`.
-
-        This is provided via a dictionary where the keys are the name of the :term:`setting`,
-        and the values are the restriction for that :term:`setting`. The restrictions can be the
-        upper or lower bounds, or even a list of allowed values. If an invalid input is passed in, a
-        `InvalidInputError` will be raised.
-
-        Returns
-        -------
-        restrictions
-            A mapping of :term:`setting` to its corresponding restriction.
-        """
-        return {}
-
-    @property
-    def defaults(self) -> dict[str, Any]:
-        """
-        The defaults for each :term:`setting` for the corresponding :term:`model`.
-
-        This is provided as a dictionary where the keys are the name of the :term:`setting`,
-        and the values are the default for that :term:`setting`. The default will be used when a
-        particular :term:`setting` is not passed in to the :term:`model`
-
-        Returns
-        -------
-        defaults
-            A mapping of :term:`settings<setting>` to their corresponding default values.
-        """
-        return {}
+    defaults: dict[str, int | float]
+    restrictions: dict[str, list[int | float], set[int | float]]
 
 
 class InstrumentModel(ABC):
@@ -213,3 +187,60 @@ class InstrumentModel(ABC):
             The citation.
         """
         return self._citation
+
+    def _validate_settings(self,
+                           model_data: ModelData,
+                           settings: dict[str, int | float | None]
+                           ) -> dict[str, int | float]:
+        """
+        Validates the user-provided `settings` against the models restrictions and fills in defaults
+
+        Parameters
+        ----------
+        model_data
+            The data associated with the model for a given version of a given instrument.
+        settings
+            The user-provided :term:`settings<setting>`
+
+        Returns
+        -------
+        validated_settings
+            The user-provided settings that comply with the model's restrictions and with any `None`
+            values replaced with defaults.
+        """
+        out = {}
+        for name, setting in settings.items():
+            if setting is None:
+                try:
+                    out[name] = model_data.defaults[name]
+                except KeyError:
+                    raise InvalidInputError(f'Model "{type(self).__name__}" does not have a default'
+                                            f' value for the "{name}" setting, so one must be '
+                                            'provided by the user.') from None
+                continue
+
+            try:
+                restriction = model_data.restrictions[name]
+            except KeyError:
+                out[name] = setting
+                continue
+
+            if isinstance(restriction, list):
+                if len(restriction) == 2:
+                    if not restriction[0] <= setting <= restriction[1]:
+                        raise InvalidInputError(f'The provided value for the "{name}" setting '
+                                                f'({setting}) must be within the {restriction} '
+                                                'boundaries.')
+                else:
+                    start, stop, step = restriction
+                    if setting not in range(start, stop, step):
+                        raise InvalidInputError(f'The provided value for the "{name}" setting '
+                                                f'({setting}) must be one of the following values: '
+                                                f'{list(range(*restriction))}')
+            elif setting not in restriction:
+                raise InvalidInputError(f'The provided value for the "{name}" setting ({setting}) '
+                                        f'must be one of the following values: {restriction}')
+
+            out[name] = setting
+
+        return out
