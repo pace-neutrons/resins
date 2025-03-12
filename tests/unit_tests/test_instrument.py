@@ -55,6 +55,18 @@ class MockModel(InstrumentModel):
     def __call__(self, frequencies, *args, **kwargs):
         return frequencies
 
+    def get_characteristics(self, omega_q):
+        return {"sigma": np.ones((len(omega_q), 1))}
+
+    def get_kernel(self, omega_q, mesh):
+        return np.zeros_like(mesh)
+
+    def get_peak(self, omega_q, mesh):
+        return np.zeros_like(mesh)
+
+    def convolve(self, omega_q, data, mesh):
+        return np.zeros_like(mesh)
+
 
 @pytest.fixture
 def mock_models():
