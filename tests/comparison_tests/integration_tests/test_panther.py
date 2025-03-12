@@ -31,7 +31,7 @@ def test_panther_against_abins(resolution_functions):
 
     frequencies = np.linspace(0, energy, 1000)
 
-    actual = panther_resins(frequencies)
+    actual = panther_resins.get_characteristics(frequencies[:, None])["sigma"]
     expected = panther_abins.calculate_sigma(frequencies * MEV_TO_WAVENUMBER) * WAVENUMBER_TO_MEV
 
     assert_allclose(actual, expected)
