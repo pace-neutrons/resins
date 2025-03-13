@@ -48,6 +48,10 @@ the corresponding data:
 >>> mesh = np.linspace(0, 500, 1000)
 >>> result = pychop(energy_transfer, data, mesh)
 
+which can be plotted as:
+
+.. image:: /figures/example_convolve.png
+
 However, the model also provides methods that go lower; `get_kernel` computes
 the broadening kernel at each [w, Q] (centered on 0), `get_peak` computes the
 broadening peak at each [w, Q] (centered on the [w, Q]), and
