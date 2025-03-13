@@ -60,10 +60,8 @@ def _convolve_simple():
     mesh = np.arange(-100, 2100, 0.25)
 
     np.random.seed(42)
-    data = np.zeros(len(mesh))
-    idxs = np.arange(400, 8400, 200)
-    data[idxs] = np.random.random(40)
-    model = MockModel(idxs)
+    data = np.random.random(40)
+    model = MockModel(np.arange(400, 8400, 200))
 
     return model.convolve(omega_q, data, mesh), mesh
 
@@ -78,7 +76,7 @@ def generate_data():
     matplotlib.use('TkAgg')
     import matplotlib.pyplot as plt
 
-    for func in [_convolve_simple]:#[_get_kernel_gaussian1d, _get_peak_gaussian1d, _convolve_simple]:
+    for func in [_get_kernel_gaussian1d, _get_peak_gaussian1d, _convolve_simple]:
         name = str(func.__name__)
         print(name)
 
