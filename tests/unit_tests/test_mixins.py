@@ -24,7 +24,7 @@ class MockModel(SimpleConvolve1DMixin):
 
         new_mesh = np.zeros((omega_len, mesh_len))
         for i, idx in enumerate(self.idxs):
-            new_mesh[i, np.arange(idx-5, idx+5, 1)] = 0.5
+            new_mesh[i, np.arange(idx-50, idx+50, 1)] = 0.5
 
         return new_mesh
 
@@ -60,7 +60,7 @@ def _convolve_simple():
     mesh = np.arange(-100, 2100, 0.25)
 
     np.random.seed(42)
-    data = mesh.copy()
+    data = np.zeros(len(mesh))
     idxs = np.arange(400, 8400, 200)
     data[idxs] = np.random.random(40)
     model = MockModel(idxs)
