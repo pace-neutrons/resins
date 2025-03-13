@@ -52,18 +52,17 @@ transfer and momentum ([w, Q]), using a mesh and the corresponding data:
 array([3.43947518e-028, ... 5.99877942e-002, ... 7.31766110e-249])
 ```
 
-However, the model also provides methods that go lower; `get_kernel` computes the broadening kernel 
-at each [w, Q], and `get_characteristics` returns only the characteristic parameters of the kernel 
-at each [w, Q] (such as the standard deviation of the normal distribution):
+However, the model also provides methods that go lower; 
+
+- `get_kernel` computes the broadening kernel at each [w, Q] (centered on 0)
+- `get_peak` computes the broadening peak at each [w, Q] (centered on the [w, Q])
+- `get_characteristics` returns only the characteristic parameters of the kernel 
+  at each [w, Q] (such as the standard deviation of the normal distribution)
 
 ```
->>> pychop.get_kernel(energy_transfer, mesh)
-array([[5.73245863e-028, 1.03934201e-027, 1.87879504e-027, ...,
-        0.00000000e+000, 0.00000000e+000, 0.00000000e+000],
-       [4.25190507e-161, 2.65400834e-160, 1.64902874e-159, ...,
-        0.00000000e+000, 0.00000000e+000, 0.00000000e+000],
-       [0.00000000e+000, 0.00000000e+000, 0.00000000e+000, ...,
-        2.37461178e-246, 1.39446471e-247, 8.13073456e-249]])
+>>> peaks = pychop.get_peak(energy_transfer, mesh)
+>>> mesh_centered_on_0 = np.linspace(-100, 100, 1000)
+>>> kernels = pychop.get_kernel(energy_transfer, mesh_centered_on_0)
 >>> pychop.get_characteristics(energy_transfer)
 {'sigma': array([9.15987016, 7.38868127, 5.93104319])}
 ```
