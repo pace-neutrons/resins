@@ -54,7 +54,8 @@ class GaussianKernel1DMixin:
         -------
         kernel
             The Gaussian kernel at each value of `omega_q` as given by this model, computed on the
-            `mesh` and centered on zero.
+            `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
+            values and M is the length of the `mesh` array.
         """
         return self._get_kernel(omega_q, mesh, 0.)
 
@@ -79,7 +80,8 @@ class GaussianKernel1DMixin:
         -------
         kernel
             The Gaussian kernel at each value of `omega_q` as given by this model, computed on the
-            `mesh` and centered on the corresponding energy transfer.
+            `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
+            N is the number of w/Q values and M is the length of the `mesh` array.
         """
         return self._get_kernel(omega_q, mesh, omega_q)
 
@@ -132,7 +134,7 @@ class SimpleBroaden1DMixin:
         Returns
         -------
         spectrum
-            The broadened spectrum.
+            The broadened spectrum. This is a 1D array of the same length as `mesh`.
         """
         kernels = self.get_peak(omega_q, mesh)
         return np.einsum('i,ij...->j...', data, kernels)
