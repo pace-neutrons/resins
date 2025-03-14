@@ -216,12 +216,16 @@ class InstrumentModel(ABC):
             number of [w, Q] combinations and ``dimension`` is the number of independent variables
             as specified by ``InstrumentModel.input`` class variable.
         mesh
-            The mesh on which to evaluate the kernel centered on zero. A 1D array.
+            The mesh on which to evaluate the kernel centered on zero. This must be an ND array
+            where N is the number of independent variables (this is the same number as the number
+            of columns of the `omega_q` array).
 
         Returns
         -------
         kernel
-            The normalised kernel representing the broadening, centered on zero..
+            The normalised kernel representing the broadening, centered on zero, produced for each
+            [w, Q] combination provided via the `omega_q` array. This is an (N+1)D array, where N
+            is the number of independent variables.
         """
 
     @abstractmethod
@@ -241,14 +245,16 @@ class InstrumentModel(ABC):
             number of [w, Q] combinations and ``dimension`` is the number of independent variables
             as specified by ``InstrumentModel.input`` class variable.
         mesh
-            The mesh on which to evaluate the peak. This is a 1D array which *must* span the
-            entire [w, Q] space of interest.
+            The mesh on which to evaluate the peak. This is an ND array, where N is the number of
+            independent variables (the number of columns of the `omega_q` array), which *must* span
+            the entire [w, Q] space of interest.
 
         Returns
         -------
         kernel
             The normalised peak representing the broadening, centered on its corresponding [w, Q]
-            value on the mesh.
+            value on the mesh, produced for each [w, Q] combination provided via the `omega_q`
+            array. This is an (N+1)D array, where N is the number of independent variables.
         """
 
     @abstractmethod
@@ -271,13 +277,14 @@ class InstrumentModel(ABC):
         data
             The intensities at the `omega_q` points.
         mesh
-            The mesh to use for the broadening. This is a 1D array which *must* span the entire
-            [w, Q] space of interest.
+            The mesh to use for the broadening. This is an ND array, where N is the number of
+            independent variables (the number of columns of the `omega_q` array), which *must* span
+            the entire [w, Q] space of interest.
 
         Returns
         -------
         spectrum
-            The broadened spectrum.
+            The broadened spectrum. This array has the same shape as the `mesh`.
         """
 
     def __call__(self,
