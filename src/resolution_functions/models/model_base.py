@@ -141,7 +141,7 @@ class InstrumentModel(ABC):
       - The ``__init__`` method should perform as much of the computation as possible, i.e. any
         computation that does not involve the [w, Q] parameter.
       - No reference to the `ModelData` should be kept.
-    - The ``get_characteristics``, ``get_kernel``, and ``convolve`` methods must be implemented.
+    - The ``get_characteristics``, ``get_kernel``, and ``broaden`` methods must be implemented.
       - Some or all of these may come as reusable code (as appropriate) via the use of the mixin
         pattern (see `resolution_functions.models.mixins`).
       - Each must take the ``omega_q`` argument, which must be a ``sample`` x ``dimension`` 2D
