@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from .model_base import InstrumentModel, ModelData
-from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
+from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -82,7 +82,7 @@ class ToscaBookModelData(ModelData):
     change_average_bragg_angle_graphite: float
 
 
-class ToscaBookModel(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel):
+class ToscaBookModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     Model for the TOSCA :term:`instrument` from the [INS book]_.
 

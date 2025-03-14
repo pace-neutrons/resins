@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from resolution_functions.models.mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
+from resolution_functions.models.mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
@@ -14,7 +14,7 @@ class MockModelLinearWidth(GaussianKernel1DMixin):
         return {'sigma': np.arange(1, len(omega_q)+1)}
 
 
-class MockModel(SimpleConvolve1DMixin):
+class MockModel(SimpleBroaden1DMixin):
     def __init__(self, idxs: list[int]):
         self.idxs = idxs
 
@@ -55,7 +55,7 @@ def test_get_peak_gaussian1d():
     assert_allclose(result, np.load(os.path.join(DATA_DIR, '_get_peak_gaussian1d.npy')))
 
 
-def _convolve_simple():
+def _broaden_simple():
     omega_q = np.arange(0, 2000, 50)[:, np.newaxis]
     mesh = np.arange(-100, 2100, 0.25)
 
@@ -63,11 +63,11 @@ def _convolve_simple():
     data = np.random.random(40)
     model = MockModel(np.arange(400, 8400, 200))
 
-    return model.convolve(omega_q, data, mesh), mesh
+    return model.broaden(omega_q, data, mesh), mesh
 
 
-def test_convolve_simple():
-    result, _ = _convolve_simple()
+def test_broaden_simple():
+    result, _ = _broaden_simple()
     assert_allclose(result, np.load(os.path.join(DATA_DIR, '_convolve_simple.npy')))
 
 
@@ -76,7 +76,7 @@ def generate_data():
     matplotlib.use('TkAgg')
     import matplotlib.pyplot as plt
 
-    for func in [_get_kernel_gaussian1d, _get_peak_gaussian1d, _convolve_simple]:
+    for func in [_get_kernel_gaussian1d, _get_peak_gaussian1d, _broaden_simple]:
         name = str(func.__name__)
         print(name)
 

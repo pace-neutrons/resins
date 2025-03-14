@@ -96,7 +96,7 @@ class GaussianKernel1DMixin:
         return norm.pdf(new_mesh, loc=displacement, scale=sigma[:, np.newaxis])
 
 
-class SimpleConvolve1DMixin:
+class SimpleBroaden1DMixin:
     """
     A mixin providing the most simple implementation for the ``convolve`` method.
 
@@ -108,11 +108,11 @@ class SimpleConvolve1DMixin:
     inefficient. It should be able to work with any model, so it may be used when other
     implementations are unavailable.
     """
-    def convolve(self: InstrumentModel,
-                 omega_q: Float[np.ndarray, 'sample dimension=1'],
-                 data: Float[np.ndarray, 'data'],
-                 mesh: Float[np.ndarray, 'mesh'],
-                 ) -> Float[np.ndarray, 'spectrum']:
+    def broaden(self: InstrumentModel,
+                omega_q: Float[np.ndarray, 'sample dimension=1'],
+                data: Float[np.ndarray, 'data'],
+                mesh: Float[np.ndarray, 'mesh'],
+                ) -> Float[np.ndarray, 'spectrum']:
         """
         Broadens the `data` on the full `mesh` using the straightforward scheme.
 

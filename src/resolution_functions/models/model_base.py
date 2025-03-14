@@ -252,11 +252,11 @@ class InstrumentModel(ABC):
         """
 
     @abstractmethod
-    def convolve(self,
-                 omega_q: Float[np.ndarray, 'sample dimension'],
-                 data: Float[np.ndarray, 'data'],
-                 mesh: Float[np.ndarray, '...'],
-                 ) -> Float[np.ndarray, '...']:
+    def broaden(self,
+                omega_q: Float[np.ndarray, 'sample dimension'],
+                data: Float[np.ndarray, 'data'],
+                mesh: Float[np.ndarray, '...'],
+                ) -> Float[np.ndarray, '...']:
         """
         Broadens the `data` on the `mesh`.
 
@@ -307,7 +307,7 @@ class InstrumentModel(ABC):
         spectrum
             The broadened spectrum.
         """
-        return self.convolve(omega_q, data, mesh)
+        return self.broaden(omega_q, data, mesh)
 
     def __str__(self) -> str:
         return f'{type(self).__name__}(citation={self.citation})'

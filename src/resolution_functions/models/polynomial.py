@@ -14,7 +14,7 @@ import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
 from .model_base import InstrumentModel, ModelData
-from .mixins import GaussianKernel1DMixin, SimpleConvolve1DMixin
+from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -39,7 +39,7 @@ class PolynomialModelData(ModelData):
     fit: list[float]
 
 
-class PolynomialModel1D(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel):
+class PolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     Model using a 1D polynomial to model an :term:`instrument`.
 
@@ -131,7 +131,7 @@ class DiscontinuousPolynomialModelData(ModelData):
     high_energy_resolution: float = 0.
 
 
-class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleConvolve1DMixin, InstrumentModel):
+class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     Model using a 1D polynomial to model an :term:`instrument`, but with values above and below
     certain energy transfer set to constant values.

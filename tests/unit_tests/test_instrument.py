@@ -64,7 +64,7 @@ class MockModel(InstrumentModel):
     def get_peak(self, omega_q, mesh):
         return np.zeros_like(mesh)
 
-    def convolve(self, omega_q, data, mesh):
+    def broaden(self, omega_q, data, mesh):
         return np.zeros_like(mesh)
 
 
