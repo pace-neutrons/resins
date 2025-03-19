@@ -23,6 +23,13 @@ The data must be stored in a YAML format file with the following structure:
                     :ref:`function<spec-function>`: :iref:target:`"model_function_name"<spec-function-targ>`
                     :ref:`citation<spec-citation>`: ["citation1", :iref:target:`"citation2"<spec-citation-targ>`]
                     :ref:`parameters<spec-parameters>`\ :iref:target:`:<spec-parameters-targ>`
+                        :ref:`defaults<spec-defaults>`\ :iref:target:`:<spec-defaults-targ>`
+                            setting1: 1
+                            setting2: "value1"
+                        :ref:`restrictions<spec-restrictions>`\ :iref:target:`:<spec-restrictions-targ>`
+                            setting1: [1, 100, 5]
+                            setting2: !!set {"value1", "value2", "value3"}
+                            setting3: [0, 2000]
                         parameter1: "value1"
                         parameter2: 2
                         parameter3: 3.14
@@ -218,7 +225,9 @@ particular :term:`model`. Its value must be a (YAML) dictionary in which each
 key is the name of a parameter of that model, and the value is a valid value for
 that parameter of that model.
 
-There are no intrinsic restrictions on this dictionary, but it must contain
+The only intrinsic restrictions on this dictionary are that it must contain the
+:ref:`defaults<spec-defaults>` and :ref:`restrictions<spec-restrictions>`
+key-value pairs. Otherwise, the only requirement is that it must contain
 **exactly** the parameters required by the ResINS model specified by the
 :ref:`function value<spec-function>`. There can be no missing or extra
 parameters, though please note that some of the parameters required by the model
@@ -230,6 +239,78 @@ subclass, which means that the type of each parameter could be anything -
 :doc:`creating new models<../howtos/add_model>`, it is encouraged to further
 structure the data if there are many parameters.
 
+
+.. _spec-defaults:
+
+defaults
+^^^^^^^^
+
+This key (:iref:ref:`see in spec<spec-defaults-targ>`), found inside the
+:ref:`parameters<spec-parameters>` (YAML) dictionary, specifies the default
+values for the :term:`settings<setting>` of a particular :term:`model`. This key
+is required and its value must be a (YAML) dictionary in which each key is the
+name of a :tern:`setting` of that model, and the value is the default value that
+will be used if user does not provide a value for that setting.
+
+.. note::
+
+    This (defaults) key is allowed to be an empty dictionary and also may
+    specify only *some* of the settings for the model. I.e., it is allowed to
+    have settings with no default values.
+
+Each key inside the dictionary **must** correspond to a :term:`setting` of that
+model, and its value must match the type. Additionally, if a default value is
+provided, it must be a valid value for that model:
+
+* It must be within the associated :ref:`restrictions<spec-restrictions>`
+* If the model has other failure states (e.g. the PyChop model has a
+  ``NoTransmissionError`` at certain values), the use of the default values
+  must not result in any of the failure states arising.
+
+
+.. _spec-restrictions:
+
+restrictions
+^^^^^^^^^^^^
+
+This key (:iref:ref:`see in spec<spec-restrictions-targ>`), found inside the
+:ref:`parameters<spec-parameters>` (YAML) dictionary, specifies the restrictions
+on the values for the :term:`settings<setting>` of a particular :term:`model`.
+This key is required and its value must be a (YAML) dictionary in which each key
+is the name of a :tern:`setting` of that model, and the value is the
+specification of the restrictions on the values for that setting. I.e., if the
+user provides a value that lies outside the restrictions (allowed values) an
+exception will be raised.
+
+.. note::
+
+    This (restrictions) key is allowed to be an empty dictionary and also may
+    specify only *some* of the settings for the model. I.e., it is allowed to
+    have settings with no restrictions.
+
+Each key inside the dictionary **must** correspond to a :term:`setting` of that
+model, and its value must be one of the following:
+
+* A set (``!!set {}``) - in this case, all the allowed values must be listed -
+  a value not in the set will raise an error.
+* A list (``[]``):
+
+  * Length-2 list (e.g. ``[1, 100]``) - in this case, the two values specify the
+    lower and upper bound for the allowed values (included, i.e. above example
+    is <1, 100>)
+  * Length-3 list (e.g. ``[1, 100, 10]``) - in this case, the three values are
+    arguments to the ``range`` function (i.e. ``range(1, 100, 10)``), the result
+    of which is treated as the ``set`` case (list of all allowed values).
+
+Any other values for a key inside the dictionary is not valid and will be
+treated as a bug.
+
+.. note::
+
+    If a setting is not bounded from exactly one side, the ``!!float inf``
+    construct may be used to specify an infinity as one of the bounds. However,
+    if there is no restriction on a setting, please leave out the key rather
+    than specifying the bounds as +inf and -inf.
 
 .. _spec-configurations:
 
