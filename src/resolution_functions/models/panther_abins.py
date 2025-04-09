@@ -99,17 +99,17 @@ class PantherAbINSModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
         self.ei_dependence = Polynomial(model_data.ei_dependence)(e_init)
         self.ei_energy_product = Polynomial(model_data.ei_energy_product)
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of energy transfer given by `omega_q`.
+        Computes the broadening width at each value of energy transfer given by `points`.
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -119,8 +119,8 @@ class PantherAbINSModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        omega_q = omega_q[:, 0]
-        resolution = (self.abs(omega_q) +
+        points = points[:, 0]
+        resolution = (self.abs(points) +
                       self.ei_dependence +
-                      self.ei_energy_product(self.e_init * omega_q))
+                      self.ei_energy_product(self.e_init * points))
         return {'sigma': resolution / (2 * np.sqrt(2 * np.log(2)))}

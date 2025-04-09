@@ -178,7 +178,7 @@ class InstrumentModel(ABC):
         self._citation = model_data.citation
 
     @abstractmethod
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension']
+    def get_characteristics(self, points: Float[np.ndarray, 'sample dimension']
                             ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
         Computes the characteristics of the broadening function at each point in [w, Q] space
@@ -186,11 +186,12 @@ class InstrumentModel(ABC):
 
         Parameters
         ----------
-        omega_q
-            The combinations of the independent variables [w, Q] at whose values to compute the
-            characteristics of the kernel. This *must* be a ``sample`` x ``dimension`` 2D array
-            where ``sample`` is the number of [w, Q] combinations and ``dimension`` is the number of
-            independent variables as specified by ``InstrumentMode.input`` class variable.
+        points
+            The points in [w, Q] space at which to compute the characteristics of the broadening
+            kernel. These have to enumerate all the desired combinations of the independent
+            variables [w, Q]. This *must* be a ``sample`` x ``dimension`` 2D array where
+            ``sample`` is the number of [w, Q] points and ``dimension`` is the number of
+            independent variables as specified by the ``input`` class variable.
 
         Returns
         -------
@@ -201,120 +202,133 @@ class InstrumentModel(ABC):
 
     @abstractmethod
     def get_kernel(self,
-                   omega_q: Float[np.ndarray, 'sample dimension'],
-                   mesh: Float[np.ndarray, '...'],
+                   points: Float[np.ndarray, 'sample dimension'],
+                   *meshes: list[Float[np.ndarray, 'mesh']],
                    ) -> Float[np.ndarray, '...']:
         """
-        Computes the kernel centered on zero on the provided `mesh` at each point in [w, Q] space
-        (`omega_q`) provided.
+        Computes the kernel centered on zero on the provided `meshes` at each point in [w, Q] space
+        (`points`) provided.
 
         Parameters
         ----------
-        omega_q
-            The combinations of the independent variables [w, Q] at whose values to compute the
-            kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
-            number of [w, Q] combinations and ``dimension`` is the number of independent variables
-            as specified by ``InstrumentModel.input`` class variable.
-        mesh
-            The mesh on which to evaluate the kernel centered on zero. This must be an ND array
-            where N is the number of independent variables (this is the same number as the number
-            of columns of the `omega_q` array).
+        points
+            The points in [w, Q] space at which to compute the kernels. These must be all the
+            combinations of the independent variables [w, Q] at whose values to compute the
+            kernels. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
+            number of [w, Q] points and ``dimension`` is the number of independent variables
+            as specified by the ``input`` class variable.
+        *meshes
+            The collection of meshes on which to evaluate each kernel. Each of these
+            must be a 1D array specifying the points along a direction in the [w, Q] space on which
+            to compute the kernels. All of the meshes are expanded into an (N+1)D results array that
+            contains the value of the kernel at that combination of points from each mesh. Each mesh
+            must contain a zero point so that the kernel can be centred on zero.
 
         Returns
         -------
         kernel
             The normalised kernel representing the broadening, centered on zero, produced for each
-            [w, Q] combination provided via the `omega_q` array. This is an (N+1)D array, where N
+            [w, Q] point provided via the `points` array. This is an (N+1)D array, where N
             is the number of independent variables.
         """
 
     @abstractmethod
     def get_peak(self,
-                 omega_q: Float[np.ndarray, 'sample dimension'],
-                 mesh: Float[np.ndarray, '...'],
+                 points: Float[np.ndarray, 'sample dimension'],
+                 *meshes: Float[np.ndarray, 'mesh'],
                  ) -> Float[np.ndarray, '...']:
         """
-        Computes the peak centered on `omega_q` on the provided `mesh` at each point in [w, Q]
-        space (`omega_q`) provided.
+        Computes the broadening peak on the provided `meshes` at each point in the [w, Q] space
+        (`points`) provided, centered on that point.
 
         Parameters
         ----------
-        omega_q
-            The combinations of the independent variables [w, Q] at whose values to compute the
-            kernel. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
-            number of [w, Q] combinations and ``dimension`` is the number of independent variables
-            as specified by ``InstrumentModel.input`` class variable.
-        mesh
-            The mesh on which to evaluate the peak. This is an ND array, where N is the number of
-            independent variables (the number of columns of the `omega_q` array), which *must* span
-            the entire [w, Q] space of interest.
+        points
+            The points in [w, Q] space at which to compute the broadening peaks. These must be all
+            the combinations of the independent variables [w, Q] at whose values to compute the
+            peaks. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
+            number of [w, Q] points and ``dimension`` is the number of independent variables
+            as specified by the ``input`` class variable.
+        *meshes
+            The collection of meshes on which to evaluate each peak. Each of these
+            must be a 1D array specifying the points along a direction in the [w, Q] space on which
+            to compute the kernels. All of the meshes are expanded into an (N+1)D results array that
+            contains the value of the kernel at that combination of points from each mesh. Each mesh
+            must span enough space to include all of the provided [w, Q] `points`.
 
         Returns
         -------
         kernel
             The normalised peak representing the broadening, centered on its corresponding [w, Q]
-            value on the mesh, produced for each [w, Q] combination provided via the `omega_q`
+            value on the mesh, produced for each [w, Q] point provided via the `points`
             array. This is an (N+1)D array, where N is the number of independent variables.
         """
 
     @abstractmethod
     def broaden(self,
-                omega_q: Float[np.ndarray, 'sample dimension'],
+                points: Float[np.ndarray, 'sample dimension'],
                 data: Float[np.ndarray, 'data'],
-                mesh: Float[np.ndarray, '...'],
+                *meshes: Float[np.ndarray, 'mesh'],
                 ) -> Float[np.ndarray, '...']:
         """
-        Broadens the `data` on the `mesh`.
+        Broadens the `data` on the `meshes`.
 
         Parameters
         ----------
-        omega_q
-            The combinations of the independent variables [w, Q] whose `data` to broaden. This
-            *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the number of
-            [w, Q] combinations and ``dimension`` is the number of independent variables as
-            specified by ``InstrumentModel.input`` class variable. The ``sample`` dimension *must*
-            match the length of the `data` array.
+        points
+            The points in [w, Q] space at whose `data` to broaden. This *must* be a ``sample`` x
+            ``dimension`` 2D array where ``sample`` is the number of [w, Q] combinations and
+            ``dimension`` is the number of independent variables as specified by the ``input``
+            class variable. The ``sample`` dimension *must* match the length of the `data` array.
         data
-            The intensities at the `omega_q` points.
-        mesh
-            The mesh to use for the broadening. This is an ND array, where N is the number of
-            independent variables (the number of columns of the `omega_q` array), which *must* span
-            the entire [w, Q] space of interest.
+            The intensities at the [w, Q] `points`.
+        *meshes
+            The collection of meshes to use for the broadening. Each of these must be a 1D array
+            specifying the points along a direction in the [w, Q] space on which to compute the
+            kernels. All of the meshes are expanded into an ND results array that
+            contains the value of the kernel at that combination of points from each mesh. Each mesh
+            must span enough space to include all of the provided [w, Q] `points`.
 
         Returns
         -------
         spectrum
-            The broadened spectrum. This array has the same shape as the `mesh`.
+            The broadened spectrum. This an ND array, where N is the number of independent variables
+            (this is also the number of `meshes` and the ``dimension`` axis of `points`) and the
+            length along each axis is the length of the corresponding mesh.
         """
 
     def __call__(self,
-                 omega_q: Float[np.ndarray, 'sample dimension'],
+                 points: Float[np.ndarray, 'sample dimension'],
                  data: Float[np.ndarray, 'data'],
-                 mesh: Float[np.ndarray, '...'],
+                 *meshes: Float[np.ndarray, 'mesh'],
                  ) -> Float[np.ndarray, '...']:
         """
-        Broadens the `data` on the `mesh`.
+        Broadens the `data` on the `meshes`.
 
         Parameters
         ----------
-        omega_q
-            The combinations of the independent variables [w, Q] whose `data` to broaden. This
-            *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the number of
-            [w, Q] combinations and ``dimension`` is the number of independent variables as
-            specified by ``InstrumentModel.input`` class variable. The ``sample`` dimension *must*
-            match the length of the `data` array.
+        points
+            The points in [w, Q] space at whose `data` to broaden. This *must* be a ``sample`` x
+            ``dimension`` 2D array where ``sample`` is the number of [w, Q] combinations and
+            ``dimension`` is the number of independent variables as specified by the ``input``
+            class variable. The ``sample`` dimension *must* match the length of the `data` array.
         data
-            The intensities at the `omega_q` points.
-        mesh
-            The mesh to use for the broadening. This is a 1D array which *must* span the entire
-            [w, Q] space of interest.
+            The intensities at the [w, Q] `points`.
+        *meshes
+            The collection of meshes to use for the broadening. Each of these must be a 1D array
+            specifying the points along a direction in the [w, Q] space on which to compute the
+            kernels. All of the meshes are expanded into an ND results array that
+            contains the value of the kernel at that combination of points from each mesh. Each mesh
+            must span enough space to include all of the provided [w, Q] `points`.
 
         Returns
         -------
         spectrum
-            The broadened spectrum.
+            The broadened spectrum. This an ND array, where N is the number of independent variables
+            (this is also the number of `meshes` and the ``dimension`` axis of `points`) and the
+            length along each axis is the length of the corresponding mesh.
         """
-        return self.broaden(omega_q, data, mesh)
+        return self.broaden(points, data, *meshes)
 
     def __str__(self) -> str:
         return f'{type(self).__name__}(citation={self.citation})'

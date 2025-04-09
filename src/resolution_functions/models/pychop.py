@@ -406,17 +406,17 @@ class PyChopModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel, 
 
     data_class = PyChopModelData
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of energy transfer given by `omega_q`.
+        Computes the broadening width at each value of energy transfer given by `points`.
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -426,7 +426,7 @@ class PyChopModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel, 
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        return {'sigma': self.polynomial(omega_q[:, 0])}
+        return {'sigma': self.polynomial(points[:, 0])}
 
     @property
     @abstractmethod

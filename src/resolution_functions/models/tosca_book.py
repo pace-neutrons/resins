@@ -131,17 +131,17 @@ class ToscaBookModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMode
         self.average_bragg_angle = model_data.average_bragg_angle_graphite
         self.time_channel_uncertainty2 = model_data.time_channel_uncertainty ** 2
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of energy transfer given by `omega_q`.
+        Computes the broadening width at each value of energy transfer given by `points`.
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma) in meV.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -151,7 +151,7 @@ class ToscaBookModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMode
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        ei = omega_q[:, 0] + self.average_final_energy
+        ei = points[:, 0] + self.average_final_energy
 
         time_dependent_term = (2 / NEUTRON_MASS) ** 0.5 * ei ** 1.5 / self.primary_flight_path
         time_dependent_term *= self.time_dependent_term_factor / (

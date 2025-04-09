@@ -35,66 +35,66 @@ class GaussianKernel1DMixin:
     Gaussian kernel should use this mixin.
     """
     def get_kernel(self,
-                   omega_q: Float[np.ndarray, 'sample dimension=1'],
+                   points: Float[np.ndarray, 'sample dimension=1'],
                    mesh: Float[np.ndarray, 'mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
-        Computes the Gaussian kernel centered on zero on the provided `mesh` at each value of
-        `omega_q` (energy transfer or momentum scalar).
+        Computes the Gaussian kernel centered on zero on the provided `mesh` at each (energy
+        transfer or momentum scalar) point in `points`.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer or momentum scalar for which to compute the kernel. This *must* be
             a Nx1 2D array where N is the number of w/Q values.
         mesh
-            The mesh on which to evaluate the kernel. A 1D array.
+            The mesh on which to evaluate the kernel. A 1D array which must encompass 0.
 
         Returns
         -------
-        kernel
-            The Gaussian kernel at each value of `omega_q` as given by this model, computed on the
+        kernels
+            The Gaussian kernel at w/Q point as given by this model, computed on the
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(omega_q, mesh, 0.)
+        return self._get_kernel(points, mesh, 0.)
 
     def get_peak(self,
-                 omega_q: Float[np.ndarray, 'sample dimension=1'],
+                 points: Float[np.ndarray, 'sample dimension=1'],
                  mesh: Float[np.ndarray, 'mesh'],
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
-        Computes the Gaussian kernel on the provided `mesh` at each value of the `omega_q` energy
-        transfer.
+        Computes the Gaussian broadening peak on the provided `mesh` at each (energy transfer or
+        momentum scalar) point in `points`.
 
         Parameters
         ----------
-        omega_q
-            The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
-            array where N is the number of energy transfers.
+        points
+            The energy transfer or momentum scalar for which to compute the peak. This *must* be a
+            Nx1 2D array where N is the number of w/Q values.
         mesh
             The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            `omega_q` transfer space of interest.
+            `points` w\Q space of interest.
 
         Returns
         -------
-        kernel
-            The Gaussian kernel at each value of `omega_q` as given by this model, computed on the
-            `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
+        peaks
+            The Gaussian peak at each w/Q point in `points` as given by this model, computed on the
+            `mesh` and centered on the corresponding w/Q. This is a 2D N x M array where
             N is the number of w/Q values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(omega_q, mesh, omega_q)
+        return self._get_kernel(points, mesh, points)
 
     def _get_kernel(self: InstrumentModel,
-                    omega_q: Float[np.ndarray, 'sample dimension=1'],
+                    points: Float[np.ndarray, 'sample dimension=1'],
                     mesh: Float[np.ndarray, 'mesh'],
                     displacement: float | Float[np.ndarray, 'sample'] = 0.
                     ) -> Float[np.ndarray, 'sample mesh']:
         """Computes the kernel using the specified `displacement`."""
-        new_mesh = np.zeros((len(omega_q), len(mesh)))
+        new_mesh = np.zeros((len(points), len(mesh)))
         new_mesh[:, :] = mesh
 
-        sigma = self.get_characteristics(omega_q)['sigma']
+        sigma = self.get_characteristics(points)['sigma']
         return norm.pdf(new_mesh, loc=displacement, scale=sigma[:, np.newaxis])
 
 
@@ -111,7 +111,7 @@ class SimpleBroaden1DMixin:
     implementations are unavailable.
     """
     def broaden(self: InstrumentModel,
-                omega_q: Float[np.ndarray, 'sample dimension=1'],
+                points: Float[np.ndarray, 'sample dimension=1'],
                 data: Float[np.ndarray, 'data'],
                 mesh: Float[np.ndarray, 'mesh'],
                 ) -> Float[np.ndarray, 'spectrum']:
@@ -120,21 +120,21 @@ class SimpleBroaden1DMixin:
 
         Parameters
         ----------
-        omega_q
+        points
             The independent variable (energy transfer or momentum scalar) whose `data` to broaden.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of w/Q values
             for which there is `data`. Therefore, the ``sample`` dimension *must* match the length
             of the `data` array.
         data
-            The intensities at the `omega_q` points.
+            The intensities at the w/Q `points`.
         mesh
             The mesh to use for the broadening. This is a 1D array which *must* span the entire
-            `omega_q` space of interest.
+            `points` space of interest.
 
         Returns
         -------
         spectrum
             The broadened spectrum. This is a 1D array of the same length as `mesh`.
         """
-        kernels = self.get_peak(omega_q, mesh)
+        kernels = self.get_peak(points, mesh)
         return np.einsum('i,ij...->j...', data, kernels)

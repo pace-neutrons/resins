@@ -73,17 +73,17 @@ class PolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
         super().__init__(model_data)
         self.polynomial = Polynomial(model_data.fit)
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of energy transfer (`omega_q`).
+        Computes the broadening width at each value of energy transfer (`points`).
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -93,7 +93,7 @@ class PolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        return {'sigma': self.polynomial(omega_q[:, 0])}
+        return {'sigma': self.polynomial(points[:, 0])}
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
@@ -189,17 +189,17 @@ class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin
         self.high_energy_cutoff = model_data.high_energy_cutoff
         self.high_energy_resolution = model_data.high_energy_resolution
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of energy transfer given by `omega_q`.
+        Computes the broadening width at each value of energy transfer given by `points`.
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -209,12 +209,12 @@ class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        omega_q = omega_q[:, 0]
-        result = self.polynomial(omega_q)
+        points = points[:, 0]
+        result = self.polynomial(points)
 
         assert np.all(result > 0)
 
-        result[omega_q < self.low_energy_cutoff] = self.low_energy_resolution
-        result[omega_q > self.high_energy_cutoff] = self.high_energy_resolution
+        result[points < self.low_energy_cutoff] = self.low_energy_resolution
+        result[points > self.high_energy_cutoff] = self.high_energy_resolution
 
         return {'sigma': result * 0.5}
