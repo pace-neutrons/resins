@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+abstract: "ResINS is a Python package for resolution functions of inelastic neutron scattering instruments"
+authors:
+  - family-names: Turanyi
+    given-names: Rastislav
+    email: rastislav.turanyi@stfc.ac.uk
+  - family-names: "Jackson"
+    given-names: "Adam J."
+    orcid: https://orcid.org/0000-0001-5272-6530
+title: "ResINS"
+repository-code: https://github.com/pace-neutrons/resins
+license: GPL-3.0
+version: 0.0.1
+keywords:
+  - "Python"
+  - "physics"
+  - "inelastic neutron scattering"
+  - "instrument resolution"
