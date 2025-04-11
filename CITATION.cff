@@ -8,6 +8,8 @@ authors:
   - family-names: "Jackson"
     given-names: "Adam J."
     orcid: https://orcid.org/0000-0001-5272-6530
+  - family-names: "Wilkins"
+    given-names: "Jacob S."
 title: "ResINS"
 repository-code: https://github.com/pace-neutrons/resins
 license: GPL-3.0
