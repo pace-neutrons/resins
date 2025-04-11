@@ -10,6 +10,7 @@ authors:
     orcid: https://orcid.org/0000-0001-5272-6530
   - family-names: "Wilkins"
     given-names: "Jacob S."
+    orcid: https://orcid.org/0009-0004-9147-3475
 title: "ResINS"
 repository-code: https://github.com/pace-neutrons/resins
 license: GPL-3.0
