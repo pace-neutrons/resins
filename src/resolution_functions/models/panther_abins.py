@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
-from .model_base import InstrumentModel, ModelData
+from .model_base import InstrumentModel, ModelData, InvalidPointsError
 from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
@@ -119,7 +119,13 @@ class PantherAbINSModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        points = points.reshape(points.shape[0])
+        try:
+            points = points.reshape(points.shape[0])
+        except ValueError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
         resolution = (self.abs(points) +
                       self.ei_dependence +
                       self.ei_energy_product(self.e_init * points))

@@ -13,7 +13,7 @@ from typing import ClassVar, TYPE_CHECKING
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
-from .model_base import InstrumentModel, ModelData
+from .model_base import InstrumentModel, ModelData, InvalidPointsError
 from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
@@ -93,7 +93,14 @@ class PolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        return {'sigma': self.polynomial(points.reshape(points.shape[0]))}
+        try:
+            points = points.reshape(points.shape[0])
+        except ValueError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        return {'sigma': self.polynomial(points)}
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
@@ -209,7 +216,14 @@ class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        points = points.reshape(points.shape[0])
+        try:
+            points = points.reshape(points.shape[0])
+        except ValueError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+
         result = self.polynomial(points)
 
         assert np.all(result > 0)

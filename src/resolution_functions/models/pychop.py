@@ -34,7 +34,7 @@ import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from scipy.interpolate import interp1d
 
-from .model_base import InstrumentModel, ModelData, InvalidInputError
+from .model_base import InstrumentModel, ModelData, InvalidInputError, InvalidPointsError
 from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
@@ -426,7 +426,14 @@ class PyChopModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel, 
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        return {'sigma': self.polynomial(points.reshape(points.shape[0]))}
+        try:
+            points = points.reshape(points.shape[0])
+        except ValueError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        return {'sigma': self.polynomial(points)}
 
     @property
     @abstractmethod

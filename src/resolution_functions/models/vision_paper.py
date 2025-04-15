@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .model_base import InstrumentModel, ModelData
+from .model_base import InstrumentModel, ModelData, InvalidPointsError
 from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
@@ -142,7 +142,14 @@ class VisionPaperModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMo
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        e1 = points.reshape(points.shape[0]) * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
+        try:
+            points = points.reshape(points.shape[0])
+        except ValueError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        e1 = points * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
         z0 = self.l1 * (self.e0 / e1) ** 0.5
         one_over_z0 = 1 / z0
 

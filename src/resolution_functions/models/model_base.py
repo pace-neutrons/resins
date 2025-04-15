@@ -30,8 +30,14 @@ class InvalidInputError(Exception):
 
     This exception should be raised whenever a user-provided parameter to a model is outside
     the valid bounds for that model of a particular instrument. For example, it is raised when the
-    incident energy (``e_init``) provided to a model of a direct instrument is outside the the range
+    incident energy (``e_init``) provided to a model of a direct instrument is outside the range
     available to that instrument.
+    """
+
+
+class InvalidPointsError(Exception):
+    """
+    A custom Exception, common to all models, signaling that the user-provided points are invalid.
     """
 
 

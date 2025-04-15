@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .model_base import InstrumentModel, ModelData
+from .model_base import InstrumentModel, ModelData, InvalidPointsError
 from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
@@ -151,7 +151,14 @@ class ToscaBookModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMode
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        ei = points.reshape(points.shape[0]) + self.average_final_energy
+        try:
+            points = points.reshape(points.shape[0])
+        except ValueError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        ei = points + self.average_final_energy
 
         time_dependent_term = (2 / NEUTRON_MASS) ** 0.5 * ei ** 1.5 / self.primary_flight_path
         time_dependent_term *= self.time_dependent_term_factor / (
