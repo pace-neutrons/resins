@@ -142,7 +142,7 @@ class VisionPaperModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMo
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        e1 = points[:, 0] * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
+        e1 = points.reshape(points.shape[0]) * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
         z0 = self.l1 * (self.e0 / e1) ** 0.5
         one_over_z0 = 1 / z0
 

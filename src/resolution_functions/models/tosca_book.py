@@ -151,7 +151,7 @@ class ToscaBookModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMode
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        ei = points[:, 0] + self.average_final_energy
+        ei = points.reshape(points.shape[0]) + self.average_final_energy
 
         time_dependent_term = (2 / NEUTRON_MASS) ** 0.5 * ei ** 1.5 / self.primary_flight_path
         time_dependent_term *= self.time_dependent_term_factor / (

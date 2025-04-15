@@ -426,7 +426,7 @@ class PyChopModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel, 
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        return {'sigma': self.polynomial(points[:, 0])}
+        return {'sigma': self.polynomial(points.reshape(points.shape[0]))}
 
     @property
     @abstractmethod

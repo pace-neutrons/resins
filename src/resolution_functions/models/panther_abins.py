@@ -119,7 +119,7 @@ class PantherAbINSModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        points = points[:, 0]
+        points = points.reshape(points.shape[0])
         resolution = (self.abs(points) +
                       self.ei_dependence +
                       self.ei_energy_product(self.e_init * points))

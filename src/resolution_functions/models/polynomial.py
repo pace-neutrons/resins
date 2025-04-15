@@ -93,7 +93,7 @@ class PolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        return {'sigma': self.polynomial(points[:, 0])}
+        return {'sigma': self.polynomial(points.reshape(points.shape[0]))}
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
@@ -209,7 +209,7 @@ class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        points = points[:, 0]
+        points = points.reshape(points.shape[0])
         result = self.polynomial(points)
 
         assert np.all(result > 0)
