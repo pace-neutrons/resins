@@ -427,8 +427,8 @@ class PyChopModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel, 
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
         try:
-            points = points.reshape(points.shape[0])
-        except ValueError as e:
+            points = points[:, 0]
+        except IndexError as e:
             raise InvalidPointsError(
                 f'The provided array of points (shape={points.shape}) is not valid. The points '
                 f'array must be a Nx1 2D array where N is the number of energy transfers.'
