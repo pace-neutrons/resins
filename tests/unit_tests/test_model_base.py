@@ -11,6 +11,15 @@ class MockModel(InstrumentModel):
     def __call__(self, *args, **kwargs):
         return
 
+    def get_kernel(self, points, *meshes):
+        return
+
+    def get_peak(self, points, *meshes):
+        return
+
+    def broaden(self, points, data, *meshes):
+        return
+
 
 class MockModelData:
     function = ''
