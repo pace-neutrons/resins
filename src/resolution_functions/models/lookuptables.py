@@ -1,5 +1,5 @@
 """
-A model based on intepolated lookup tables
+A model based on interpolated lookup tables
 
 All classes within are exposed for reference only and should not be instantiated directly. For
 obtaining the :term:`resolution function` of an :term:`instrument`, please use the
