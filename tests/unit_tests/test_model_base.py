@@ -1,12 +1,28 @@
 import re
+
+import numpy as np
 import pytest
+from jaxtyping import Float
 
 from resolution_functions.models.model_base import InstrumentModel, InvalidInputError
 
 
 class MockModel(InstrumentModel):
-    def get_characteristics(self, *args):
+    def get_characteristics(self, points):
         return {}
+
+    def get_kernel(self, points, *meshes):
+        return np.empty(0)
+
+    def get_peak(self, points, *meshes):
+        return np.empty(0)
+
+    def broaden(self,
+                points: Float[np.ndarray, 'sample dimension'],
+                data: Float[np.ndarray, 'data'],
+                *meshes: Float[np.ndarray, 'mesh'],
+                ) -> Float[np.ndarray, '...']:
+        return np.empty(0)
 
     def __call__(self, *args, **kwargs):
         return
