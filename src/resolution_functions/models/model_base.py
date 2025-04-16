@@ -24,19 +24,20 @@ if TYPE_CHECKING:
     from jaxtyping import Float
 
 
-DEPRECATION_MSG = 'The functionality of the __call__ method is going to soon change to return a ' \
-                  'convolution with data (see #10). For current functionality, use ' \
-                  'get_characteristics instead.'
-
-
 class InvalidInputError(Exception):
     """
     A custom Exception, common to all models, signalling invalid user input.
 
     This exception should be raised whenever a user-provided parameter to a model is outside
     the valid bounds for that model of a particular instrument. For example, it is raised when the
-    incident energy (``e_init``) provided to a model of a direct instrument is outside the the range
+    incident energy (``e_init``) provided to a model of a direct instrument is outside the range
     available to that instrument.
+    """
+
+
+class InvalidPointsError(Exception):
+    """
+    A custom Exception, common to all models, signaling that the user-provided points are invalid.
     """
 
 
@@ -116,17 +117,22 @@ class InstrumentModel(ABC):
         - These parameters should be ``Optional`` wherever possible, with the defaults for each
           instrument in the corresponding yaml files.
       - Any number of any other parameters is allowed, though ``__init__`` must not accept the
-        parameters that are passed in to ``__call__``.
-      - Each subclass must accept ``**kwargs``.
+        energy transfer/momentum ([w, Q]) parameter used in the other methods.
       - The ``__init__`` method should perform as much of the computation as possible, i.e. any
-        computation that does not involve the ``__call__`` parameters.
+        computation that does not involve the [w, Q] parameter.
       - No reference to the `ModelData` should be kept.
-    - The ``__call__`` method must be implemented.
-      - It must take the parameters that the particular model uses as argument. These can be any
-        combination of the energy transfer (i.e. frequencies), the momentum value (q), and the
-        momentum vector (q-vectors).
+    - The ``get_characteristics``, ``get_kernel``, and ``broaden`` methods must be implemented.
+      - Some or all of these may come as reusable code (as appropriate) via the use of the mixin
+        pattern (see `resolution_functions.models.mixins`).
+      - Each must take the ``omega_q`` argument, which must be a ``sample`` x ``dimension`` 2D
+        array, where ``sample`` is the number of [w, Q] values provided by the user and
+        ``dimension`` are the [w, Q] variables required by the model, as defined in the ``input``
+        class variable. These can be any combination of the energy transfer (i.e. frequencies),
+        the momentum value (q), and the momentum vector (q-vectors).
+        - For example, a model that uses the energy transfer and momentum scalar would have
+          ``dimension=2`` and ``input = ('energy transfer', 'momentum')``.
       - It must also take ``*args`` and ``**kwargs``.
-    - The `input` and `output` class variables must be given specific values.
+    - The `input` class variable must be given a specific value.
     - The `data_class` class variable must be assigned to the corresponding `ModelData` subclass.
     - Any additional defined methods should be private, but feel free to use your discretion.
 
@@ -138,7 +144,8 @@ class InstrumentModel(ABC):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         The `ModelData` subclass associated with this particular model.
     citation
@@ -151,15 +158,20 @@ class InstrumentModel(ABC):
         self._citation = model_data.citation
 
     @abstractmethod
-    def get_characteristics(self, *args) -> dict[str, Float[np.ndarray, '...']]:
+    def get_characteristics(self, points: Float[np.ndarray, 'sample dimension']
+                            ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
-        Computes the characteristics of the broadening function at each point in [Q, w] space
+        Computes the characteristics of the broadening function at each point in [w, Q] space
         provided.
 
         Parameters
         ----------
-        *args
-            The independent variables at whose values to evaluate the model.
+        points
+            The points in [w, Q] space at which to compute the characteristics of the broadening
+            kernel. These have to enumerate all the desired combinations of the independent
+            variables [w, Q]. This *must* be a ``sample`` x ``dimension`` 2D array where
+            ``sample`` is the number of [w, Q] points and ``dimension`` is the number of
+            independent variables as specified by the ``input`` class variable.
 
         Returns
         -------
@@ -167,11 +179,136 @@ class InstrumentModel(ABC):
             The characteristics of the broadening function at each combination of independent
             variables.
         """
-        raise NotImplementedError()
 
     @abstractmethod
-    def __call__(self, *args, **kwargs):
-        raise NotImplementedError()
+    def get_kernel(self,
+                   points: Float[np.ndarray, 'sample dimension'],
+                   *meshes: list[Float[np.ndarray, 'mesh']],
+                   ) -> Float[np.ndarray, '...']:
+        """
+        Computes the kernel centered on zero on the provided `meshes` at each point in [w, Q] space
+        (`points`) provided.
+
+        Parameters
+        ----------
+        points
+            The points in [w, Q] space at which to compute the kernels. These must be all the
+            combinations of the independent variables [w, Q] at whose values to compute the
+            kernels. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
+            number of [w, Q] points and ``dimension`` is the number of independent variables
+            as specified by the ``input`` class variable.
+        *meshes
+            The collection of meshes on which to evaluate each kernel. Each of these
+            must be a 1D array specifying the points along a direction in the [w, Q] space on which
+            to compute the kernels. All of the meshes are expanded into an (N+1)D results array that
+            contains the value of the kernel at that combination of points from each mesh. Each mesh
+            must contain a zero point so that the kernel can be centred on zero.
+
+        Returns
+        -------
+        kernel
+            The normalised kernel representing the broadening, centered on zero, produced for each
+            [w, Q] point provided via the `points` array. This is an (N+1)D array, where N
+            is the number of independent variables.
+        """
+
+    @abstractmethod
+    def get_peak(self,
+                 points: Float[np.ndarray, 'sample dimension'],
+                 *meshes: Float[np.ndarray, 'mesh'],
+                 ) -> Float[np.ndarray, '...']:
+        """
+        Computes the broadening peak on the provided `meshes` at each point in the [w, Q] space
+        (`points`) provided, centered on that point.
+
+        Parameters
+        ----------
+        points
+            The points in [w, Q] space at which to compute the broadening peaks. These must be all
+            the combinations of the independent variables [w, Q] at whose values to compute the
+            peaks. This *must* be a ``sample`` x ``dimension`` 2D array where ``sample`` is the
+            number of [w, Q] points and ``dimension`` is the number of independent variables
+            as specified by the ``input`` class variable.
+        *meshes
+            The collection of meshes on which to evaluate each peak. Each of these
+            must be a 1D array specifying the points along a direction in the [w, Q] space on which
+            to compute the kernels. All of the meshes are expanded into an (N+1)D results array that
+            contains the value of the kernel at that combination of points from each mesh. Each mesh
+            must span enough space to include all of the provided [w, Q] `points`.
+
+        Returns
+        -------
+        kernel
+            The normalised peak representing the broadening, centered on its corresponding [w, Q]
+            value on the mesh, produced for each [w, Q] point provided via the `points`
+            array. This is an (N+1)D array, where N is the number of independent variables.
+        """
+
+    @abstractmethod
+    def broaden(self,
+                points: Float[np.ndarray, 'sample dimension'],
+                data: Float[np.ndarray, 'data'],
+                *meshes: Float[np.ndarray, 'mesh'],
+                ) -> Float[np.ndarray, '...']:
+        """
+        Broadens the `data` on the `meshes`.
+
+        Parameters
+        ----------
+        points
+            The points in [w, Q] space at whose `data` to broaden. This *must* be a ``sample`` x
+            ``dimension`` 2D array where ``sample`` is the number of [w, Q] combinations and
+            ``dimension`` is the number of independent variables as specified by the ``input``
+            class variable. The ``sample`` dimension *must* match the length of the `data` array.
+        data
+            The intensities at the [w, Q] `points`.
+        *meshes
+            The collection of meshes to use for the broadening. Each of these must be a 1D array
+            specifying the points along a direction in the [w, Q] space on which to compute the
+            kernels. All of the meshes are expanded into an ND results array that
+            contains the value of the kernel at that combination of points from each mesh. Each mesh
+            must span enough space to include all of the provided [w, Q] `points`.
+
+        Returns
+        -------
+        spectrum
+            The broadened spectrum. This an ND array, where N is the number of independent variables
+            (this is also the number of `meshes` and the ``dimension`` axis of `points`) and the
+            length along each axis is the length of the corresponding mesh.
+        """
+
+    def __call__(self,
+                 points: Float[np.ndarray, 'sample dimension'],
+                 data: Float[np.ndarray, 'data'],
+                 *meshes: Float[np.ndarray, 'mesh'],
+                 ) -> Float[np.ndarray, '...']:
+        """
+        Broadens the `data` on the `meshes`.
+
+        Parameters
+        ----------
+        points
+            The points in [w, Q] space at whose `data` to broaden. This *must* be a ``sample`` x
+            ``dimension`` 2D array where ``sample`` is the number of [w, Q] combinations and
+            ``dimension`` is the number of independent variables as specified by the ``input``
+            class variable. The ``sample`` dimension *must* match the length of the `data` array.
+        data
+            The intensities at the [w, Q] `points`.
+        *meshes
+            The collection of meshes to use for the broadening. Each of these must be a 1D array
+            specifying the points along a direction in the [w, Q] space on which to compute the
+            kernels. All of the meshes are expanded into an ND results array that
+            contains the value of the kernel at that combination of points from each mesh. Each mesh
+            must span enough space to include all of the provided [w, Q] `points`.
+
+        Returns
+        -------
+        spectrum
+            The broadened spectrum. This an ND array, where N is the number of independent variables
+            (this is also the number of `meshes` and the ``dimension`` axis of `points`) and the
+            length along each axis is the length of the corresponding mesh.
+        """
+        return self.broaden(points, data, *meshes)
 
     def __str__(self) -> str:
         return f'{type(self).__name__}(citation={self.citation})'

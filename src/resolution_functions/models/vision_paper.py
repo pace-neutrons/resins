@@ -11,14 +11,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-try:
-    from warnings import deprecated
-except ImportError:
-    from typing_extensions import deprecated
 
 import numpy as np
 
-from .model_base import InstrumentModel, ModelData, DEPRECATION_MSG
+from .model_base import InstrumentModel, ModelData, InvalidPointsError
+from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -75,7 +72,7 @@ class VisionPaperModelData(ModelData):
     average_bragg_angle_graphite: float
 
 
-class VisionPaperModel(InstrumentModel):
+class VisionPaperModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     Model for TOSCA-like :term:`instruments<instrument>` from the [VISION paper]_.
 
@@ -92,7 +89,8 @@ class VisionPaperModel(InstrumentModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `VisionPaperModelData` type.
     citation
@@ -129,25 +127,34 @@ class VisionPaperModel(InstrumentModel):
 
         self.final_term = self.e0 / np.tan(self.theta) / self.z2 * model_data.d_r
 
-    def get_characteristics(self, energy_transfer: Float[np.ndarray, 'energy_transfer']
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Computes the broadening width at each value of `energy_transfer`.
+        Computes the broadening width at each value of energy transfer given by `points`.
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        energy_transfer
-            The energy transfer in meV at which to compute the broadening.
+        points
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        e1 = energy_transfer * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
+        try:
+            points = points[:, 0]
+        except IndexError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        e1 = points * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
         z0 = self.l1 * (self.e0 / e1) ** 0.5
         one_over_z0 = 1 / z0
 
@@ -158,21 +165,3 @@ class VisionPaperModel(InstrumentModel):
         sigma -= self.final_term
 
         return {'sigma': sigma}
-
-    @deprecated(DEPRECATION_MSG)
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies']) -> Float[np.ndarray, 'sigma']:
-        """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Ikeda-Carpenter widths (FWHM).
-
-        Parameters
-        ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
-
-        Returns
-        -------
-        fwhm
-            The Ikeda-Carpenter widths at `frequencies` as predicted by this model.
-        """
-        return self.get_characteristics(frequencies)['sigma']

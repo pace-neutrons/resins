@@ -39,7 +39,7 @@ which can be used as a starting point to generate some resolution data:
 >>> import numpy as np
 >>> model = maps.get_resolution_function('PyChop_fit', chopper_package='B')
 >>> energies = np.arange(0, data.defaults['e_init'], 0.5)
->>> resolution = model(energies)
+>>> resolution = model.get_characteristics(energies)['sigma']
 
 Plotting with matplotlib:
 
@@ -91,7 +91,7 @@ All the data can then be generated using by loopiing over these variables:
 >>> for i, chopper_frequency in enumerate(test_choppers):
 ...     for j, e_init in enumerate(test_e_init):
 ...         model = maps.get_resolution_function('PyChop_fit', chopper_package='B', e_init=e_init, chopper_frequency=chopper_frequency)
-...         results[i, j, :] = model(energy_transfer)
+...         results[i, j, :] = model.get_characteristics(energy_transfer)['sigma']
 
 This can then be plotted in various ways. For example, we can check the effect
 of ``e_init`` by plotting the resolution for its different values at a constant

@@ -49,7 +49,7 @@ def test_lagrange_against_abins(
     if abins.get_setting() == "Cu(220) (Lagrange)" and label == FreqRange.LOW:
         pytest.xfail(reason="LAGRANGE low frequencies to be fixed in Abins")
 
-    actual = rf(frequencies)
+    actual = rf.get_characteristics(frequencies[:, None])["sigma"]
     expected = abins.get_sigma(frequencies * MEV_TO_WAVENUMBER) * WAVENUMBER_TO_MEV
 
     assert_allclose(actual, expected, rtol=1e-5)

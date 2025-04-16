@@ -90,7 +90,7 @@ def _test_against_abins(abins, rf_2d, config, matrix):
 
     rf = rf_2d.get_resolution_function('PyChop_fit', chopper_package=config, e_init=energy,
                                        chopper_frequency=chopper_frequency)
-    actual = rf(frequencies)
+    actual = rf.get_characteristics(frequencies[:, None])["sigma"]
     assert_allclose(actual, expected, rtol=1e-5)
 
 

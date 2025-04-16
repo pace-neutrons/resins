@@ -582,7 +582,7 @@ def _test_debug_precompute_van_var(e_init, chopper_frequency, cls, data, pychop)
 @pytest.mark.parametrize('matrix', MATRIX_FERMI, ids=matrix_fermi_id)
 def test_fermi_precompute_resolution(matrix, pychop_fermi_data):
     e_init, chopper_frequency = matrix
-    _test_precompute_resolution(e_init, [chopper_frequency], PyChopModelFermi, *pychop_fermi_data)
+    _test_precompute_resolution(e_init, [float(chopper_frequency)], PyChopModelFermi, *pychop_fermi_data)
 
 
 @pytest.mark.xfail(reason='PyChop V2 no reference')
@@ -590,7 +590,7 @@ def test_fermi_precompute_resolution(matrix, pychop_fermi_data):
 @pytest.mark.parametrize('matrix', MATRIX_FERMI, ids=matrix_fermi_id)
 def test_fermi_v2_precompute_resolution(matrix, pychop_v2_data):
     e_init, chopper_frequency = matrix
-    _test_precompute_resolution(e_init, [chopper_frequency], PyChopModelFermi, *pychop_v2_data)
+    _test_precompute_resolution(e_init, [float(chopper_frequency)], PyChopModelFermi, *pychop_v2_data)
 
 
 @pytest.mark.skipif(DEBUG, reason='Debugging precompute_van_var; its outputs have been temporarily changed.')
