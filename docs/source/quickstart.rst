@@ -39,7 +39,7 @@ PyChopModelFermi(citation=[''])
     The settings and configurations *must* be passed in as keyword arguments.
 
 The obtained model can be called (like a function) to broaden data at the
-provided combinations of energy transfer and momentum ([w. Q]), using a mesh and
+provided combinations of energy transfer and momentum ([w, Q]), using a mesh and
 the corresponding data:
 
 >>> import numpy as np
@@ -52,7 +52,7 @@ which can be plotted as:
 
 .. image:: /figures/example_convolve.png
 
-However, the model also provides methods that go lower; `get_kernel` computes
+However, the model also provides methods for more fundamental operations: `get_kernel` computes
 the broadening kernel at each [w, Q] (centered on 0), `get_peak` computes the
 broadening peak at each [w, Q] (centered on the [w, Q]), and
 `get_characteristics` returns only the characteristic parameters of the kernel
