@@ -213,7 +213,8 @@ def validate_configurations_dict(configurations_dict: dict, header: str) -> None
         The header to prepend to the error messages.
     """
     if not configurations_dict:
-        raise ValidationError(f'{header}No configurations provided (dictionary is empty)')
+        # No configurations, nothing to validate. This is allowed.
+        return
 
     for name, config in configurations_dict.items():
         header = f'{header}: configuration "{config}": '
