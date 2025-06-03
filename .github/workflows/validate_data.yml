@@ -7,15 +7,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Install the latest version of uv
-      uses: astral-sh/setup-uv@v6
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
 
     - name: Setup python environment
       shell: bash -el {0}
-      run: uv sync
+      run: pip install .
 
     - name: validate YAML data
       shell: bash -el {0}
-      run: uv run python dev/validate_data_file.py src/resolution_functions/instrument_data/*.yaml
+      run: ls src/resolution_functions/instrument_data/*.yaml | xargs -n 1 python dev/validate_data_file.py
+
