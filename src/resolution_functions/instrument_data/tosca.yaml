@@ -6,9 +6,6 @@ version:
         constants: &tfxa_constants
             defaults: {}
             restrictions: {}
-            final_neutron_energy: 32.0  # Final energy on the crystal analyser in cm-1
-            scattering_angle: 2.356  # Angle of the crystal analyser radians (NO LONGER USED)
-            energy_bin_width: 1.0  # Default bin width in wavenumber
             primary_flight_path: 12.13  # m
             primary_flight_path_uncertainty: 0.0021  # m
             water_moderator_constant: 44  # us
@@ -27,6 +24,7 @@ version:
                     average_secondary_flight_path: 0.671  # m
                     average_final_energy: 3.909  # meV
                     average_bragg_angle_graphite: 43.  # deg
+                    change_average_bragg_angle_graphite: 5.0814852427945665
         default_model: "book"
         models:
             book: "book_v1"
@@ -39,9 +37,6 @@ version:
         constants: &tosca1_constants
             defaults: {}
             restrictions: {}
-            final_neutron_energy: 32.0  # Final energy on the crystal analyser in cm-1
-            scattering_angle: 2.356  # Angle of the crystal analyser radians (NO LONGER USED)
-            energy_bin_width: 1.0  # Default bin width in wavenumber
             primary_flight_path: 12.264  # m
             primary_flight_path_uncertainty: 0.0021  # m
             water_moderator_constant: 44  # us
