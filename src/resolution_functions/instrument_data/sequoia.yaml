@@ -10,7 +10,7 @@ version:
             theta: -13.75                   # Angle beamline makes with moderator face (degrees)
             defaults:
                 e_init: 500  # meV
-                chopper_frequency: 300
+                chopper_frequency: 420
             restrictions:
                 e_init: [ 4, 6000 ]  # meV
                 chopper_frequency: [60, 601, 60]
