@@ -1,0 +1,21 @@
+name: Validate supplied data against YAML schema
+
+on: [push,workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v6
+
+    - name: Setup python environment
+      shell: bash -el {0}
+      run: uv sync
+
+    - name: validate YAML data
+      shell: bash -el {0}
+      run: uv run python dev/validate_data_file.py src/resolution_functions/instrument_data/*.yaml
