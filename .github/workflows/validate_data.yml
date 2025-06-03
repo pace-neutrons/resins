@@ -3,7 +3,7 @@ name: Validate supplied data against YAML schema
 on: [push,workflow_dispatch]
 
 jobs:
-  test:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
