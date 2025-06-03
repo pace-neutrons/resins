@@ -7,7 +7,7 @@ version:
             defaults: {}
             restrictions: {}
             primary_flight_path: 15.  # m
-            primary_flight_path_uncertainty: null
+            primary_flight_path_uncertainty: 0.0054 # m
             sample_thickness: 0.002  # m
             detector_thickness: 0.003  # m
             crystal_plane_spacing: 3.348e-10  # m
