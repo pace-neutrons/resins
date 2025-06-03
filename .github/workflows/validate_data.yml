@@ -17,7 +17,11 @@ jobs:
       shell: bash -el {0}
       run: pip install .
 
-    - name: validate YAML data
+    - name: validate YAML data structure
       shell: bash -el {0}
-      run: ls src/resolution_functions/instrument_data/*.yaml | xargs -n 1 python dev/validate_data_file.py
+      run: ls src/resolution_functions/instrument_data/*.yaml | xargs -n 1 python dev/validate_data_file.py --disable-resins
+
+    - name: validate model parameters
+      shell: bash -el {0}
+      run: ls src/resolution_functions/instrument_data/*.yaml | xargs -n 1 python dev/validate_data_file.py --disable-yaml
 
