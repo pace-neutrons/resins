@@ -15,7 +15,7 @@ version:
                 # sigma = polyval(abs_meV, ɛ) + polyval(ei_dependence, E_i) + polyval(ei_energy_product, E_i × ɛ)
                 # (Here a quartic polynomial in ɛ, plus quadratic on Ei and cubic on ɛ×Ei)
                 function: "panther_abins_polynomial"
-                citation: [""]
+                citation: ["Mantid (2013): Manipulation and Analysis Toolkit for Instrument Data.; Mantid Project. http://dx.doi.org/10.5286/SOFTWARE/MANTID6.10"]
                 configurations: {}
 
                 parameters:
