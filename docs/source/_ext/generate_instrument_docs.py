@@ -63,15 +63,13 @@ def generate_rst(data):
     out += '\n'
 
     for version_name, version_data in data['version'].items():
-        link = f'{version_name}-data'
+        link = get_link(version_name)
         out += f'.. _{version_name}-version:\n\n' \
                f'{version_name}\n' \
                f'{len(version_name) * "="}\n\n' \
                f'For details on the parameters associated with the {version_name} version, please' \
                f' see the :iref:ref:`{version_name} data<{link}>`.\n\n' \
                 'Models\n------\n\n'
-
-        version_data['sphinx_link'] = link
 
         default_model = version_data['default_model']
         for model_name in version_data['models'].keys():
@@ -83,9 +81,23 @@ def generate_rst(data):
         out += '\n'
 
         for model_name, model_data in version_data['models'].items():
+            if isinstance(model_data, str):
+                out += f'.. _{version_name}-{model_name}-model:\n\n' \
+                       f'{model_name}\n' \
+                       f'{len(model_name) * "^"}\n\n' \
+                       f'This is the recommended {model_name} model - it is an alias for the ' \
+                       f':ref:`{version_name}-{model_data}-model` model, which is the model ' \
+                       f'actually containing the data.\n\n' \
+                       f'.. important::\n\n' \
+                       f'    {model_name} refers to the best version of this model - using a ' \
+                       f'    specific version may run the risk using a model with known bugs or ' \
+                       f'    other issues and is not advisable unless replicating the results of ' \
+                       f'    a given version of the model.\n\n'
+                continue
+
             cls = MODELS[model_data["function"]]
             module = inspect.getmodule(cls)
-            link = f'{version_name}-{model_name}-data'
+            link = get_link(version_name, model_name)
 
             out += f'.. _{version_name}-{model_name}-model:\n\n' \
                    f'{model_name}\n' \
@@ -96,8 +108,6 @@ def generate_rst(data):
                    f':py:class:`{module.__name__}.{cls.__name__}`. For more information on the ' \
                    f'model parameters, please see :iref:ref:`{model_name} model data<{link}>`.\n\n'
 
-            model_data['sphinx_link'] = link
-
             if not model_data['configurations']:
                 out += 'Configurations: NONE\n\n'
                 continue
@@ -105,40 +115,38 @@ def generate_rst(data):
                 out += 'Configurations:\n\n'
 
             for config_name, config_data in model_data['configurations'].items():
-                config_link = f'{version_name}-{model_name}-{config_name}-data'
+                config_link = get_link(version_name, model_name, config_name)
                 out += f'* :iref:ref:`{config_name}<{config_link}>`\n\n'
 
                 default_option = config_data['default_option']
                 for option_name in config_data.keys():
-                    link = f'{version_name}-{model_name}-{config_name}-{option_name}-data'
+                    link = get_link(version_name, model_name, config_name)
 
                     if option_name == 'default_option':
                         continue
                     else:
                         out += f'  * :iref:ref:`{option_name}<{link}>`'
-                        config_data[option_name]['sphinx_link'] = link
 
                         if option_name == default_option:
                             out +=  ' (default)\n'
                         else:
                             out += '\n'
 
-                config_data['sphinx_link'] = config_link
 
                 out += '\n'
 
     return out, data
 
 
-def generate_data_section(data_with_links: dict, target_role: str = ':iref:target:'):
+def generate_data_section(data: dict, target_role: str = ':iref:target:'):
     """
     Generates the data section of an instrument's documentation, effectively reproducing
     `yaml.dump` but with sphinx roles injected to serve as targets for links.
 
     Parameters
     ----------
-    data_with_links
-        The yaml data. but with the link names inserted.
+    data
+        The yaml data.
     target_role
         The sphinx role to use to mark the target links.
 
@@ -150,7 +158,7 @@ def generate_data_section(data_with_links: dict, target_role: str = ':iref:targe
     out = '\nData\n****\n\n' \
           '.. parsed-code-block:: yaml\n\n'
 
-    for key, value in data_with_links.items():
+    for key, value in data.items():
         if key == 'version':
             continue
 
@@ -158,18 +166,22 @@ def generate_data_section(data_with_links: dict, target_role: str = ':iref:targe
 
     out += '    version:\n'
 
-    for version_name, version_data in data_with_links['version'].items():
-        link = version_data['sphinx_link']
+    for version_name, version_data in data['version'].items():
+        link = get_link(version_name)
         out += f'        {target_role}`{version_name}<{link}>`:\n' \
                f'            default_model: "{version_data["default_model"]}"\n' \
                 '            models:\n'
 
         for model_name, model_data in version_data['models'].items():
-            link = model_data['sphinx_link']
+            if isinstance(model_data, str):
+                out += ' ' * 16 + f'{model_name}: "{model_data}"\n'
+                continue
+
+            link = get_link(version_name, model_name)
             out += ' ' * 16 + f'{target_role}`{model_name}<{link}>`:\n'
 
             for key, value in model_data.items():
-                if key in ['parameters', 'configurations', 'sphinx_link']:
+                if key in ['parameters', 'configurations']:
                     continue
 
                 out += ' ' * 20 + f'{key}: {format_value(value)}\n'
@@ -187,21 +199,18 @@ def generate_data_section(data_with_links: dict, target_role: str = ':iref:targe
             out += '\n'
 
             for config_name, config_data in model_data['configurations'].items():
-                link = config_data['sphinx_link']
+                link = get_link(version_name, model_name, config_name)
                 out += ' ' * 24 + f'{target_role}`{config_name}<{link}>`:\n'
                 out += ' ' * 28 + f'default_option: "{config_data["default_option"]}"\n'
 
                 for option_name, option_data in config_data.items():
-                    if option_name in ['sphinx_link', 'default_option']:
+                    if option_name == 'default_option':
                         continue
 
-                    link = option_data['sphinx_link']
+                    link = get_link(version_name, model_name, config_name, option_name)
                     out += ' ' * 28 + f'{target_role}`{option_name}<{link}>`:\n'
 
                     for key, value in option_data.items():
-                        if key == 'sphinx_link':
-                            continue
-
                         out += ' ' * 32 + f'{key}: {format_value(value)}\n'
 
     return out
@@ -237,6 +246,24 @@ def add_parameters(parameters: dict, depth: int = 4) -> str:
             out += ' ' * depth + f'{parameter_name}: {format_value(parameter_data)}\n'
 
     return out
+
+
+def get_link(*keys) -> str:
+    """
+    Formats a cross-reference link from `keys`.
+
+    Parameters
+    ----------
+    keys
+        The important unique-name keys (i.e. version name, model name, configuration name,
+        and option name) of the desired element.
+
+    Returns
+    -------
+    link
+        The formatted link.
+    """
+    return '-'.join(keys) + '-data'
 
 
 if __name__ == '__main__':
