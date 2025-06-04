@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .lookuptables import ScaledTabulatedModel
 from .polynomial import PolynomialModel1D, DiscontinuousPolynomialModel1D
 from .panther_abins import PantherAbINSModel
 from .pychop import PyChopModelFermi, PyChopModelNonFermi, PyChopModelCNCS, PyChopModelLET
@@ -32,5 +33,6 @@ MODELS: dict[str, type[InstrumentModel]] = {
     'pychop_fit_fermi': PyChopModelFermi,
     'pychop_fit_cncs': PyChopModelCNCS,
     'pychop_fit_let': PyChopModelLET,
+    'scaled_tabulated': ScaledTabulatedModel,
 }
 """A dictionary mapping the unique name of a model to the corresponding class."""
