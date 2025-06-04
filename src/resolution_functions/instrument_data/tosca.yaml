@@ -4,9 +4,8 @@ default_version: 'TOSCA'
 version:
     TFXA:
         constants: &tfxa_constants
-            final_neutron_energy: 32.0  # Final energy on the crystal analyser in cm-1
-            scattering_angle: 2.356  # Angle of the crystal analyser radians (NO LONGER USED)
-            energy_bin_width: 1.0  # Default bin width in wavenumber
+            defaults: {}
+            restrictions: {}
             primary_flight_path: 12.13  # m
             primary_flight_path_uncertainty: 0.0021  # m
             water_moderator_constant: 44  # us
@@ -17,26 +16,27 @@ version:
             sample_width: 0.02  # m
             detector_width: 0.012  # m
             crystal_plane_spacing: 3.348e-10  # m
-        settings: &tfxa_settings
+        configurations: &tfxa_configurations
             detector_bank:
-                default_setting: "Backward"
+                default_option: "Backward"
                 Backward:
                     angles: [ 134.98885653282196 ]
                     average_secondary_flight_path: 0.671  # m
                     average_final_energy: 3.909  # meV
                     average_bragg_angle_graphite: 43.  # deg
+                    change_average_bragg_angle_graphite: 5.637684123246608
         default_model: "book"
         models:
-            book:
+            book: "book_v1"
+            book_v1:
                 function: "tosca_book"
                 citation: ["PCH Mitchell, SF Parker, AJ Ramirez-Cuesta, and J Tomkinson, Vibrational Spectroscopy with Neutrons, World Scientific, Singapore, 2005. ISBN 981-256-013-0"]
                 parameters: *tfxa_constants
-                settings: *tfxa_settings
+                configurations: *tfxa_configurations
     TOSCA1:
         constants: &tosca1_constants
-            final_neutron_energy: 32.0  # Final energy on the crystal analyser in cm-1
-            scattering_angle: 2.356  # Angle of the crystal analyser radians (NO LONGER USED)
-            energy_bin_width: 1.0  # Default bin width in wavenumber
+            defaults: {}
+            restrictions: {}
             primary_flight_path: 12.264  # m
             primary_flight_path_uncertainty: 0.0021  # m
             water_moderator_constant: 44  # us
@@ -47,9 +47,9 @@ version:
             sample_width: 0.02  # m
             detector_width: 0.012  # m
             crystal_plane_spacing: 3.348e-10  # m
-        settings: &tosca1_settings
+        configurations: &tosca1_configurations
             detector_bank:
-                default_setting: "Backward"
+                default_option: "Backward"
                 Backward:
                     angles: [ 134.98885653282196 ]
                     average_secondary_flight_path: 0.7456  # m
@@ -58,32 +58,36 @@ version:
                     change_average_bragg_angle_graphite: 5.0814852427945665
         default_model: "book"
         models:
-            book:
+            book: "book_v1"
+            book_v1:
                 function: "tosca_book"
                 citation: ["PCH Mitchell, SF Parker, AJ Ramirez-Cuesta, and J Tomkinson, Vibrational Spectroscopy with Neutrons, World Scientific, Singapore, 2005. ISBN 981-256-013-0"]
                 parameters: *tosca1_constants
-                settings: *tosca1_settings
+                configurations: *tosca1_configurations
     TOSCA:
         constants: &tosca_constants
+            defaults: {}
+            restrictions: {}
             primary_flight_path: 17.  # m
             primary_flight_path_uncertainty: 0.0021  # m
             sample_thickness: 0.002  # m
             detector_thickness: 0.0025  # m
             crystal_plane_spacing: 3.348e-10  # m
-        settings:
-            detector_bank: &tosca_settings
-                default_setting: "Backward"
-                Backward: &tosca_settings_backward
+        configurations:
+            detector_bank: &tosca_configurations
+                default_option: "Backward"
+                Backward: &tosca_configurations_backward
                     angles: [ 134.98885653282196 ]
                     average_bragg_angle_graphite: 47.73  # deg
-                Forward: &tosca_settings_forward
+                Forward: &tosca_configurations_forward
                     angles: [ 45.0 ]
                     average_bragg_angle_graphite: 47.45  # deg
 #            All detectors:
 #                angles: [ 45.0, 134.98885653282196 ]
         default_model: "AbINS"
         models:
-            AbINS:
+            AbINS: "AbINS_v1"
+            AbINS_v1:
                 # TOSCA parameters for resolution function
                 # sigma = tosca_a * omega * omega + tosca_b * omega + tosca_c
                 # where sigma is width of Gaussian function
@@ -91,9 +95,12 @@ version:
                 citation: [""]
                 #original_parameters: [2.5, 0.005, 0.0000001] wavenumber
                 parameters:
+                    defaults: {}
+                    restrictions: {}
                     fit: [ 0.3099604960830007, 0.005, 8.065543937349209e-07 ]  # meV
-                settings: {}
-            book:
+                configurations: {}
+            book: "book_v1"
+            book_v1:
                 function: "tosca_book"
                 citation: ["PCH Mitchell, SF Parker, AJ Ramirez-Cuesta, and J Tomkinson, Vibrational Spectroscopy with Neutrons, World Scientific, Singapore, 2005. ISBN 981-256-013-0"]
                 parameters:
@@ -103,33 +110,34 @@ version:
                     graphite_thickness: 0.002  # m
                     sample_width: 0.04  # m ???????????? where is it used?
                     detector_width: 0.12  # m
-                settings:
+                configurations:
                     detector_bank:
-                        <<: *tosca_settings
+                        <<: *tosca_configurations
                         Backward:
-                            <<: *tosca_settings_backward
+                            <<: *tosca_configurations_backward
                             average_final_energy: 3.32  # meV
                             average_secondary_flight_path: 0.6279  # m
                             change_average_bragg_angle_graphite: 17.439366410966983
                         Forward:
-                            <<: *tosca_settings_forward
+                            <<: *tosca_configurations_forward
                             average_final_energy: 3.35  # meV
                             average_secondary_flight_path: 0.6279  # m
                             change_average_bragg_angle_graphite: 17.59374274222979
-            vision:
+            vision: "vision_v1"
+            vision_v1:
                 function: "vision_paper"
                 citation: ["P. A. Seeger, L. L. Daemen, and J. Z. Larese, Nucl. Instrum. Methods Phys. Res., Sect. A, 2009, 604, 3, 719-728. https://doi.org/10.1016/j.nima.2009.03.204"]
                 parameters:
                     <<: *tosca_constants
                     d_r: 12.9e-6
                     d_t: null
-                settings:
+                configurations:
                     detector_bank:
-                        <<: *tosca_settings
+                        <<: *tosca_configurations
                         Backward:
-                            <<: *tosca_settings_backward
+                            <<: *tosca_configurations_backward
                             distance_sample_analyzer: 0.23231778281139834  # m  0.5 * average_secondary_flight_path * np.sin(average_bragg_angle_graphite)
                         Forward:
-                            <<: *tosca_settings_forward
+                            <<: *tosca_configurations_forward
                             # TODO: Recompute below once average_secondary_flight_path for Forward has been recomputed
                             distance_sample_analyzer: 0.2312830382624369  # m (as above)

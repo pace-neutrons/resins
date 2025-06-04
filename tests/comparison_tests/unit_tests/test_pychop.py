@@ -63,7 +63,7 @@ INSTRUMENTS_FERMI = [
     [('SEQUOIA', 'SEQUOIA')],
 ]
 
-INSTRUMENT_SETTINGS_FERMI = [
+INSTRUMENT_CONFIGURATIONS_FERMI = [
     ['SEQ-100-2.0-AST', 'SEQ-700-3.5-AST', 'ARCS-100-1.5-AST', 'ARCS-700-1.5-AST',
      'ARCS-700-0.5-AST', 'ARCS-100-1.5-SMI', 'ARCS-700-1.5-SMI'],
     ['OnlyOne'],
@@ -76,8 +76,22 @@ INSTRUMENT_SETTINGS_FERMI = [
 
 INSTRUMENT_MATRIX_FERMI = list(
         itertools.chain.from_iterable(
-            itertools.product(instr, settings)
-                  for instr, settings in zip(INSTRUMENTS_FERMI, INSTRUMENT_SETTINGS_FERMI)
+            itertools.product(instr, configurations)
+                  for instr, configurations in zip(INSTRUMENTS_FERMI, INSTRUMENT_CONFIGURATIONS_FERMI)
+        )
+)
+
+INSTRUMENTS_V2 = [[('ARCS', 'ARCS')], [('SEQUOIA', 'SEQUOIA')]]
+INSTRUMENT_CONFIGURATIONS_V2 = [
+    ['SEQ-100-2.0-AST', 'SEQ-700-3.5-AST', 'ARCS-100-1.5-AST', 'ARCS-700-1.5-AST',
+     'ARCS-700-0.5-AST', 'ARCS-100-1.5-SMI', 'ARCS-700-1.5-SMI'],
+    ['High-Resolution', 'High-Flux', 'SEQ-100-2.0-AST', 'SEQ-700-3.5-AST', 'ARCS-100-1.5-AST',
+     'ARCS-700-1.5-AST', 'ARCS-700-0.5-AST', 'ARCS-100-1.5-SMI', 'ARCS-700-1.5-SMI'],
+]
+INSTRUMENT_MATRIX_FERMI_V2 = list(
+        itertools.chain.from_iterable(
+            itertools.product(instr, configurations)
+                  for instr, configurations in zip(INSTRUMENTS_V2, INSTRUMENT_CONFIGURATIONS_V2)
         )
 )
 
@@ -85,22 +99,22 @@ INSTRUMENTS_NONFERMI = [
     [('CNCS', 'CNCS')],
     [('LET', 'LET')],
 ]
-INSTRUMENT_SETTINGS_NONFERMI = [
+INSTRUMENT_CONFIGURATIONS_NONFERMI = [
     ['High Flux', 'Intermediate', 'High Resolution'],
     ['High Flux', 'Intermediate', 'High Resolution'],
 ]
 INSTRUMENT_MATRIX_NONFERMI = list(
         itertools.chain.from_iterable(
-            itertools.product(instr, settings)
-                  for instr, settings in zip(INSTRUMENTS_NONFERMI, INSTRUMENT_SETTINGS_NONFERMI)
+            itertools.product(instr, configurations)
+                  for instr, configurations in zip(INSTRUMENTS_NONFERMI, INSTRUMENT_CONFIGURATIONS_NONFERMI)
         )
 )
 
 
 def instrument_id(matrix_row: tuple[tuple[str, str], str]) -> str:
-    """Get test id NAME_SETTING from input row ((NAME, NAME), SETTING)"""
-    (instrument, _), setting = matrix_row
-    return f"{instrument}_{setting}"
+    """Get test id NAME_configuration from input row ((NAME, NAME), configuration)"""
+    (instrument, _), configuration = matrix_row
+    return f"{instrument}_{configuration}"
 
 # id formatter for E_i input
 format_ei = "ei={}".format
@@ -112,21 +126,41 @@ def get_fake_frequencies(e_init: float) -> Float[np.ndarray]:
 
 @pytest.fixture(scope="module", params=INSTRUMENT_MATRIX_FERMI, ids=instrument_id)
 def pychop_fermi_data(request) -> tuple[PyChopModelDataFermi, PyChopInstrument]:
-    (name, version), setting = request.param
+    (name, version), configuration = request.param
     maps = Instrument.from_default(name, version)
-    rf = maps.get_model_data('PyChop_fit', chopper_package=setting)
+    rf = maps.get_model_data('PyChop_fit_v1', chopper_package=configuration)
 
-    pc = PyChopInstrument(name, chopper=setting)
+    pc = PyChopInstrument(name, chopper=configuration)
     return rf, pc
 
+@pytest.fixture(scope="module", params=INSTRUMENT_MATRIX_FERMI_V2, ids=instrument_id)
+def pychop_v2_data(request) -> tuple[PyChopModelDataFermi, PyChopInstrument]:
+    (name, version), configuration = request.param
+    maps = Instrument.from_default(name, version)
+    rf = maps.get_model_data('PyChop_fit_v2', chopper_package=configuration)
+
+    try:
+        pc = PyChopInstrument(name, chopper=configuration)
+    except ValueError:
+        if name == 'SEQUOIA':
+            if configuration == 'High-Resolution':
+                pc = PyChopInstrument(name, chopper='Fine')
+            elif configuration == 'High-Flux':
+                pc = PyChopInstrument(name, chopper='Sloppy')
+            else:
+                raise
+        else:
+            raise
+
+    return rf, pc
 
 @pytest.fixture(scope="module", params=INSTRUMENT_MATRIX_NONFERMI, ids=instrument_id)
 def pychop_nonfermi_data(request) -> tuple[PyChopModelDataNonFermi, PyChopInstrument]:
-    (name, version), setting = request.param
+    (name, version), configuration = request.param
     maps = Instrument.from_default(name, version)
-    rf = maps.get_model_data('PyChop_fit', chopper_package=setting)
+    rf = maps.get_model_data('PyChop_fit_v1', chopper_package=configuration)
 
-    pc = PyChopInstrument(name, chopper=setting)
+    pc = PyChopInstrument(name, chopper=configuration)
     return rf, pc
 
 
@@ -135,7 +169,7 @@ def mari_data():
     maps = Instrument.from_default('MARI', 'MARI')
     rf = maps.get_model_data('PyChop_fit')
 
-    pc = PyChopInstrument('MARI', chopper=maps.default_option_for_setting('PyChop_fit', 'chopper_package'))
+    pc = PyChopInstrument('MARI', chopper=maps.default_option_for_configuration('PyChop_fit', 'chopper_package'))
     return rf, pc
 
 
@@ -172,7 +206,8 @@ def let_data():
 def test_fermi_invalid_chopper_frequency(
     chopper_frequency, mari_data: tuple[PyChopModelDataFermi, PyChopInstrument]
 ):
-    with pytest.raises(InvalidInputError, match="The provided chopper frequency"):
+    with pytest.raises(InvalidInputError,
+                       match='The provided value for the "chopper_frequency" setting'):
         PyChopModelFermi(mari_data[0], chopper_frequency=chopper_frequency)
 
 
@@ -182,56 +217,56 @@ def test_fermi_invalid_chopper_frequency(
 def test_fermi_invalid_e_init(
     e_init, mari_data: tuple[PyChopModelDataFermi, PyChopInstrument]
 ):
-    with pytest.raises(InvalidInputError, match="The provided incident energy"):
+    with pytest.raises(InvalidInputError, match='The provided value for the "e_init" setting'):
         PyChopModelFermi(mari_data[0], e_init=e_init)
 
 @pytest.mark.parametrize(
-    "chopper_frequency",
+    'chopper_frequency,invalid_setting',
     [
-        [59.99999, 60],
-        [-0.048] * 2,
-        [-np.inf, 0],
-        [120, 300.00017],
-        [np.inf, np.inf],
-        [300, np.nan],
-        [60.5, 60],
-        [180, 67.5],
-        [600, 600],
-        [130, 130],
-    ],
+        ([59.99999, 60], 'resolution_disk_frequency'),
+        ([-0.048] * 2, 'resolution_disk_frequency'),
+        ([-np.inf, 0], 'resolution_disk_frequency'),
+        ([120, 300.00017], 'fermi_frequency'),
+        ([np.inf, np.inf], 'resolution_disk_frequency'),
+        ([300, np.nan], 'fermi_frequency'),
+        ([60.5, 60], 'resolution_disk_frequency'),
+        ([180, 67.5], 'fermi_frequency'),
+        ([600, 600], 'resolution_disk_frequency'),
+        ([135, 135], 'resolution_disk_frequency')
+    ]
 )
-def test_cncs_invalid_chopper_frequency(chopper_frequency, cncs_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match="The provided chopper frequency"):
+def test_cncs_invalid_chopper_frequency(chopper_frequency, invalid_setting, cncs_data: PyChopModelDataNonFermi):
+    with pytest.raises(InvalidInputError, match=f'The provided value for the "{invalid_setting}" setting'):
         PyChopModelCNCS(cncs_data, resolution_disk_frequency=chopper_frequency[0], fermi_frequency=chopper_frequency[1])
 
 
 @pytest.mark.parametrize('e_init', [-5, -0.00048, -np.inf, 80.1, np.inf, 13554.1654, np.nan])
 def test_cncs_invalid_e_init(e_init, cncs_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match="The provided incident energy"):
+    with pytest.raises(InvalidInputError, match='The provided value for the "e_init" setting'):
         PyChopModelCNCS(cncs_data, e_init=e_init)
 
 
 @pytest.mark.parametrize(
-    'chopper_frequency',
-    [[59.99999, 60],
-     [-0.048] * 2,
-     [-np.inf, 0],
-     [120, 300.00017],
-     [np.inf, np.inf],
-     [300, np.nan],
-     [60.5, 60],
-     [180, 67.5],
-     [600, 600],
-     [135, 135]]
+    'chopper_frequency,invalid_setting',
+    [([59.99999, 60], 'resolution_frequency'),
+     ([-0.048] * 2, 'resolution_frequency'),
+     ([-np.inf, 0], 'resolution_frequency'),
+     ([120, 300.00017], 'pulse_remover_frequency'),
+     ([np.inf, np.inf], 'resolution_frequency'),
+     ([300, np.nan], 'pulse_remover_frequency'),
+     ([60.5, 60], 'resolution_frequency'),
+     ([180, 67.5], 'pulse_remover_frequency'),
+     ([600, 600], 'resolution_frequency'),
+     ([135, 135], 'resolution_frequency')]
 )
-def test_let_invalid_chopper_frequency(chopper_frequency, let_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match="The provided chopper frequency"):
+def test_let_invalid_chopper_frequency(chopper_frequency, invalid_setting, let_data: PyChopModelDataNonFermi):
+    with pytest.raises(InvalidInputError, match=f'The provided value for the "{invalid_setting}" setting'):
         PyChopModelLET(let_data, resolution_frequency=chopper_frequency[0], pulse_remover_frequency=chopper_frequency[1])
 
 
 @pytest.mark.parametrize('e_init', [-5, -0.00048, -np.inf, 30.0001, np.inf, 13554.1654, np.nan])
 def test_let_invalid_e_init(e_init, let_data: PyChopModelDataNonFermi):
-    with pytest.raises(InvalidInputError, match="The provided incident energy"):
+    with pytest.raises(InvalidInputError, match='The provided value for the "e_init" setting'):
         PyChopModelLET(let_data, e_init=e_init)
 
 
@@ -248,6 +283,12 @@ def test_distances(mari_data: tuple[PyChopModelData, PyChopInstrument]):
 @pytest.mark.parametrize('e_init', EINIT_SAMPLE, ids=format_ei)
 def test_fermi_moderator_width_analytical(e_init, pychop_fermi_data):
     _test_moderator_width_analytical(e_init, *pychop_fermi_data, PyChopModelFermi)
+
+
+@pytest.mark.xfail(reason='PyChop V2 no reference')
+@pytest.mark.parametrize('e_init', EINIT_SAMPLE, ids=format_ei)
+def test_fermi_v2_moderator_width_analytical(e_init, pychop_v2_data):
+    _test_moderator_width_analytical(e_init, *pychop_v2_data, PyChopModelFermi)
 
 
 @pytest.mark.parametrize('e_init', EINIT_SAMPLE, ids=format_ei)
@@ -269,6 +310,12 @@ def test_fermi_moderator_width(e_init, pychop_fermi_data):
     _test_moderator_width(e_init, PyChopModelFermi, *pychop_fermi_data)
 
 
+@pytest.mark.xfail(reason='PyChop V2 no reference')
+@pytest.mark.parametrize('e_init', EINIT_SAMPLE, ids=format_ei)
+def test_fermi_v2_moderator_width(e_init, pychop_v2_data):
+    _test_moderator_width(e_init, PyChopModelFermi, *pychop_v2_data)
+
+
 @pytest.mark.parametrize('e_init', EINIT_SAMPLE, ids=format_ei)
 def test_nonfermi_moderator_width(e_init, pychop_nonfermi_data):
     _test_moderator_width(e_init, PyChopModelNonFermi, *pychop_nonfermi_data)
@@ -283,6 +330,15 @@ def _test_moderator_width(e_init, cls, data, pychop):
 
 @pytest.mark.parametrize('matrix', MATRIX_FERMI, ids=matrix_fermi_id)
 def test_fermi_chopper_width(matrix, pychop_fermi_data):
+    _test_fermi_chopper_width(matrix, pychop_fermi_data)
+
+
+@pytest.mark.xfail(reason='PyChop V2 no reference')
+@pytest.mark.parametrize('matrix', MATRIX_FERMI, ids=matrix_fermi_id)
+def test_fermi_v2_chopper_width(matrix, pychop_v2_data):
+    _test_fermi_chopper_width(matrix, pychop_v2_data)
+
+def _test_fermi_chopper_width(matrix, pychop_fermi_data):
     e_init, chopper_frequency = matrix
     pychop_fermi_data, pychop = pychop_fermi_data
 
@@ -380,6 +436,11 @@ def test_fermi_detector_width_squared(e_init, pychop_fermi_data):
 
 
 @pytest.mark.parametrize('e_init', EINIT, ids=format_ei)
+def test_fermi_v2_detector_width_squared(e_init, pychop_v2_data):
+    _test_get_detector_width_squared(e_init, PyChopModelFermi, *pychop_v2_data)
+
+
+@pytest.mark.parametrize('e_init', EINIT, ids=format_ei)
 def test_nonfermi_detector_width_squared(e_init, pychop_nonfermi_data):
     _test_get_detector_width_squared(e_init, PyChopModelNonFermi, *pychop_nonfermi_data)
 
@@ -405,6 +466,17 @@ def test_fermi_sample_width_squared(pychop_fermi_data):
     assert_allclose(actual, expected)
 
 
+def test_fermi_v2_sample_width_squared(pychop_v2_data):
+    if pychop_v2_data[1].name == 'SEQUOIA':
+        pytest.xfail(reason='PyChop V2 no reference')
+
+    pychop_fermi_data, pychop = pychop_v2_data
+
+    actual = PyChopModelFermi._get_sample_width_squared(pychop_fermi_data.sample)
+    expected = pychop.sample.getWidthSquared()
+
+    assert_allclose(actual, expected)
+
 def test_nonfermi_sample_width_squared(pychop_nonfermi_data):
     data, pychop = pychop_nonfermi_data
 
@@ -422,6 +494,14 @@ def test_nonfermi_sample_width_squared(pychop_nonfermi_data):
 def test_fermi_precompute_van_var(matrix, pychop_fermi_data):
     e_init, chopper_frequency = matrix
     _test_precompute_van_var(e_init, [chopper_frequency], PyChopModelFermi, *pychop_fermi_data)
+
+
+@pytest.mark.xfail(reason='PyChop V2 no reference')
+@pytest.mark.skipif(DEBUG, reason='Debugging precompute_van_var; its outputs have been temporarily changed.')
+@pytest.mark.parametrize('matrix', MATRIX_FERMI, ids=matrix_fermi_id)
+def test_fermi_v2_precompute_van_var(matrix, pychop_v2_data):
+    e_init, chopper_frequency = matrix
+    _test_precompute_van_var(e_init, [chopper_frequency], PyChopModelFermi, *pychop_v2_data)
 
 
 @pytest.mark.skipif(DEBUG, reason='Debugging precompute_van_var; its outputs have been temporarily changed.')
@@ -502,7 +582,15 @@ def _test_debug_precompute_van_var(e_init, chopper_frequency, cls, data, pychop)
 @pytest.mark.parametrize('matrix', MATRIX_FERMI, ids=matrix_fermi_id)
 def test_fermi_precompute_resolution(matrix, pychop_fermi_data):
     e_init, chopper_frequency = matrix
-    _test_precompute_resolution(e_init, [chopper_frequency], PyChopModelFermi, *pychop_fermi_data)
+    _test_precompute_resolution(e_init, [float(chopper_frequency)], PyChopModelFermi, *pychop_fermi_data)
+
+
+@pytest.mark.xfail(reason='PyChop V2 no reference')
+@pytest.mark.skipif(DEBUG, reason='Debugging precompute_van_var; its outputs have been temporarily changed.')
+@pytest.mark.parametrize('matrix', MATRIX_FERMI, ids=matrix_fermi_id)
+def test_fermi_v2_precompute_resolution(matrix, pychop_v2_data):
+    e_init, chopper_frequency = matrix
+    _test_precompute_resolution(e_init, [float(chopper_frequency)], PyChopModelFermi, *pychop_v2_data)
 
 
 @pytest.mark.skipif(DEBUG, reason='Debugging precompute_van_var; its outputs have been temporarily changed.')
@@ -516,11 +604,22 @@ def _test_precompute_resolution(e_init, chopper_frequency, cls, data, pychop):
     try:
         pychop.chopper_system.setFrequency(chopper_frequency)
     except ValueError as e:
+        try:
+            pychop.chopper_system.setEi(e_init)
+        except ValueError as e:
+            if f'Ei={e_init} is outside limits ' in str(e):
+                with pytest.raises(InvalidInputError,
+                                   match=rf'The provided value for the "e_init" setting \({e_init}\)'):
+                    cls(model_data=data, chopper_frequency=chopper_frequency, e_init=e_init)
+                return
+            raise
+
         if 'Value of frequencies outside maximum allowed' in str(e):
             # Energy out of range for Pychop: make sure the model agrees
             with pytest.raises(
                     InvalidInputError,
-                    match=rf"The provided chopper frequency \(\[{chopper_frequency[0]}\]\) is not allowed"):
+                    match=rf'The provided value for the "chopper_frequency" setting '
+                          rf'\(\[{chopper_frequency[0]}\]\) must be within'):
                 cls(model_data=data, chopper_frequency=chopper_frequency, e_init=e_init)
 
             return

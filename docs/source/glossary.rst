@@ -38,16 +38,24 @@ Most relevant terms
         upgrade significant enough to alter the :term:`resolution` is done, a new "version" is
         created for that :term:`instrument`.
 
-    setting
-        A set of :term:`options<option>` that can be made for a particular :term:`version` of a
-        particular :term:`instrument`. This can be, for example, the choice of the
-        :term:`Fermi chopper` parameters.
+    configuration
+        A set of :term:`options<option>` built into an :term:`instrument` that change the physical
+        configuration of the :term:`instrument`, affecting the :term:`resolution`. These are things
+        such as the choice of :term:`Fermi chopper` or analyser. In the context of this library,
+        this is a set of instrument parameters, grouped by a name (:term:`option`), which get
+        provided to a :term:`model` together with the constant parameters.
 
     option
-        One of the options that can be chosen for a given :term:`setting`. This is tied to a
-        particular :term:`version` of a particular :term:`instrument`. For example, if a
-        :term:`Fermi chopper` is a :term:`setting`, the "option" is one of the choices that can be
-        made for that :term:`Fermi chopper`.
+        One of the options that can be chosen for a given :term:`configuration`. This is tied to a
+        particular :term:`version` of a particular :term:`instrument`. Any given INS instrument may
+        have several :term:`options<option>` for a given :term:`configuration` for users to choose
+        from, which affect several parameters of that instrument.
+
+    setting
+        A user-chosen experimental parameter that affects the :term:`resolution`. In practice, this
+        can be the incident energy and the chopper frequencies, depending on the :term:`instrument`.
+        In the context of this library, a :term:`setting` is an argument specifically required by a
+        :term:`model`.
 
     model
         A method to represent the :term:`resolution function`. There are different ways of

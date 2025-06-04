@@ -30,12 +30,12 @@ try:
 except ImportError:
     from typing_extensions import NotRequired, TypedDict
 
-
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from scipy.interpolate import interp1d
 
-from .model_base import InstrumentModel, ModelData, InvalidInputError
+from .model_base import InstrumentModel, ModelData, InvalidInputError, InvalidPointsError
+from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -62,6 +62,13 @@ class PyChopModelData(ModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     d_chopper_sample
         Distance from the final chopper to sample in meters (m).
     d_sample_detector
@@ -70,11 +77,6 @@ class PyChopModelData(ModelData):
         Width of aperture at moderator face in meters (m)
     theta
         The angle that the beamline makes with the moderator face in degrees.
-    default_e_init
-        The default value for the initial energy (``e_init``) in meV.
-    allowed_e_init
-        The limits (lower and upper bound) for the allowed initial energies (``e_init``). This
-        should correspond to the physical limitations of the INS instrument.
     frequency_matrix
         A matrix mapping the relationship between the user-provided parameter ``chopper_frequency``
         or its equivalent (depending on model) to the frequency of each chopper in the instrument.
@@ -88,15 +90,11 @@ class PyChopModelData(ModelData):
         Data for the sample. See `Sample` for more info.
     tjit
         The jitter time in microseconds (us).
-    restrictions
-    defaults
     """
     d_chopper_sample: float
     d_sample_detector: float
     aperture_width: float
     theta: float
-    default_e_init: float
-    allowed_e_init: list[float]
     frequency_matrix: list[list[float]]
     choppers: dict[str, FermiChopper | DiskChopper]
     moderator: Moderator
@@ -116,6 +114,13 @@ class PyChopModelDataFermi(PyChopModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     d_chopper_sample
         Distance from the final :term:`chopper` to :term:`sample` in meters (m).
     d_sample_detector
@@ -124,11 +129,6 @@ class PyChopModelDataFermi(PyChopModelData):
         Width of aperture at :term:`moderator` face in meters (m)
     theta
         The angle that the beamline makes with the :term:`moderator` face in degrees.
-    default_e_init
-        The default value for the initial energy (``e_init``) in meV.
-    allowed_e_init
-        The limits (lower and upper bound) for the allowed initial energies (``e_init``). This
-        should correspond to the physical limitations of the INS :term:`instrument`.
     frequency_matrix
         A matrix mapping the relationship between the user-provided parameter ``chopper_frequency``
         to the frequency of each :term:`chopper` in the :term:`instrument`.
@@ -142,34 +142,16 @@ class PyChopModelDataFermi(PyChopModelData):
         Data for the :term:`sample`. See `Sample` for more info.
     tjit
         The jitter time in microseconds (us).
-    default_chopper_frequency
-        The default value for the :term:`Fermi chopper` frequency (``chopper_frequency``) in Hz.
-    allowed_chopper_frequencies
-        The allowed values for the :term:`Fermi chopper` frequency (``chopper_frequency``) in Hz.
-        `allowed_chopper_frequencies` defines the (start, stop, step), which is converted into a
-        list at runtime.
     pslit
         Width of the neutron-transparent slit in meters (m).
     radius
         Radius of the :term:`chopper` package in meters (m).
     rho
         Curvature of the :term:`chopper` package in meters (m).
-    restrictions
-    defaults
     """
-    default_chopper_frequency: int
-    allowed_chopper_frequencies: list[int]
     pslit: float
     radius: float
     rho: float
-
-    @property
-    def restrictions(self) -> dict[str, list[int | float]]:
-        return {'e_init': self.allowed_e_init, 'chopper_frequency': self.allowed_chopper_frequencies}
-
-    @property
-    def defaults(self) -> dict:
-        return {'e_init': self.default_e_init, 'chopper_frequency': self.default_chopper_frequency}
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True)
@@ -186,6 +168,13 @@ class PyChopModelDataNonFermi(PyChopModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     d_chopper_sample
         Distance from the final :term:`chopper` to :term:`sample` in meters (m).
     d_sample_detector
@@ -194,11 +183,6 @@ class PyChopModelDataNonFermi(PyChopModelData):
         Width of aperture at :term:`moderator` face in meters (m)
     theta
         The angle that the beamline makes with the :term:`moderator` face in degrees.
-    default_e_init
-        The default value for the initial energy (``e_init``) in meV.
-    allowed_e_init
-        The limits (lower and upper bound) for the allowed initial energies (``e_init``). This
-        should correspond to the physical limitations of the INS :term:`instrument`.
     frequency_matrix
         A matrix mapping the relationship between all user-provided :term:`chopper` frequency
         parameters (i.e. the choppers with user control) to the frequency of each :term:`chopper` in
@@ -213,13 +197,6 @@ class PyChopModelDataNonFermi(PyChopModelData):
         Data for the :term:`sample`. See `Sample` for more info.
     tjit
         The jitter time in microseconds (us).
-    default_chopper_frequency
-        The default value for the :term:`chopper` frequency of each user-controlled :term:`chopper`
-        in Hz.
-    allowed_chopper_frequencies
-        The allowed values for the :term:`chopper` frequency of each user-controlled
-        :term:`chopper`, in Hz. Each value defines the (start, stop, step), which is converted into
-        a list at runtime.
     constant_frequencies
         The frequency of each :term:`chopper` in Hz, with those run at a constant frequency having
         non-zero values.
@@ -227,22 +204,10 @@ class PyChopModelDataNonFermi(PyChopModelData):
         The frequency of the neutron :term:`source` in Hz.
     n_frame
         Number of frames to calculate time-distance diagram for.
-    restrictions
-    defaults
     """
-    default_chopper_frequency: list[int]
-    allowed_chopper_frequencies: list[list[int]]
     constant_frequencies: list[int]
     source_frequency: float
     n_frame: int
-
-    @property
-    def restrictions(self) -> dict[str, list[int | float]]:
-        return {'e_init': self.allowed_e_init, 'chopper_frequency': self.allowed_chopper_frequencies}
-
-    @property
-    def defaults(self) -> dict:
-        return {'e_init': self.default_e_init, 'chopper_frequency': self.default_chopper_frequency}
 
 
 class FermiChopper(TypedDict):
@@ -373,7 +338,7 @@ class Moderator(TypedDict):
     measured_width: NotRequired[list[float]]
 
 
-class PyChopModel(InstrumentModel, ABC):
+class PyChopModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel, ABC):
     """
     Abstract base class for all PyChop models.
 
@@ -395,36 +360,45 @@ class PyChopModel(InstrumentModel, ABC):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
-    output
-        The output of the ``__call__`` method.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelData` type.
     citation
     polynomial
     """
-    input = 1
-    output = 1
+    input = ('energy_transfer',)
 
     data_class = PyChopModelData
 
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs
-                 ) -> Float[np.ndarray, 'sigma']:
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
+                            ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
+        Computes the broadening width at each value of energy transfer given by `points`.
+
+        The model approximates the broadening using the Gaussian distribution, so the returned
+        widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
+        points
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
+        characteristics
+            The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        return self.polynomial(frequencies)
+        try:
+            points = points[:, 0]
+        except IndexError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        return {'sigma': self.polynomial(points)}
 
     @property
     @abstractmethod
@@ -977,9 +951,8 @@ class PyChopModelFermi(PyChopModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
-    output
-        The output of the ``__call__`` method.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataFermi` type.
     citation
@@ -994,15 +967,10 @@ class PyChopModelFermi(PyChopModel):
                  fitting_order: int = 4,
                  **_):
         super().__init__(model_data)
-        
-        if chopper_frequency is None:
-            chopper_frequency = model_data.default_chopper_frequency
-        elif chopper_frequency not in range(*model_data.allowed_chopper_frequencies):
-            raise InvalidInputError(f'The provided chopper frequency ({chopper_frequency}) is not '
-                                    f'allowed; only the following frequencies are possible: '
-                                    f'{list(range(*model_data.allowed_chopper_frequencies))}')
 
-        e_init = self._validate_e_init(e_init, model_data)
+        settings = self._validate_settings(model_data,
+                                           {'e_init': e_init, 'chopper_frequency': chopper_frequency})
+        e_init, chopper_frequency = settings['e_init'], settings['chopper_frequency']
 
         fake_frequencies, resolution = self._precompute_resolution(model_data, e_init, [chopper_frequency])
         self._polynomial = Polynomial.fit(fake_frequencies, resolution, fitting_order)
@@ -1079,45 +1047,6 @@ class PyChopModelNonFermi(PyChopModel, ABC):
     data_class = PyChopModelDataNonFermi
 
     @staticmethod
-    def _validate_chopper_frequency(chopper_frequencies: list[int | None],
-                                    model_data: PyChopModelDataNonFermi) -> list[int]:
-        """
-        Validates that the user-provided `chopper_frequencies` are among the allowed values for the instrument.
-
-        Parameters
-        ----------
-        chopper_frequencies
-            A list of chopper frequencies corresponding to the choppers with tunable frequencies.
-            The list must have the same length and order as the
-            `PyChopModelDataNonFermi.allowed_chopper_frequencies` for that instrument. Each entry
-            which contains a ``None`` instead of a value will be replaced with the default value
-            for the corresponding chopper.
-        model_data
-            The data for a particular INS instrument.
-
-        Returns
-        -------
-        chopper_frequencies
-            The valid chopper frequencies.
-
-        Raises
-        ------
-        InvalidInputError
-            If any of the provided `chopper_frequencies` is invalid.
-        """
-        for i, (frequency, allowed_chopper_frequencies) in (
-                enumerate(zip(chopper_frequencies, model_data.allowed_chopper_frequencies))):
-            if frequency is None:
-                chopper_frequencies[i] = model_data.default_chopper_frequency[i]
-            elif frequency not in range(*allowed_chopper_frequencies):
-                raise InvalidInputError(
-                    f'The provided chopper frequency ({frequency}) is not allowed; only the'
-                    f' following frequencies are possible: '
-                    f'{list(range(*allowed_chopper_frequencies))}')
-
-        return chopper_frequencies
-
-    @staticmethod
     def get_long_frequency(frequencies: list[int],
                            model_data: PyChopModelDataNonFermi
                            ) -> Float[np.ndarray, 'chopper_frequencies']:
@@ -1143,7 +1072,6 @@ class PyChopModelNonFermi(PyChopModel, ABC):
         all_frequencies
             The frequency of each chopper, in the order of increasing distance from the moderator.
         """
-        frequencies += model_data.default_chopper_frequency[len(frequencies):]
         frequency_matrix = np.array(model_data.frequency_matrix)
 
         return np.dot(frequency_matrix, frequencies) + model_data.constant_frequencies
@@ -1299,7 +1227,7 @@ class PyChopModelCNCS(PyChopModelNonFermi):
     A PyChop :term:`model` for the CNCS :term:`instrument`.
 
     This :term:`model` is identical to all other PyChop models for instruments without a
-    :term:`Fermi chopper`, but the user-choice :term:`chopper` frequencies have unique names
+    :term:`Fermi chopper`, but the :term:`setting` ":term:`chopper` frequencies" have unique names
     compared to the other models.
 
     Parameters
@@ -1332,9 +1260,8 @@ class PyChopModelCNCS(PyChopModelNonFermi):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
-    output
-        The output of the ``__call__`` method.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataNonFermi` type.
     citation
@@ -1349,10 +1276,13 @@ class PyChopModelCNCS(PyChopModelNonFermi):
                  **_):
         super().__init__(model_data)
 
-        chopper_frequencies = [resolution_disk_frequency, fermi_frequency]
-        chopper_frequencies = self._validate_chopper_frequency(chopper_frequencies, model_data)
+        settings = {'e_init': e_init,
+                    'resolution_disk_frequency': resolution_disk_frequency,
+                    'fermi_frequency': fermi_frequency}
+        settings = self._validate_settings(model_data, settings)
 
-        e_init = self._validate_e_init(e_init, model_data)
+        e_init = settings['e_init']
+        chopper_frequencies = [settings['resolution_disk_frequency'], settings['fermi_frequency']]
 
         frequencies, resolution = self._precompute_resolution(model_data, e_init, chopper_frequencies)
         self._polynomial = Polynomial.fit(frequencies, resolution, fitting_order)
@@ -1367,14 +1297,15 @@ class PyChopModelLET(PyChopModelNonFermi):
     A PyChop :term:`model` for the LET :term:`instrument`.
 
     This :term:`model` is identical to all other PyChop models for instruments without a
-    :term:`Fermi chopper`, but the user-choice :term:`chopper` frequencies have unique names
+    :term:`Fermi chopper`, but the :term:`setting` ":term:`chopper` frequencies" have unique names
     compared to the other models.
 
     The LET instrument, specifically, has a set-up with multiple choppers of variable frequency, but
     where some of the choppers are set to a pre-determined fraction of the frequency of another
-    chopper. Further, this relationship changes depending on the ``chopper_package`` setting. The
-    `PyChopModelDataNonFermi.frequency_matrix` attribute describes this relationship, and the
-    `get_long_frequency` method can be used to compute the frequencies of all choppers.
+    chopper. Further, this relationship changes depending on the ``chopper_package``
+    :term:`configuration`. The `PyChopModelDataNonFermi.frequency_matrix` attribute describes this
+    relationship, and the `get_long_frequency` method can be used to compute the frequencies of all
+    choppers.
 
     Parameters
     ----------
@@ -1408,9 +1339,8 @@ class PyChopModelLET(PyChopModelNonFermi):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
-    output
-        The output of the ``__call__`` method.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PyChopModelDataNonFermi` type.
     citation
@@ -1425,10 +1355,14 @@ class PyChopModelLET(PyChopModelNonFermi):
                  **_):
         super().__init__(model_data)
 
-        chopper_frequencies = [resolution_frequency, pulse_remover_frequency]
-        chopper_frequencies = self._validate_chopper_frequency(chopper_frequencies, model_data)
+        settings = {'e_init': e_init,
+                    'resolution_frequency': resolution_frequency,
+                    'pulse_remover_frequency': pulse_remover_frequency}
+        settings = self._validate_settings(model_data, settings)
 
-        e_init = self._validate_e_init(e_init, model_data)
+        e_init = settings['e_init']
+        chopper_frequencies = [settings['resolution_frequency'],
+                               settings['pulse_remover_frequency']]
 
         frequencies, resolution = self._precompute_resolution(model_data, e_init, chopper_frequencies)
         self._polynomial = Polynomial.fit(frequencies, resolution, fitting_order)

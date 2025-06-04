@@ -8,18 +8,19 @@ version:
             d_sample_detector: 3.0                  # Distance (x2) from sample to detector (m)
             aperture_width: 0.1751         # Width of aperture at moderator face (m)
             theta: -13.75                   # Angle beamline makes with moderator face (degrees)
-            default_e_init: 500  # meV
-            allowed_e_init: [ 20, 1500 ]  # meV
-            default_chopper_frequency: 300
-            allowed_chopper_frequencies: [60, 601, 60]
+            defaults:
+                e_init: 200  # meV
+                chopper_frequency: 300
+            restrictions:
+                e_init: [ 20, 1500 ]  # meV
+                chopper_frequency: [60, 601, 60]
             frequency_matrix: [[1]]
-            moderator:
+            moderator: &moderator
                 type: 1
                 scaling_function: null
                 scaling_parameters: null
                 measured_wavelength: null
                 measured_width: null
-                parameters: [119.63, 33.618, .037, .17, 172.42]      # Parameters for time profile
             detector:
                 type: 2
                 phi: 0.0
@@ -34,9 +35,9 @@ version:
                 Fermi:
                     distance: 11.61  # m
                     aperture_distance: 9.342  # m
-        settings: &settings
-            chopper_package:
-                default_setting: 'ARCS-100-1.5-AST'
+        configurations:
+            chopper_package: &chopper_package
+                default_option: 'ARCS-100-1.5-AST'
                 SEQ-100-2.0-AST:
                     pslit: 2.03e-3  # m
                     radius: 50.0e-3  # m
@@ -62,21 +63,48 @@ version:
                     radius: 50.0e-3  # m
                     rho: 1.5350  # m
                     tjit: 0.0             # Jitter time (us)
-                ARCS-100-1.5-SMI:
-                    pslit: 1.52e-3  # m
-                    radius: 50.0e-3  # m
-                    rho: 0.5800  # m
-                    tjit: 0.0             # Jitter time (us)
-                ARCS-700-1.5-SMI:
-                    pslit: 1.52e-3  # m
-                    radius: 50.0e-3  # m
-                    rho: 1.5350  # m
-                    tjit: 0.0             # Jitter time (us)
         default_model: 'PyChop_fit'
         models:
-            PyChop_fit:
+            PyChop_fit: "PyChop_fit_v2"
+            PyChop_fit_v1:
                 function: "pychop_fit_fermi"
                 citation: ["Jiao Y.Y. Lin et. al., Phys. B, Volume 562, 2019, Pages 26-30, https://doi.org/10.1016/j.physb.2018.11.027"]
                 parameters:
                     <<: *constants
-                settings: *settings
+                    moderator:
+                        <<: *moderator
+                        parameters: [ 119.63, 33.618, .037, .17, 172.42 ]      # Parameters for time profile
+                configurations:
+                    chopper_package:
+                        <<: *chopper_package
+                        ARCS-100-1.5-SMI:
+                            pslit: 1.52e-3  # m
+                            radius: 50.0e-3  # m
+                            rho: 0.5800  # m
+                            tjit: 0.0             # Jitter time (us)
+                        ARCS-700-1.5-SMI:
+                            pslit: 1.52e-3  # m
+                            radius: 50.0e-3  # m
+                            rho: 1.5350  # m
+                            tjit: 0.0             # Jitter time (us)
+            PyChop_fit_v2:
+                function: "pychop_fit_fermi"
+                citation: [ "" ]
+                parameters:
+                    <<: *constants
+                    moderator:
+                        <<: *moderator
+                        parameters: [281., 79.0, .087, .4, 172.]     # Parameters for time profile
+                configurations:
+                    chopper_package:
+                        <<: *chopper_package
+                        ARCS-100-1.5-SMI:
+                            pslit: 1.5e-3  # m
+                            radius: 50.0e-3  # m
+                            rho: 0.6400  # m
+                            tjit: 0.0             # Jitter time (us)
+                        ARCS-700-1.5-SMI:
+                            pslit: 1.5e-3  # m
+                            radius: 50.0e-3  # m
+                            rho: 1.5350  # m
+                            tjit: 0.0             # Jitter time (us)

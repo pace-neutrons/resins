@@ -4,8 +4,8 @@ ResINS
 Python library for working with resolution functions of inelastic neutron
 scattering (INS) instruments. This package exists to centralise all things related to resolution of
 INS instruments and make it easier to work with. It pools related code from existing projects,
-namely :ref:`AbINS <https://github.com/mantidproject/mantid/tree/main/scripts/abins>`_ and
-:ref:`PyChop <https://github.com/mducle/pychop/tree/main>`_, as well as implementing code
+namely `AbINS <https://github.com/mantidproject/mantid/tree/main/scripts/abins>`_ and
+`PyChop <https://github.com/mducle/pychop/tree/main>`_, as well as implementing code
 published in literature. The main purposes are:
 
 1. Provide one, central place implementing various models for INS instruments (resolution functions)
@@ -23,5 +23,7 @@ Using ResINS
     quickstart
     glossary
     theory
+    howto
     api
     instruments
+    dev

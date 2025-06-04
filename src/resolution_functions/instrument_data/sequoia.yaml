@@ -8,23 +8,22 @@ version:
             d_sample_detector: 5.5                  # Distance (x2) from sample to detector (m)
             aperture_width: 0.050         # Width of aperture at moderator face (m)
             theta: -13.75                   # Angle beamline makes with moderator face (degrees)
-            default_e_init: 500  # meV
-            allowed_e_init: [ 4, 6000 ]  # meV
-            default_chopper_frequency: 300
-            allowed_chopper_frequencies: [60, 601, 60]
+            defaults:
+                e_init: 500  # meV
+                chopper_frequency: 420
+            restrictions:
+                e_init: [ 4, 6000 ]  # meV
+                chopper_frequency: [60, 601, 60]
             frequency_matrix: [[1]]
-            moderator:
+            moderator: &moderator
                 type: 1
                 scaling_function: null
                 measured_wavelength: null
-                parameters: [119.63, 33.618, .037, .17, 172.42]      # Parameters for time profile
             detector:
                 type: 2
                 phi: 0.0
                 depth: 0.025  # Detector depth (m)
-            sample:
-                type: 0  # Sample type: 0==flat plate, 1==ellipse, 2==annulus, 3==sphere, 4==solid cylinder
-                thickness: 2.0e-3  # Thickness (m)
+            sample: &sample
                 width: 4.8e-2  # Width (m)
                 height: 4.8e-2  # Height (m)
                 gamma: 0.0  # Angle of x-axis to ki (degrees)
@@ -32,28 +31,13 @@ version:
                 Fermi:
                     distance: 18.01  # m
                     aperture_distance: 17.0  # m
-        settings: &settings
-            chopper_package:
-                default_setting: 'ARCS-100-1.5-AST'
-                Fine:
-                    pslit: 1.087e-3  # m
-                    radius: 49.0e-3  # m
-                    rho: 1.300  # m
-                    tjit: 0.0             # Jitter time (us)
-                Sloppy:
-                    pslit: 1.812e-3  # m
-                    radius: 49.0e-3  # m
-                    rho: 0.92  # m
-                    tjit: 0.0             # Jitter time (us)
+        configurations:
+            chopper_package: &configurations
+                default_option: 'ARCS-100-1.5-AST'
                 SEQ-100-2.0-AST:
                     pslit: 2.03e-3  # m
                     radius: 50.0e-3  # m
                     rho: 0.5800  # m
-                    tjit: 0.0             # Jitter time (us)
-                SEQ-700-3.5-AST:
-                    pslit: 3.56e-3  # m
-                    radius: 50.0e-3  # m
-                    rho: 1.5350  # m
                     tjit: 0.0             # Jitter time (us)
                 ARCS-100-1.5-AST:
                     pslit: 1.52e-3  # m
@@ -82,9 +66,64 @@ version:
                     tjit: 0.0             # Jitter time (us)
         default_model: 'PyChop_fit'
         models:
-            PyChop_fit:
+            PyChop_fit: "PyChop_fit_v2"
+            PyChop_fit_v1:
                 function: "pychop_fit_fermi"
                 citation: [""]
                 parameters:
                     <<: *constants
-                settings: *settings
+                    moderator:
+                        <<: *moderator
+                        parameters: [ 119.63, 33.618, .037, .17, 172.42 ]      # Parameters for time profile
+                    sample:
+                        <<: *sample
+                        type: 0  # Sample type: 0==flat plate, 1==ellipse, 2==annulus, 3==sphere, 4==solid cylinder
+                        thickness: 2.0e-3  # Thickness (m)
+                configurations:
+                    chopper_package:
+                        <<: *configurations
+                        Fine:
+                            pslit: 1.087e-3  # m
+                            radius: 49.0e-3  # m
+                            rho: 1.300  # m
+                            tjit: 0.0             # Jitter time (us)
+                        Sloppy:
+                            pslit: 1.812e-3  # m
+                            radius: 49.0e-3  # m
+                            rho: 0.92  # m
+                            tjit: 0.0             # Jitter time (us)
+                        SEQ-700-3.5-AST:
+                            pslit: 3.56e-3  # m
+                            radius: 50.0e-3  # m
+                            rho: 1.5350  # m
+                            tjit: 0.0             # Jitter time (us)
+            PyChop_fit_v2:
+                function: "pychop_fit_fermi"
+                citation: [""]
+                parameters:
+                    <<: *constants
+                    moderator:
+                        <<: *moderator
+                        parameters: [30.13, 10.0, .07, .08, 50.42]    # Parameters for time profile
+                    sample:
+                        <<: *sample
+                        type: 2  # Sample type: 0==flat plate, 1==ellipse, 2==annulus, 3==sphere, 4==solid cylinder
+                        thickness: 4.8e-2  # Thickness (m)
+                configurations:
+                    chopper_package:
+                        <<: *configurations
+                        High-Resolution:
+                            pslit: 2.03e-3  # m
+                            radius: 50.0e-3  # m
+                            rho: 0.580  # m
+                            tjit: 0.0             # Jitter time (us)
+                        High-Flux:
+                            pslit: 4.56e-3  # m
+                            radius: 50.0e-3  # m
+                            rho: 1.535  # m
+                            tjit: 0.0             # Jitter time (us)
+                        SEQ-700-3.5-AST:
+                            pslit: 4.56e-3  # m
+                            radius: 50.0e-3  # m
+                            rho: 1.5350  # m
+                            tjit: 0.0             # Jitter time (us)

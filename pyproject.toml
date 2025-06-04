@@ -15,10 +15,27 @@ description = "Python library for working with resolution functions of neutron i
 readme = "README.md"
 license = {file = "LICENSE"}
 
+keywords = [
+    "Python",
+    "physics",
+    "inelastic neutron scattering",
+    "instrument resolution",
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
 dependencies = [
     "PyYAML >= 6.0.2",
     "numpy >= 1.26.4",
-    "scipy >= 1.13.1"
+    "scipy >= 1.13.1",
+    "typing_extensions >= 4.5.0",
 ]
 
 [project.optional-dependencies]
@@ -31,11 +48,12 @@ test = [
     "mantid >= 6.10.0",
     "pychop @ git+https://github.com/mducle/pychop.git",
     "more_itertools >= 10.5.0",
+    "pytest-mock >= 3.14.0",
 ]
 docs = [
     "sphinx >= 8.1.3",
     "numpydoc >= 1.8.0",
-    "inline_reference @ git+https://github.com/pace-neutrons/inline_reference.git",
+    "inline_reference",
     "sphinx_parsed_codeblock @ git+https://github.com/RastislavTuranyi/sphinx_parsed_codeblock.git",
     "sphinx_rtd_theme >= 3.0.2",
 ]

@@ -1,0 +1,79 @@
+name: 'TEST'
+default_version: 'TEST'
+
+version:
+    VERSION1:
+        constants: &version1_constants
+            param1: 5
+            param_2: 0.00051564
+            param3: -9.056457e6
+            string: "string"
+            lst: [0.151, -9.1, 88]
+            matrix:
+                [[1, 0],
+                 [0, 1]]
+            dictionary:
+                another_dict:
+                    val1: 1
+                    val2: 2
+                non_dict: 3
+            defaults: {}
+            restrictions:
+                kwarg2: [0]
+        configurations: &version1_configurations
+            config1:
+                default_option: "A"
+                A:
+                    param4: 4
+                    param5: 5
+                B:
+                    param4: 44
+                    param5: 55
+                C:
+                    param4: 444
+                    param5: 555
+            config2:
+                default_option: "X"
+                X:
+                    param6: 6
+                Y:
+                    param6: 0.6
+        default_model: "mock"
+        models:
+            mock: "mock_v3"
+            mock_v1:
+                function: "mock"
+                citation: [""]
+                parameters:
+                    <<: *version1_constants
+                    param1: "invalid type"
+                configurations: *version1_configurations
+            mock_v2:
+                function: "invalid_function"
+                citation: [""]
+                parameters: *version1_constants
+                configurations: *version1_configurations
+            mock_v3:
+                function: "mock"
+                citation: [""]
+                parameters: *version1_constants
+                configurations: *version1_configurations
+            empty: "empty_v1"
+            empty_v1:
+                function: "none"
+                citation: [""]
+                parameters:
+                    defaults: {}
+                    restrictions: {}
+                configurations: {}
+    TEST:
+        default_model: "invalid model"
+        models:
+            mock: "invalid model"
+            mock_v1:
+                function: "mock"
+                citation: [""]
+                parameters:
+                    defaults: {}
+                    restrictions: {}
+                configurations: {}

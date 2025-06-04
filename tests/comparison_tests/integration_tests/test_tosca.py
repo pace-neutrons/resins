@@ -38,8 +38,12 @@ def test_tosca_against_abins(frequencies,
                              tosca_abins_resolution_function_forward,
                              tosca_abins
                              ):
-    backward = tosca_abins_resolution_function_backward(frequencies)
-    forward = tosca_abins_resolution_function_forward(frequencies)
+    backward = tosca_abins_resolution_function_backward.get_characteristics(
+        frequencies[:, None]
+    )["sigma"]
+    forward = tosca_abins_resolution_function_forward.get_characteristics(
+        frequencies[:, None]
+    )["sigma"]
     actual = (backward + forward) * 0.5
 
     expected = tosca_abins.get_sigma(frequencies * MEV_TO_WAVENUMBER) * WAVENUMBER_TO_MEV

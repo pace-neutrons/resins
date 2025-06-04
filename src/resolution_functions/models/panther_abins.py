@@ -13,7 +13,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
-from .model_base import InstrumentModel, ModelData
+from .model_base import InstrumentModel, ModelData, InvalidPointsError
+from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -30,6 +31,13 @@ class PantherAbINSModelData(ModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     abs
         Polynomial coefficients for the energy transfer (frequencies) polynomial.
     ei_dependence
@@ -37,15 +45,13 @@ class PantherAbINSModelData(ModelData):
     ei_energy_product
         Polynomial coefficients for the product of initial energy and energy transfer (frequencies)
         polynomial.
-    restrictions
-    defaults
     """
     abs: list[float]
     ei_dependence: list[float]
     ei_energy_product: list[float]
 
 
-class PantherAbINSModel(InstrumentModel):
+class PantherAbINSModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     Model for the PANTHER :term:`instrument` originating from the AbINS software.
 
@@ -53,7 +59,7 @@ class PantherAbINSModel(InstrumentModel):
     output model being a Gaussian. This is done by fitting three power-series polynomials (see
     `numpy.polynomial.polynomial.Polynomial`) to the resolution curve, where the result of the sum
     of the polynomials is the width (sigma) of the Gaussian. Each polynomial can be of any degree
-    ane is given via the `resolution_functions.models.polynomial.PolynomialModelData`.
+    and is given via the `resolution_functions.models.polynomial.PolynomialModelData`.
 
     The :term:`resolution` is modelled as::
 
@@ -69,14 +75,13 @@ class PantherAbINSModel(InstrumentModel):
     model_data
         The data associated with the model for a given version of a given instrument.
     e_init
-        The initial energy in meV.
+        The incident energy in meV.
 
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
-    output
-        The output of the ``__call__`` method.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PantherAbINSModelData` type.
     abs : numpy.polynomial.polynomial.Polynomial
@@ -87,35 +92,48 @@ class PantherAbINSModel(InstrumentModel):
         The energy transfer and `e_init` product polynomial.
     citation
     """
-    input = 1
-    output = 1
+    input = ('energy_transfer',)
 
     data_class = PantherAbINSModelData
 
-    def __init__(self, model_data: PantherAbINSModelData, e_init: float, **_):
+    def __init__(self, model_data: PantherAbINSModelData, e_init: float | None = None, **_):
         super().__init__(model_data)
 
-        self.e_init = e_init
+        settings = self._validate_settings(model_data, {'e_init': e_init})
+
+        self.e_init = settings['e_init']
         self.abs = Polynomial(model_data.abs)
-        self.ei_dependence = Polynomial(model_data.ei_dependence)(e_init)
+        self.ei_dependence = Polynomial(model_data.ei_dependence)(settings['e_init'])
         self.ei_energy_product = Polynomial(model_data.ei_energy_product)
 
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs) -> Float[np.ndarray, 'sigma']:
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
+                            ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
+        Computes the broadening width at each value of energy transfer given by `points`.
+
+        The model approximates the broadening using the Gaussian distribution, so the returned
+        widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
+        points
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
+        characteristics
+            The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        resolution = (self.abs(frequencies) +
+        try:
+            points = points[:, 0]
+        except IndexError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        resolution = (self.abs(points) +
                       self.ei_dependence +
-                      self.ei_energy_product(self.e_init * frequencies))
-        return resolution / (2 * np.sqrt(2 * np.log(2)))
+                      self.ei_energy_product(self.e_init * points))
+        return {'sigma': resolution / (2 * np.sqrt(2 * np.log(2)))}

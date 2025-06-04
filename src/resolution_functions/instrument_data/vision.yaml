@@ -4,8 +4,10 @@ default_version: 'VISION'
 version:
     VISION:
         constants: &vision_constants
+            defaults: {}
+            restrictions: {}
             primary_flight_path: 15.  # m
-            primary_flight_path_uncertainty: null
+            primary_flight_path_uncertainty: 0.0054 # m
             sample_thickness: 0.002  # m
             detector_thickness: 0.003  # m
             crystal_plane_spacing: 3.348e-10  # m
@@ -14,11 +16,12 @@ version:
             average_bragg_angle_graphite: 45.  # deg
         default_model: "vision"
         models:
-            vision:
+            vision: "vision_v1"
+            vision_v1:
                 function: "vision_paper"
                 citation: ["P. A. Seeger, L. L. Daemen, and J. Z. Larese, Nucl. Instrum. Methods Phys. Res., Sect. A, 2009, 604, 3, 719-728. https://doi.org/10.1016/j.nima.2009.03.204"]
                 parameters:
                     <<: *vision_constants
                     d_r: 11.6e-6
                     d_t: null
-                settings: {  }
+                configurations: {  }

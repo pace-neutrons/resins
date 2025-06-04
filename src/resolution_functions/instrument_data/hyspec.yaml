@@ -8,10 +8,12 @@ version:
             d_sample_detector: 4.5                  # Distance (x2) from sample to detector (m)
             aperture_width: 0.0         # Width of aperture at moderator face (m)
             theta: 32.0                   # Angle beamline makes with moderator face (degrees)
-            default_e_init: 30  # meV
-            allowed_e_init: [ 3.6, 61.0 ]  # meV
-            default_chopper_frequency: 180
-            allowed_chopper_frequencies: [60, 421, 60]
+            defaults:
+                e_init: 30  # meV
+                chopper_frequency: 180
+            restrictions:
+                e_init: [ 3.6, 61.0 ]  # meV
+                chopper_frequency: [60, 421, 60]
             frequency_matrix:
                 [ [ 0 ],
                   [ 0 ],
@@ -71,9 +73,9 @@ version:
                 Fermi:
                     distance: 37.17  # m
                     aperture_distance: 37.0  # m
-        settings: &settings
+        configurations: &configurations
             chopper_package:
-                default_setting: 'OnlyOne'
+                default_option: 'OnlyOne'
                 OnlyOne:
                     pslit: 0.6e-3  # m
                     radius: 5.0e-3  # m
@@ -81,9 +83,10 @@ version:
                     tjit: 0.0
         default_model: 'PyChop_fit'
         models:
-            PyChop_fit:
+            PyChop_fit: "PyChop_fit_v1"
+            PyChop_fit_v1:
                 function: "pychop_fit_fermi"
                 citation: [""]
                 parameters:
                     <<: *constants
-                settings: *settings
+                configurations: *configurations

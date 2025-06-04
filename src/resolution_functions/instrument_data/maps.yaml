@@ -8,10 +8,12 @@ version:
             d_sample_detector: 6.0                  # Distance (x2) from sample to detector (m)
             aperture_width: 0.094         # Width of aperture at moderator face (m)
             theta: 32.0                   # Angle beamline makes with moderator face (degrees)
-            default_e_init: 500  # meV
-            allowed_e_init: [ 0, 2000 ]  # meV
-            default_chopper_frequency: 400
-            allowed_chopper_frequencies: [50, 601, 50]
+            defaults:
+                e_init: 500  # meV
+                chopper_frequency: 400
+            restrictions:
+                e_init: [ 0, 2000 ]  # meV
+                chopper_frequency: [50, 601, 50]
             frequency_matrix:
                 [[0, 1],                    # f1 is the Fermi frequency
                  [1, 0]]                    # f2 is the Disk frequency
@@ -46,9 +48,9 @@ version:
                 Fermi:
                     distance: 10.143  # m
                     aperture_distance: 8.27  # m
-        settings: &maps_settings
+        configurations: &maps_configurations
             chopper_package:
-                default_setting: 'A'
+                default_option: 'A'
                 A:
                     pslit: 1.087e-3  # m
                     radius: 49.0e-3  # m
@@ -66,12 +68,13 @@ version:
                     tjit: 0.0             # Jitter time (us)
         default_model: 'PyChop_fit'
         models:
-            PyChop_fit:
+            PyChop_fit: "PyChop_fit_v1"
+            PyChop_fit_v1:
                 function: "pychop_fit_fermi"
                 citation: [""]
                 parameters:
                     <<: *maps_constants
-                settings: *maps_settings
+                configurations: *maps_configurations
 #            PyChop_tau:
 #                function: "2d_tau"
 #                parameters:

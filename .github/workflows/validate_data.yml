@@ -1,0 +1,26 @@
+name: Validate supplied data against YAML schema
+
+on: [push,workflow_dispatch]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Setup python environment
+      shell: bash -el {0}
+      run: pip install .
+
+    - name: validate YAML data structure
+      shell: bash -el {0}
+      run: python dev/validate_data_file.py --disable-resins
+
+    - name: validate model parameters
+      shell: bash -el {0}
+      run: python dev/validate_data_file.py --disable-yaml

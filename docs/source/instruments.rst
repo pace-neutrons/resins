@@ -3,8 +3,8 @@ Instruments
 
 This section contains the data associated with each supported :term:`instrument`. It lists its
 available :term:`versions<version>` and the :term:`models<model>` available for each :term:`version`.
-The :term:`settings<setting>` and their :term:`options<option>` are similarly listed. All of this
-information is provided to help with the construction of the
+The :term:`configurations<configuration>` and their :term:`options<option>` are similarly listed.
+All of this information is provided to help with the construction of the
 :py:class:`resolution_functions.Instrument` object and subsequent acquisition of the resolution
 function.
 

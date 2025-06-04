@@ -11,7 +11,7 @@ from resolution_functions.instrument import Instrument
 
 WAVENUMBER_TO_MEV = 0.12398419843320028
 MEV_TO_WAVENUMBER = 1 / WAVENUMBER_TO_MEV
-LAGRANGE_SETTINGS = ['Cu(220)', 'Cu(331)', 'Si(311)', 'Si(111)']
+LAGRANGE_CONFIGURATIONS = ['Cu(220)', 'Cu(331)', 'Si(311)', 'Si(111)']
 
 
 @pytest.fixture(scope="module")
@@ -19,7 +19,7 @@ def lagrange_rf():
     return Instrument.from_default('Lagrange', 'Lagrange')
 
 
-@pytest.fixture(scope="module", params=LAGRANGE_SETTINGS)
+@pytest.fixture(scope="module", params=LAGRANGE_CONFIGURATIONS)
 def lagrange_abins_plus_rf_abins_resolution_function(lagrange_rf, request):
     abins = LagrangeInstrument(setting=request.param + ' (Lagrange)')
     rf = lagrange_rf.get_resolution_function('AbINS', monochromator=request.param)
@@ -49,7 +49,7 @@ def test_lagrange_against_abins(
     if abins.get_setting() == "Cu(220) (Lagrange)" and label == FreqRange.LOW:
         pytest.xfail(reason="LAGRANGE low frequencies to be fixed in Abins")
 
-    actual = rf(frequencies)
+    actual = rf.get_characteristics(frequencies[:, None])["sigma"]
     expected = abins.get_sigma(frequencies * MEV_TO_WAVENUMBER) * WAVENUMBER_TO_MEV
 
     assert_allclose(actual, expected, rtol=1e-5)

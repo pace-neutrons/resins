@@ -49,10 +49,14 @@ version:
             d_sample_detector: 3.5                  # Distance (x2) from sample to detector (m)
             aperture_width: 0.        # Width of aperture at moderator face (m)
             theta: 32.0                   # Angle beamline makes with moderator face (degrees)
-            default_e_init: 20  # meV
-            allowed_e_init: [ 0.5, 80 ]  # meV
-            default_chopper_frequency: [ 300, 60 ]
-            allowed_chopper_frequencies: [[60, 301, 60], [60, 301, 60]]
+            defaults:
+                e_init: 20  # meV
+                resolution_disk_frequency: 300
+                fermi_frequency: 60
+            restrictions:
+                e_init: [ 0.5, 80 ]  # meV
+                resolution_disk_frequency: [60, 301, 60]
+                fermi_frequency: [60, 301, 60]
             constant_frequencies: [0, 60, 60, 0]
             frequency_matrix:
                 [ [ 0, 1 ],                    #   f1: The frequency of the resolution chopper (Chopper 4)
@@ -93,9 +97,9 @@ version:
                 width: 1.e-2  # Width (m)
                 height: 6.e-2  # Height (m)
                 gamma: 0.0  # Angle of x-axis to ki (degrees)
-        settings: &settings
+        configurations: &configurations
             chopper_package:
-                default_setting: 'High Flux'
+                default_option: 'High Flux'
                 High Flux:
                     choppers:
                         <<: *choppers
@@ -116,9 +120,10 @@ version:
                             slot_width: 9.86
         default_model: 'PyChop_fit'
         models:
-            PyChop_fit:
+            PyChop_fit: "PyChop_fit_v1"
+            PyChop_fit_v1:
                 function: "pychop_fit_cncs"
                 citation: [""]
                 parameters:
                     <<: *constants
-                settings: *settings
+                configurations: *configurations

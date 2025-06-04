@@ -13,7 +13,8 @@ from typing import ClassVar, TYPE_CHECKING
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 
-from .model_base import InstrumentModel, ModelData
+from .model_base import InstrumentModel, ModelData, InvalidPointsError
+from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -30,15 +31,20 @@ class PolynomialModelData(ModelData):
         The name of the function, i.e. the alias for `PolynomialModel1D`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     fit
         Polynomial coefficients.
-    restrictions
-    defaults
     """
     fit: list[float]
 
 
-class PolynomialModel1D(InstrumentModel):
+class PolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     Model using a 1D polynomial to model an :term:`instrument`.
 
@@ -56,17 +62,15 @@ class PolynomialModel1D(InstrumentModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
-    output
-        The output of the ``__call__`` method.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PolynomialModelData` type.
     polynomial : numpy.polynomial.polynomial.Polynomial
         The polynomial representing the resolution function.
     citation
     """
-    input = 1  # tuple of strings
-    output = 1
+    input = ('energy_transfer',)
 
     data_class: ClassVar[type[PolynomialModelData]] = PolynomialModelData
 
@@ -74,23 +78,34 @@ class PolynomialModel1D(InstrumentModel):
         super().__init__(model_data)
         self.polynomial = Polynomial(model_data.fit)
 
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs
-                 ) -> Float[np.ndarray, 'sigma']:
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
+                            ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
+        Computes the broadening width at each value of energy transfer (`points`).
+
+        The model approximates the broadening using the Gaussian distribution, so the returned
+        widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
+        points
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
+        characteristics
+            The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        return self.polynomial(frequencies)
+        try:
+            points = points[:, 0]
+        except IndexError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        return {'sigma': self.polynomial(points)}
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
@@ -104,6 +119,13 @@ class DiscontinuousPolynomialModelData(ModelData):
         The name of the function, i.e. the alias for `DiscontinuousPolynomialModel1D`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     fit
         Polynomial coefficients.
     low_energy_cutoff
@@ -118,8 +140,6 @@ class DiscontinuousPolynomialModelData(ModelData):
     high_energy_resolution
         The value (in meV) to which ``sigma`` is set when the energy transfer is higher than
         `high_energy_cutoff`.
-    restrictions
-    defaults
     """
     fit: list[float]
     low_energy_cutoff: float = - np.inf
@@ -128,7 +148,7 @@ class DiscontinuousPolynomialModelData(ModelData):
     high_energy_resolution: float = 0.
 
 
-class DiscontinuousPolynomialModel1D(InstrumentModel):
+class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     Model using a 1D polynomial to model an :term:`instrument`, but with values above and below
     certain energy transfer set to constant values.
@@ -151,9 +171,8 @@ class DiscontinuousPolynomialModel1D(InstrumentModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
-    output
-        The output of the ``__call__`` method.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `DiscontinuousPolynomialModelData` type.
     polynomial : numpy.polynomial.polynomial.Polynomial
@@ -172,8 +191,7 @@ class DiscontinuousPolynomialModel1D(InstrumentModel):
         `high_energy_cutoff`.
     citation
     """
-    input = 1
-    output = 1
+    input = ('energy_transfer',)
 
     data_class: ClassVar[type[DiscontinuousPolynomialModelData]] = DiscontinuousPolynomialModelData
 
@@ -188,31 +206,39 @@ class DiscontinuousPolynomialModel1D(InstrumentModel):
         self.high_energy_cutoff = model_data.high_energy_cutoff
         self.high_energy_resolution = model_data.high_energy_resolution
 
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies']) -> Float[np.ndarray, 'sigma']:
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
+                            ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Gaussian widths (sigma).
+        Computes the broadening width at each value of energy transfer given by `points`.
+
+        The model approximates the broadening using the Gaussian distribution, so the returned
+        widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
+        points
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
-        sigma
-            The Gaussian widths at `frequencies` as predicted by this model.
-
-        Raises
-        ------
-        AssertionError
-            If any of the widths are negative.
+        characteristics
+            The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        result = self.polynomial(frequencies)
+        try:
+            points = points[:, 0]
+        except IndexError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+
+        result = self.polynomial(points)
 
         assert np.all(result > 0)
 
-        result[frequencies < self.low_energy_cutoff] = self.low_energy_resolution
-        result[frequencies > self.high_energy_cutoff] = self.high_energy_resolution
+        result[points < self.low_energy_cutoff] = self.low_energy_resolution
+        result[points > self.high_energy_cutoff] = self.high_energy_resolution
 
-        return result * 0.5
+        return {'sigma': result * 0.5}

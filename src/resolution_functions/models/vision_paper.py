@@ -10,11 +10,12 @@ obtaining the :term:`resolution function` of an :term:`instrument`, please use t
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .model_base import InstrumentModel, ModelData
+from .model_base import InstrumentModel, ModelData, InvalidPointsError
+from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -31,6 +32,13 @@ class VisionPaperModelData(ModelData):
         The name of the function, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
     primary_flight_path
         Distance between the :term:`moderator` and the :term:`sample` in meters (m).
     primary_flight_path_uncertainty
@@ -51,8 +59,6 @@ class VisionPaperModelData(ModelData):
         Distance between the :term:`sample` and the analyser, in meters (m).
     average_bragg_angle_graphite
         Average Bragg angle of the graphite analyser, in degrees.
-    restrictions
-    defaults
     """
     primary_flight_path: float
     primary_flight_path_uncertainty: float
@@ -66,7 +72,7 @@ class VisionPaperModelData(ModelData):
     average_bragg_angle_graphite: float
 
 
-class VisionPaperModel(InstrumentModel):
+class VisionPaperModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     Model for TOSCA-like :term:`instruments<instrument>` from the [VISION paper]_.
 
@@ -83,15 +89,13 @@ class VisionPaperModel(InstrumentModel):
     Attributes
     ----------
     input
-        The input that the ``__call__`` method expects.
-    output
-        The output of the ``__call__`` method.
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `VisionPaperModelData` type.
     citation
     """
-    input = 1
-    output = 1
+    input = ('energy_transfer',)
 
     data_class = VisionPaperModelData
 
@@ -123,22 +127,34 @@ class VisionPaperModel(InstrumentModel):
 
         self.final_term = self.e0 / np.tan(self.theta) / self.z2 * model_data.d_r
 
-    def __call__(self, frequencies: Float[np.ndarray, 'frequencies']) -> Float[np.ndarray, 'sigma']:
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
+                            ) -> dict[str, Float[np.ndarray, 'sigma']]:
         """
-        Evaluates the model at given energy transfer values (`frequencies`), returning the
-        corresponding Ikeda-Carpenter widths (FWHM).
+        Computes the broadening width at each value of energy transfer given by `points`.
+
+        The model approximates the broadening using the Gaussian distribution, so the returned
+        widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        frequencies
-            Energy transfer in meV. The frequencies at which to return widths.
+        points
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
 
         Returns
         -------
-        fwhm
-            The Ikeda-Carpenter widths at `frequencies` as predicted by this model.
+        characteristics
+            The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        e1 = frequencies * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
+        try:
+            points = points[:, 0]
+        except IndexError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        e1 = points * self.REDUCED_PLANCK + self.e0 * (1 / np.sin(self.theta))
         z0 = self.l1 * (self.e0 / e1) ** 0.5
         one_over_z0 = 1 / z0
 
@@ -148,4 +164,4 @@ class VisionPaperModel(InstrumentModel):
         sigma *= 2 * e1
         sigma -= self.final_term
 
-        return sigma
+        return {'sigma': sigma}
