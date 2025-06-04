@@ -31,7 +31,7 @@ version:
             AbINS: "AbINS_v1"
             AbINS_v1:
                 function: "discontinuous_polynomial"
-                citation: [""]
+                citation: ["Mantid (2013): Manipulation and Analysis Toolkit for Instrument Data.; Mantid Project. http://dx.doi.org/10.5286/SOFTWARE/MANTID6.10"]
                 parameters:
                     defaults: {}
                     restrictions: {}
