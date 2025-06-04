@@ -92,7 +92,9 @@ version:
                 # sigma = tosca_a * omega * omega + tosca_b * omega + tosca_c
                 # where sigma is width of Gaussian function
                 function: "polynomial_1d"
-                citation: [""]
+                citation: [
+                    "K. Dymkowski, S. F. Parker, F. Fernandez-Alonso, S. Mukhopadhyay, Phys. B: Condens. Matter, 2018, 551, 443-448. https://doi.org/10.1016/j.physb.2018.02.034.",
+                    "Y. Q. Cheng, L. L. Daemen, A. I. Kolesnikov, and A. J. Ramirez-Cuesta, J. Chem. Theory Comput., 2019, 15, 1974-1982. https://doi.org/10.1021/acs.jctc.8b01250"]
                 #original_parameters: [2.5, 0.005, 0.0000001] wavenumber
                 parameters:
                     defaults: {}
