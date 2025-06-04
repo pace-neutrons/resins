@@ -69,7 +69,9 @@ version:
             PyChop_fit: "PyChop_fit_v2"
             PyChop_fit_v1:
                 function: "pychop_fit_fermi"
-                citation: [""]
+                citation: ["Jiao Y.Y. Lin et. al., Phys. B, Volume 562, 2019, Pages 26-30, https://doi.org/10.1016/j.physb.2018.11.027",
+                           "R. I. Bewley, R. A. Ewings, M. D. Le, T. G. Perring and D. J. Voneshen, 2018. PyChop",
+                           "https://mantidproject.github.io/docs-versioned/v6.10.0/interfaces/direct/PyChop.html"]
                 parameters:
                     <<: *constants
                     moderator:
