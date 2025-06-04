@@ -24,7 +24,7 @@ version:
                     average_secondary_flight_path: 0.671  # m
                     average_final_energy: 3.909  # meV
                     average_bragg_angle_graphite: 43.  # deg
-                    change_average_bragg_angle_graphite: 5.0814852427945665
+                    change_average_bragg_angle_graphite: 5.637684123246608
         default_model: "book"
         models:
             book: "book_v1"
