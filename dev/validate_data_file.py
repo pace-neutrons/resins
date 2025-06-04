@@ -2,6 +2,7 @@ import argparse
 import glob
 from itertools import product
 import logging
+from pathlib import Path
 import os
 import warnings
 
@@ -305,7 +306,13 @@ def validate_with_resins(data: dict) -> None:
                     ) from e
 
 
-def main(path: str,
+def _default_paths():
+    """Get instrument data yaml files from this package"""
+    data_dir = Path(__file__).parent.parent / 'src/resolution_functions/instrument_data'
+    return list(data_dir.glob('*.yaml'))
+
+
+def main(paths: list[Path],
          logger: logging.Logger,
          skip_yaml: bool = False,
          skip_resins: bool = False) -> None:
@@ -314,8 +321,8 @@ def main(path: str,
 
     Parameters
     ----------
-    path
-        The path to the file(s) to validate.
+    paths
+        Paths of file(s) to validate.
     logger
         The logger to use for logging
     skip_yaml
@@ -323,16 +330,14 @@ def main(path: str,
     skip_resins
         If True, disables file validation by ResINS
     """
-    files = glob.glob(path)
+    for path in paths:
+        logger.info(path)
 
-    for file in files:
-        logger.info(file)
-
-        with open(file, 'r') as f:
-            data = yaml.safe_load(f)
+        with open(path, 'r') as fd:
+            data = yaml.safe_load(fd)
 
         if not skip_yaml:
-            validate_top_level(data, os.path.split(file)[-1])
+            validate_top_level(data, path.name)
 
         if not skip_resins:
             validate_with_resins(data)
@@ -341,11 +346,8 @@ def main(path: str,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    default = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    default = os.path.join(default, 'src', 'resolution_functions', 'instrument_data', '*.yaml')
-
-    parser.add_argument('path', nargs='?', default=default,
-                        help='The path to the YAML data file(s) to validate. May include globs.')
+    parser.add_argument('paths', nargs='*', default=None, type=Path,
+                        help='YAML data file(s) to validate.')
     parser.add_argument('-dy', '--disable-yaml', action='store_true',
                         help='Disables YAML data validation by dedicated validator')
     parser.add_argument('-dr', '--disable-resins', action='store_true',
@@ -357,4 +359,7 @@ if __name__ == '__main__':
     logger = logging.getLogger()
     logging.basicConfig(level=args.log_level)
 
-    main(args.path, logger, args.disable_yaml, args.disable_resins)
+    if not args.paths:
+        args.paths = _default_paths()
+
+    main(args.paths, logger, args.disable_yaml, args.disable_resins)
