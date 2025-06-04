@@ -96,12 +96,14 @@ class PantherAbINSModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
 
     data_class = PantherAbINSModelData
 
-    def __init__(self, model_data: PantherAbINSModelData, e_init: float, **_):
+    def __init__(self, model_data: PantherAbINSModelData, e_init: float | None = None, **_):
         super().__init__(model_data)
 
-        self.e_init = e_init
+        settings = self._validate_settings(model_data, {'e_init': e_init})
+
+        self.e_init = settings['e_init']
         self.abs = Polynomial(model_data.abs)
-        self.ei_dependence = Polynomial(model_data.ei_dependence)(e_init)
+        self.ei_dependence = Polynomial(model_data.ei_dependence)(settings['e_init'])
         self.ei_energy_product = Polynomial(model_data.ei_energy_product)
 
     def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
