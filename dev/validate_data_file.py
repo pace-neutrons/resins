@@ -1,9 +1,7 @@
 import argparse
-import glob
 from itertools import product
 import logging
 from pathlib import Path
-import os
 import warnings
 
 import yaml
@@ -26,23 +24,23 @@ def validate_top_level(data: dict, header: str) -> None:
     header
         The header to prepend to error messages - should include the file name.
     """
-    if not 'name' in data:
+    if 'name' not in data:
         raise ValidationError(f'{header}: the "name" key is missing.')
     elif not isinstance(data['name'], str):
         raise ValidationError(f'{header}: the "name" must be a str (is a {type(data["name"])})')
 
-    if not 'version' in data:
+    if 'version' not in data:
         raise ValidationError(f'{header}: the "version" key is missing.')
     elif not isinstance(data['version'], dict):
         raise ValidationError(f'{header}: the "version" must be a (YAML) dict (is a '
                               f'{type(data["version"])})')
 
-    if not 'default_version' in data:
+    if 'default_version' not in data:
         raise ValidationError(f'{header}: the "default_version" key is missing.')
     elif not isinstance(data['default_version'], str):
         raise ValidationError(f'{header}: the "default_version" must be a str (is a '
                               + str(type(data['default_version'])) + ')')
-    elif not data['default_version'] in data['version']:
+    elif data['default_version'] not in data['version']:
         raise ValidationError(f'{header}: the "default_version" must correspond to one of the '
                               f'specified versions. I.e. "{data["default_version"]}" not in '
                               f'{list(data["version"].keys())}')
@@ -85,7 +83,7 @@ def validate_version(version: dict, header: str) -> None:
     header
         The header to prepend to error messages.
     """
-    if not 'models' in version:
+    if 'models' not in version:
         raise ValidationError(f'{header}the "models" key is missing.')
     elif not isinstance(version['models'], dict):
         raise ValidationError(f'{header}the "models" must be a str (is a {type(version["name"])})')
@@ -128,7 +126,7 @@ def validate_models_dict(models_dict: dict, header: str) -> None:
                                       f'(versioned) model should not normally end with an _integer',
                                       Warning)
 
-            if not model_value in models_dict:
+            if model_value not in models_dict:
                 raise ValidationError(f'{header} does not point to a specified model. I.e. '
                                       f'"{model_value}" not in {list(models_dict.keys())}')
             elif not isinstance(models_dict[model_value], dict):
@@ -170,13 +168,13 @@ def validate_model(model: dict, header: str) -> None:
     header
         The header to prepend to error messages.
     """
-    if not 'function' in model:
+    if 'function' not in model:
         raise ValidationError(f'{header}the "function" key is missing.')
     elif not isinstance(model['function'], str):
         raise ValidationError(f'{header}the "function" must be a str (is a '
                               f'{type(model["function"])})')
 
-    if not 'citation' in model:
+    if 'citation' not in model:
         raise ValidationError(f'{header}the "citation" key is missing.')
     elif not isinstance(model['citation'], list):
         raise ValidationError(f'{header}the "citation" must be a list of str (is a '
@@ -187,13 +185,13 @@ def validate_model(model: dict, header: str) -> None:
                 raise ValidationError(f'{header}the "citation" must be a list of str (entry '
                                       f'"{value}" is a {type(model["citation"])})')
 
-    if not 'parameters' in model:
+    if 'parameters' not in model:
         raise ValidationError(f'{header}the "parameters" key is missing.')
     elif not isinstance(model['parameters'], dict):
         raise ValidationError(f'{header}the "parameters" must be a (YAML) dict (is a '
                               f'{type(model["parameters"])})')
 
-    if not 'configurations' in model:
+    if 'configurations' not in model:
         raise ValidationError(f'{header}the "configurations" key is missing.')
     elif not isinstance(model['configurations'], dict):
         raise ValidationError(f'{header}the "configurations" must be a (YAML) dict (is a '
@@ -239,12 +237,12 @@ def validate_configuration(configuration: dict, header: str) -> None:
     header
         The header to prepend to the error messages.
     """
-    if not 'default_option' in configuration:
+    if 'default_option' not in configuration:
         raise ValidationError(f'{header}the "default_option" key is missing.')
     elif not isinstance(configuration['default_option'], str):
         raise ValidationError(f'{header}the "default_option" must be a str (is a '
                               f'{type(configuration["default_option"])})')
-    elif not configuration['default_option'] in configuration:
+    elif configuration['default_option'] not in configuration:
         raise ValidationError(f'{header}the "default_option" must correspond to one of the provided'
                               f' options. I.e. "{configuration["default_option"]}" not in '
                               f'{list(configuration.keys())}')
