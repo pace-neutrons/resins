@@ -10,17 +10,15 @@ import importlib
 
 import numpy as np
 import yaml
-from typing import Iterator, Iterable, Optional, Union, TYPE_CHECKING
-
-
-INSTRUMENT_DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instrument_data')
-
+from typing import Iterator, Optional, Union, TYPE_CHECKING
 
 from .models import MODELS
 
 if TYPE_CHECKING:
     from .models.model_base import ModelData, InstrumentModel
     from inspect import Signature
+
+INSTRUMENT_DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instrument_data')
 
 INSTRUMENT_MAP: dict[str, tuple[str, None | str]] = {
     'ARCS': ('arcs.yaml', None),
