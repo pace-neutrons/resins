@@ -21,6 +21,9 @@ if TYPE_CHECKING:
     from jaxtyping import Float
 
 
+FWHM2SIGMA = 1 / (2 * np.sqrt(2 * np.log(2)))
+
+
 @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
 class ToscaBookModelData(ModelData):
     """
@@ -114,26 +117,30 @@ class ToscaBookModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMode
     data_class = ToscaBookModelData
 
     REDUCED_PLANCK_SQUARED = 4.18019
+    NEUTRON_MASS = 1
 
     def __init__(self, model_data: ToscaBookModelData, **_):
         super().__init__(model_data)
-        da = model_data.average_secondary_flight_path * np.sin(np.deg2rad(model_data.average_bragg_angle_graphite))
+        theta = np.deg2rad(model_data.average_bragg_angle_graphite)
+        da = 0.5 * model_data.average_secondary_flight_path * np.sin(theta)
+        dt = (model_data.sample_thickness ** 2 +
+              4 * model_data.graphite_thickness ** 2 +
+              model_data.detector_thickness ** 2) ** 0.5
 
-        self.time_dependent_term_factor = model_data.water_moderator_constant ** 2 * self.REDUCED_PLANCK_SQUARED
-        self.final_energy_term_factor = (2 * model_data.average_final_energy *
-                                         model_data.change_average_bragg_angle_graphite /
-                                         np.tan(np.deg2rad(model_data.average_bragg_angle_graphite)))
-        self.time_dependent_term_factor += (2 * model_data.average_final_energy *
-                                            (model_data.sample_thickness ** 2 +
-                                             4 * model_data.graphite_thickness ** 2 +
-                                             model_data.detector_thickness ** 2) ** 0.5 / da) ** 2
-        self.time_dependent_term_factor = np.sqrt(self.time_dependent_term_factor)
+        self.time_dependent_term_factor = (0.5 * model_data.water_moderator_constant ** 2
+                                           * self.REDUCED_PLANCK_SQUARED / self.NEUTRON_MASS)
+
+        self.final_energy_factor = (2 * model_data.average_final_energy * dt / da) ** 2
+        angle_contrib = model_data.change_average_bragg_angle_graphite / np.tan(theta)
+        self.final_energy_factor += (2 * model_data.average_final_energy * angle_contrib) ** 2
+        self.final_energy_factor **= 0.5
+
+        self.final_flight_factor = 2 * dt / np.sin(theta)
 
         self.average_final_energy = model_data.average_final_energy
         self.primary_flight_path = model_data.primary_flight_path
         self.primary_flight_path_uncertainty = model_data.primary_flight_path_uncertainty
         self.average_secondary_flight_path = model_data.average_secondary_flight_path
-        self.average_bragg_angle = model_data.average_bragg_angle_graphite
         self.time_channel_uncertainty2 = model_data.time_channel_uncertainty ** 2
 
     def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
@@ -165,20 +172,18 @@ class ToscaBookModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMode
             ) from e
         ei = points + self.average_final_energy
 
-        time_dependent_term = (2 / NEUTRON_MASS) ** 0.5 * ei ** 1.5 / self.primary_flight_path
-        time_dependent_term *= self.time_dependent_term_factor / (
-                    2 * NEUTRON_MASS * ei) + self.time_channel_uncertainty2
+        time_term = 2 * (2 / self.NEUTRON_MASS) ** 0.5 * ei ** 1.5 / self.primary_flight_path
+        time_term *= (self.time_dependent_term_factor / ei + self.time_channel_uncertainty2) ** 0.5
 
         incident_flight_term = 2 * ei / self.primary_flight_path * self.primary_flight_path_uncertainty
 
-        final_energy_term = (self.time_dependent_term_factor *
-                             (1 + self.average_secondary_flight_path / self.primary_flight_path *
+        final_energy_term = (self.final_energy_factor *
+                             (-1 - self.average_secondary_flight_path / self.primary_flight_path *
                               (ei / self.average_final_energy) ** 1.5))
 
-        final_flight_term = (2 / self.average_secondary_flight_path *
-                             np.sqrt(ei ** 3 / self.average_final_energy) *
-                             2 * self.primary_flight_path / np.sin(self.average_bragg_angle))
+        final_flight_term = (self.final_flight_factor * 2 / self.primary_flight_path *
+                             np.sqrt(ei ** 3 / self.average_final_energy))
 
-        result =  np.sqrt(time_dependent_term ** 2 + incident_flight_term ** 2 +
+        result =  np.sqrt(time_term ** 2 + incident_flight_term ** 2 +
                           final_energy_term ** 2 + final_flight_term ** 2)
         return {'sigma': result}
