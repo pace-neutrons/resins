@@ -8,14 +8,13 @@ obtaining the :term:`resolution function` of an :term:`instrument`, please use t
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib
 from typing import ClassVar, TYPE_CHECKING
 
 import numpy as np
-from numpy.polynomial.polynomial import Polynomial
 
 from .model_base import InstrumentModel, ModelData
 from .mixins import SimpleBroaden1DMixin
-from ..instrument import INSTRUMENT_DATA_PATH
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -67,16 +66,14 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
     """
     input = ('energy_transfer',)
 
-    data_class: ClassVar[type[ScaledTabultedModelData]] = ScaledTabulatedModelData
+    data_class: ClassVar[type[ScaledTabulatedModelData]] = ScaledTabulatedModelData
 
     def __init__(self, model_data: ScaledTabulatedModelData, **_):
-        from pathlib import Path
-
         from numpy.polynomial import Polynomial
         from scipy.interpolate import RegularGridInterpolator
 
         super().__init__(model_data)
-        self.data = np.load(Path(INSTRUMENT_DATA_PATH) / model_data.npz)
+        self.data = np.load(importlib.resources.files("resins.instrument_data") / model_data.npz)
 
         self.polynomial = Polynomial(coef=self.data["coef"],
                                      domain=self.data["domain"],
@@ -110,7 +107,7 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         return {'sigma': self.polynomial(omega_q[:, 0])}
 
     def get_kernel(self,
-                   omega_q: Float[np.ndarray, 'sample dimension=1'],
+                   points: Float[np.ndarray, 'sample dimension=1'],
                    mesh: Float[np.ndarray, 'mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
 
@@ -130,14 +127,14 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         return interp_kernels
 
     def get_peak(self,
-                 omega_q: Float[np.ndarray, 'sample dimension=1'],
+                 points: Float[np.ndarray, 'sample dimension=1'],
                  mesh: Float[np.ndarray, 'mesh'],
                  ) -> Float[np.ndarray, 'sample mesh']:
         shifted_meshes = [mesh - energy for energy in omega_q[:, 0]]
 
         shifted_kernels = [
-            self.get_kernel(np.array([omega_q]), shifted_mesh)
-            for omega_q, shifted_mesh in zip(omega_q, shifted_meshes)
+            self.get_kernel(np.array([point]), shifted_mesh)
+            for point, shifted_mesh in zip(points, shifted_meshes)
         ]
 
         return np.array(np.vstack(shifted_kernels))
