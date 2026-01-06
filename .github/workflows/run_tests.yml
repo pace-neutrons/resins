@@ -17,14 +17,18 @@ jobs:
     - name: Setup Miniconda
       uses: conda-incubator/setup-miniconda@v3.2.0
       with:
-        python-version: '3.11'
+        python-version: "3.11"
         channels: conda-forge
         miniforge-version: "latest"
 
     - name: Install tox
       shell: bash -el {0}
-      run: mamba install tox
+      run: |
+        conda activate test
+        conda install tox
 
     - name: Test with tox
       shell: bash -el {0}
-      run: tox
+      run: |
+        conda activate test
+        python -m tox
