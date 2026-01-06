@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import inspect
-import os
+from pathlib import Path
 import typing
 
 import pytest
@@ -11,8 +11,8 @@ from resins.models import MODELS
 from resins.models.model_base import ModelData, InstrumentModel
 
 
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-FAKE_YAML = os.path.join(TEST_DIR, 'fake_instrument.yaml')
+TEST_DIR = Path(__file__).parent
+FAKE_YAML = TEST_DIR / 'fake_instrument.yaml'
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True)
@@ -68,13 +68,6 @@ class MockModel(InstrumentModel):
 def mock_models():
     return {'mock': MockModel}
 
-@pytest.fixture
-def mock_instrument_map():
-    return {
-        'TEST': ('fake_instrument.yaml', None),
-        'ALIAS': ('fake_instrument.yaml', 'VERSION1'),
-    }
-
 
 @pytest.fixture(scope='module')
 def data():
@@ -127,35 +120,45 @@ def test_instrument(data):
     )
 
 
-def test_available_instruments(mock_instrument_map, mocker):
-    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
+@pytest.fixture
+def patch_importlib_files(mocker):
+    """Make all calls to importlib.resources.files() return TEST_DIR
+
+    This is used to replace resins.instrument_data with test data
+    """
+    mocker.patch('importlib.resources.files', lambda _: Path(TEST_DIR))
+
+
+@pytest.fixture
+def patch_instrument_map(mocker):
+    """Replace main INSTRUMENT_MAP with test examples"""
+
+    instrument_map = {
+        'TEST': ('fake_instrument.yaml', None),
+        'ALIAS': ('fake_instrument.yaml', 'VERSION1'),
+    }
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', instrument_map)
+
+
+def test_available_instruments(patch_instrument_map):
     assert i.Instrument.available_instruments() == ['TEST', 'ALIAS']
 
 
-def test_private_available_versions(mock_instrument_map, mocker):
-    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
-
+def test_private_available_versions(patch_instrument_map, patch_importlib_files):
     actual_versions, actual_default = i.Instrument._available_versions(FAKE_YAML)
 
     assert actual_default == 'TEST'
     assert actual_versions == ['VERSION1', 'TEST']
 
 
-def test_available_versions(mock_instrument_map, mocker):
-    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
-
+def test_available_versions(patch_instrument_map, patch_importlib_files):
     actual_versions, actual_default = i.Instrument.available_versions('TEST')
 
     assert actual_default == 'TEST'
     assert actual_versions == ['VERSION1', 'TEST']
 
 
-def test_available_versions_alias(mock_instrument_map, mocker):
-    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
-
+def test_available_versions_alias(patch_instrument_map, patch_importlib_files):
     actual_versions, actual_default = i.Instrument.available_versions('ALIAS')
 
     assert actual_default == 'VERSION1'
@@ -185,10 +188,7 @@ def test_from_file_invalid_version():
         i.Instrument.from_file(FAKE_YAML, 'INVALID_VERSION')
 
 
-def test_from_default(data, mock_instrument_map, mocker):
-    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
-
+def test_from_default(data, patch_instrument_map, patch_importlib_files):
     instrument = i.Instrument.from_default('TEST', 'VERSION1')
 
     assert isinstance(instrument, i.Instrument)
@@ -197,10 +197,7 @@ def test_from_default(data, mock_instrument_map, mocker):
     assert instrument._models == data['version']['VERSION1']['models']
 
 
-def test_from_default_default(data, mock_instrument_map, mocker):
-    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
-
+def test_from_default_default(data, patch_instrument_map, patch_importlib_files):
     instrument = i.Instrument.from_default('TEST')
 
     assert isinstance(instrument, i.Instrument)
@@ -211,20 +208,14 @@ def test_from_default_default(data, mock_instrument_map, mocker):
 
 @pytest.mark.parametrize("name,expected_path,implied_ver",
                          [('TEST', FAKE_YAML, None), ('ALIAS', FAKE_YAML, 'VERSION1')])
-def test_get_file(name, expected_path, implied_ver, mock_instrument_map, mocker):
-    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
-
+def test_get_file(name, expected_path, implied_ver, patch_instrument_map, patch_importlib_files):
     actual_path, actual_version = i.Instrument._get_file(name)
 
-    assert actual_path == expected_path
+    assert Path(actual_path) == expected_path
     assert actual_version == implied_ver
 
 
-def test_get_file_invalid(mock_instrument_map, mocker):
-    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
-
+def test_get_file_invalid(patch_instrument_map, patch_importlib_files):
     with pytest.raises(i.InvalidInstrumentError):
         i.Instrument._get_file('INVALID_INSTRUMENT')
 
