@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools >= 77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -13,7 +13,8 @@ maintainers = [
 ]
 description = "Python library for working with resolution functions of neutron instruments "
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 
 keywords = [
     "Python",
@@ -26,14 +27,15 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
+requires-python = ">=3.11"
+
 dependencies = [
     "PyYAML >= 6.0.2",
-    "numpy >= 1.26.4",
+    "numpy >= 2.1.0",
     "scipy >= 1.13.1",
     "typing_extensions >= 4.5.0",
 ]
@@ -45,7 +47,7 @@ dev = [
 ]
 test = [
     "pytest >= 8.3.2",
-    "mantid >= 6.10.0",
+    "mantid >= 6.14.0",
     "pychop @ git+https://github.com/mducle/pychop.git",
     "more_itertools >= 10.5.0",
     "pytest-mock >= 3.14.0",
