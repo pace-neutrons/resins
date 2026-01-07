@@ -78,7 +78,7 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, sigma: float, **_):
+    def __init__(self, model_data: ModelData, sigma: float = 1., **_):
         super().__init__(model_data)
         self.sigma = sigma
 
@@ -206,7 +206,7 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, fwhm: float = 1, **_):
+    def __init__(self, model_data: ModelData, fwhm: float = 1., **_):
         super().__init__(model_data)
         self.fwhm = fwhm
 
@@ -335,7 +335,7 @@ class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, long_base: float = 1, short_base: float = 0.5, **_):
+    def __init__(self, model_data: ModelData, long_base: float = 1., short_base: float = 0.5, **_):
         super().__init__(model_data)
         self.long_base = long_base
         self.short_base = short_base
@@ -467,7 +467,7 @@ class GenericGaussian1DModel(StaticConvolveBroadenMixin, GaussianKernel1DMixin, 
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, sigma: float = 1, **_):
+    def __init__(self, model_data: ModelData, sigma: float = 1., **_):
         super().__init__(model_data)
         self.sigma = sigma
 
@@ -530,7 +530,7 @@ class GenericLorentzian1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, fwhm: float = 1, **_):
+    def __init__(self, model_data: ModelData, fwhm: float = 1., **_):
         super().__init__(model_data)
         self.fwhm = fwhm
 
