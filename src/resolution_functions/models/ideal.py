@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class StaticConvolveBroadenMixin:
     def broaden(self: InstrumentModel,
-                omega_q: Float[np.ndarray, 'sample dimension'],
+                points: Float[np.ndarray, 'sample dimension'],
                 data: Float[np.ndarray, 'data'],
                 mesh: Float[np.ndarray, '...'],
                 ) -> Float[np.ndarray, '...']:
@@ -24,23 +24,23 @@ class StaticConvolveBroadenMixin:
 
         Parameters
         ----------
-        omega_q
+        points
             The independent variable (energy transfer or momentum scalar) whose `data` to broaden.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of w/Q values
             for which there is `data`. Therefore, the ``sample`` dimension *must* match the length
             of the `data` array.
         data
-            The intensities at the `omega_q` points.
+            The intensities at the points.
         mesh
             The mesh to use for the broadening. This is a 1D array which *must* span the entire
-            `omega_q` space of interest.
+            `points` space of interest.
 
         Returns
         -------
         spectrum
             The broadened spectrum. This is a 1D array of the same length as `mesh`.
         """
-        kernel = self.get_kernel(np.array([[omega_q[0, 0]]]), mesh)
+        kernel = self.get_kernel(np.array([[points[0, 0]]]), mesh)
         return convolve(kernel, data)
 
 
@@ -64,7 +64,7 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
     Attributes
     ----------
     input
-        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        The names of the columns in the ``points`` array expected by all computation methods, i.e.
         the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `ModelData` type.
@@ -86,17 +86,17 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         super().__init__(model_data)
         self.width = width
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
-        Returns the broadening width at each value of energy transfer given by `omega_q`.
+        Returns the broadening width at each value of energy transfer given by `points`.
 
-        This model is a static test model, so it returns the same width for each value of `omega_q`,
+        This model is a static test model, so it returns the same width for each value of `points`,
         which is in the form of the width of a Boxcar kernel.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -106,21 +106,21 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         characteristics
             The characteristics of the broadening function, i.e. the Boxcar width in meV and derived standard deviation (sigma).
         """
-        characteristics = {'width': np.ones(len(omega_q)) * self.width}
+        characteristics = {'width': np.ones(len(points)) * self.width}
         characteristics['sigma'] = np.full_like(characteristics['width'], np.sqrt(1/12))
         return characteristics
 
     def get_kernel(self,
-                   omega_q: Float[np.ndarray, 'sample dimension=1'],
+                   points: Float[np.ndarray, 'sample dimension=1'],
                    mesh: Float[np.ndarray, 'mesh']
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Boxcar (square) kernel centered on zero on the provided `mesh` at each value of
-        `omega_q` (energy transfer or momentum scalar).
+        `points` (energy transfer or momentum scalar).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer or momentum scalar for which to compute the kernel. This *must* be
             a Nx1 2D array where N is the number of w/Q values.
         mesh
@@ -129,46 +129,46 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         Returns
         -------
         kernel
-            The Boxcar kernel at each value of `omega_q` as given by this model, computed on the
+            The Boxcar kernel at each value of `points` as given by this model, computed on the
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
         radius = self.width * 0.5
         indices = np.logical_or(mesh <= - radius, mesh >= radius)
 
-        kernel = np.zeros((len(omega_q), len(mesh)))
+        kernel = np.zeros((len(points), len(mesh)))
         kernel[:, indices] = 1 / self.width
 
         return kernel
 
     def get_peak(self,
-                 omega_q: Float[np.ndarray, 'sample dimension=1'],
+                 points: Float[np.ndarray, 'sample dimension=1'],
                  mesh: Float[np.ndarray, 'mesh']
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
-        Computes the Boxcar (square) kernel on the provided `mesh` at each value of the `omega_q`
+        Computes the Boxcar (square) kernel on the provided `mesh` at each value of the `points`
         energy transfer.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
             array where N is the number of energy transfers.
         mesh
             The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            `omega_q` transfer space of interest.
+            `points` transfer space of interest.
 
         Returns
         -------
         kernel
-            The Boxcar kernel at each value of `omega_q` as given by this model, computed on the
+            The Boxcar kernel at each value of `points` as given by this model, computed on the
             `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
             N is the number of w/Q values and M is the length of the `mesh` array.
         """
         radius = self.width * 0.5
 
-        kernel = np.zeros((len(omega_q), len(mesh)))
-        for value in omega_q:
+        kernel = np.zeros((len(points), len(mesh)))
+        for value in points:
             value = value[0]
             indices = np.logical_or(mesh >= (value - radius), mesh <= (value + radius))
             kernel[:, indices] = 1 / self.width
@@ -193,7 +193,7 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
     Attributes
     ----------
     input
-        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        The names of the columns in the ``points`` array expected by all computation methods, i.e.
         the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `ModelData` type.
@@ -216,17 +216,17 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         super().__init__(model_data)
         self.fwhm = fwhm
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
-        Returns the broadening width at each value of energy transfer given by `omega_q`.
+        Returns the broadening width at each value of energy transfer given by `points`.
 
-        This model is a static test model, so it returns the same width for each value of `omega_q`,
+        This model is a static test model, so it returns the same width for each value of `points`,
         which is in the form of the Full-Width Half-Maximum of a Triangle model.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -236,19 +236,19 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         characteristics
             The characteristics of the broadening function, i.e. the Triangle width as FWHM.
         """
-        return {'fwhm': np.ones(len(omega_q)) * self.fwhm}
+        return {'fwhm': np.ones(len(points)) * self.fwhm}
 
     def get_kernel(self,
-                   omega_q: Float[np.ndarray, 'sample dimension=1'],
+                   points: Float[np.ndarray, 'sample dimension=1'],
                    mesh: Float[np.ndarray, 'mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Triangle kernel centered on zero on the provided `mesh` at each value of
-        `omega_q` (energy transfer or momentum scalar).
+        `points` (energy transfer or momentum scalar).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer or momentum scalar for which to compute the kernel. This *must* be
             a Nx1 2D array where N is the number of w/Q values.
         mesh
@@ -257,44 +257,44 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         Returns
         -------
         kernel
-            The Triangle kernel at each value of `omega_q` as given by this model, computed on the
+            The Triangle kernel at each value of `points` as given by this model, computed on the
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(omega_q, mesh, -self.fwhm)
+        return self._get_kernel(points, mesh, -self.fwhm)
 
     def get_peak(self,
-                 omega_q: Float[np.ndarray, 'sample dimension=1'],
+                 points: Float[np.ndarray, 'sample dimension=1'],
                  mesh: Float[np.ndarray, 'mesh']
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
-        Computes the Triangle kernel on the provided `mesh` at each value of the `omega_q`
+        Computes the Triangle kernel on the provided `mesh` at each value of the `points`
         energy transfer.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
             array where N is the number of energy transfers.
         mesh
             The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            `omega_q` transfer space of interest.
+            `points` transfer space of interest.
 
         Returns
         -------
         kernel
-            The Triangle kernel at each value of `omega_q` as given by this model, computed on the
+            The Triangle kernel at each value of `points` as given by this model, computed on the
             `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
             N is the number of w/Q values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(omega_q, mesh, omega_q-self.fwhm)
+        return self._get_kernel(points, mesh, points - self.fwhm)
 
     def _get_kernel(self,
-                    omega_q: Float[np.ndarray, 'sample dimension=1'],
+                    points: Float[np.ndarray, 'sample dimension=1'],
                     mesh: Float[np.ndarray, 'mesh'],
                     displacement: float | Float[np.ndarray, 'sample'] = 0.,
                     ) -> Float[np.ndarray, 'sample mesh']:
-        kernel = np.zeros((len(omega_q), len(mesh)))
+        kernel = np.zeros((len(points), len(mesh)))
         kernel[:, :] = triang.pdf(mesh, 0.5, loc=displacement, scale=self.fwhm * 2)
         return kernel
 
@@ -319,7 +319,7 @@ class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
     Attributes
     ----------
     input
-        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        The names of the columns in the ``points`` array expected by all computation methods, i.e.
         the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `ModelData` type.
@@ -346,21 +346,21 @@ class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         self.long_base = long_base
         self.short_base = short_base
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
         Returns the characteristics of a Trapezoid function for each value of energy transfer given
-        by `omega_q`.
+        by `points`.
 
         This model is a static test model, so it returns the same characteristics for each value
-        of `omega_q`. A Trapezoid model has two characteristics:
+        of `points`. A Trapezoid model has two characteristics:
 
         * ``long_base`` - the length of the longer (bottom) base of a trapezoid
         * ``short_base`` - the length of the shorter (top) base of a trapezoid.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -371,21 +371,21 @@ class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
             The characteristics of the broadening function.
         """
         return {
-            'long_base': np.ones(len(omega_q)) * self.long_base,
-            'short_base': np.ones(len(omega_q)) * self.short_base,
+            'long_base': np.ones(len(points)) * self.long_base,
+            'short_base': np.ones(len(points)) * self.short_base,
         }
 
     def get_kernel(self,
-                   omega_q: Float[np.ndarray, 'sample dimension=1'],
+                   points: Float[np.ndarray, 'sample dimension=1'],
                    mesh: Float[np.ndarray, 'mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Trapezoid kernel centered on zero on the provided `mesh` at each value of
-        `omega_q` (energy transfer or momentum scalar).
+        `points` (energy transfer or momentum scalar).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer or momentum scalar for which to compute the kernel. This *must* be
             a Nx1 2D array where N is the number of w/Q values.
         mesh
@@ -394,46 +394,46 @@ class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         Returns
         -------
         kernel
-            The Trapezoid kernel at each value of `omega_q` as given by this model, computed on the
+            The Trapezoid kernel at each value of `points` as given by this model, computed on the
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(omega_q, mesh, - 0.5 * self.long_base)
+        return self._get_kernel(points, mesh, - 0.5 * self.long_base)
 
     def get_peak(self,
-                 omega_q: Float[np.ndarray, 'sample dimension=1'],
+                 points: Float[np.ndarray, 'sample dimension=1'],
                  mesh: Float[np.ndarray, 'mesh']
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
-        Computes the Trapezoid kernel on the provided `mesh` at each value of the `omega_q`
+        Computes the Trapezoid kernel on the provided `mesh` at each value of the `points`
         energy transfer.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
             array where N is the number of energy transfers.
         mesh
             The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            `omega_q` transfer space of interest.
+            energy-transfer space of interest.
 
         Returns
         -------
         kernel
-            The Trapezoid kernel at each value of `omega_q` as given by this model, computed on the
+            The Trapezoid kernel at each value of `points` as given by this model, computed on the
             `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
             N is the number of w/Q values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(omega_q, mesh, omega_q - 0.5 * self.long_base)
+        return self._get_kernel(points, mesh, points - 0.5 * self.long_base)
 
     def _get_kernel(self,
-                    omega_q: Float[np.ndarray, 'sample dimension=1'],
+                    points: Float[np.ndarray, 'sample dimension=1'],
                     mesh: Float[np.ndarray, 'mesh'],
                     displacement: float | Float[np.ndarray, 'sample'] = 0.,
                     ) -> Float[np.ndarray, 'sample mesh']:
         slope_length = 0.5 * (self.long_base - self.short_base)
 
-        kernel = np.zeros((len(omega_q), len(mesh)))
+        kernel = np.zeros((len(points), len(mesh)))
         kernel[:, :] = trapezoid.pdf(mesh, slope_length, 1 - slope_length,
                                      loc=displacement, scale=self.long_base)
         return kernel
@@ -455,7 +455,7 @@ class GenericGaussian1DModel(StaticConvolveBroadenMixin, GaussianKernel1DMixin, 
     Attributes
     ----------
     input
-        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        The names of the columns in the ``points`` array expected by all computation methods, i.e.
         the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `ModelData` type.
@@ -477,17 +477,17 @@ class GenericGaussian1DModel(StaticConvolveBroadenMixin, GaussianKernel1DMixin, 
         super().__init__(model_data)
         self.sigma = sigma
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
-        Returns the broadening width at each value of energy transfer given by `omega_q`.
+        Returns the broadening width at each value of energy transfer given by `points`.
 
-        This model is a static test model, so it returns the same width for each value of `omega_q`,
+        This model is a static test model, so it returns the same width for each value of `points`,
         which is in the form of the standard deviation (sigma) of a Gaussian model.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -497,7 +497,7 @@ class GenericGaussian1DModel(StaticConvolveBroadenMixin, GaussianKernel1DMixin, 
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
         """
-        return {'sigma': np.ones(len(omega_q)) * self.sigma}
+        return {'sigma': np.ones(len(points)) * self.sigma}
 
 
 class GenericLorentzian1DModel(StaticConvolveBroadenMixin, InstrumentModel):
@@ -517,7 +517,7 @@ class GenericLorentzian1DModel(StaticConvolveBroadenMixin, InstrumentModel):
     Attributes
     ----------
     input
-        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        The names of the columns in the ``points`` array expected by all computation methods, i.e.
         the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `ModelData` type.
@@ -540,17 +540,17 @@ class GenericLorentzian1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         super().__init__(model_data)
         self.fwhm = fwhm
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension=1']
+    def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sample']]:
         """
-        Returns the broadening width at each value of energy transfer given by `omega_q`.
+        Returns the broadening width at each value of energy transfer given by `points`.
 
-        This model is a static test model, so it returns the same width for each value of `omega_q`,
+        This model is a static test model, so it returns the same width for each value of `points`,
         which is in the form of the Full-Width Half-Maximum of a Lorentzian model.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -560,19 +560,19 @@ class GenericLorentzian1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         characteristics
             The characteristics of the broadening function, i.e. the Lorentzian width as FWHM.
         """
-        return {'fwhm': np.ones(len(omega_q)) * self.fwhm}
+        return {'fwhm': np.ones(len(points)) * self.fwhm}
 
     def get_kernel(self,
-                   omega_q: Float[np.ndarray, 'sample dimension=1'],
+                   points: Float[np.ndarray, 'sample dimension=1'],
                    mesh: Float[np.ndarray, 'mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Lorentzian kernel centered on zero on the provided `mesh` at each value of
-        `omega_q` (energy transfer or momentum scalar).
+        `points` (energy transfer or momentum scalar).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer or momentum scalar for which to compute the kernel. This *must* be
             a Nx1 2D array where N is the number of w/Q values.
         mesh
@@ -581,43 +581,43 @@ class GenericLorentzian1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         Returns
         -------
         kernel
-            The Lorentzian kernel at each value of `omega_q` as given by this model, computed on the
+            The Lorentzian kernel at each value of `points` as given by this model, computed on the
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(omega_q, mesh, 0.)
+        return self._get_kernel(points, mesh, 0.)
 
     def get_peak(self,
-                 omega_q: Float[np.ndarray, 'sample dimension=1'],
+                 points: Float[np.ndarray, 'sample dimension=1'],
                  mesh: Float[np.ndarray, 'mesh']
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
-        Computes the Lorentzian kernel on the provided `mesh` at each value of the `omega_q`
+        Computes the Lorentzian kernel on the provided `mesh` at each value of the `points`
         energy transfer.
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
             array where N is the number of energy transfers.
         mesh
             The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            `omega_q` transfer space of interest.
+            `points` transfer space of interest.
 
         Returns
         -------
         kernel
-            The Lorentzian kernel at each value of `omega_q` as given by this model, computed on the
+            The Lorentzian kernel at each value of `points` as given by this model, computed on the
             `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
             N is the number of w/Q values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(omega_q, mesh, omega_q)
+        return self._get_kernel(points, mesh, points)
 
     def _get_kernel(self,
-                    omega_q: Float[np.ndarray, 'sample dimension=1'],
+                    points: Float[np.ndarray, 'sample dimension=1'],
                     mesh: Float[np.ndarray, 'mesh'],
                     displacement: float | Float[np.ndarray, 'sample'] = 0.,
                     ) -> Float[np.ndarray, 'sample mesh']:
-        kernel = np.zeros((len(omega_q), len(mesh)))
+        kernel = np.zeros((len(points), len(mesh)))
         kernel[:, :] = cauchy.pdf(mesh, loc=displacement, scale=self.fwhm * 0.5)
         return kernel
