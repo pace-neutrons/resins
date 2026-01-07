@@ -50,12 +50,16 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
     Models the :term:`resolution` as a Boxcar (square) function.
 
+    A useful relationship: the standard deviation of a width-1 boxcar is √(1/12).
+    So to produce crudely "equivalent" broadening to a Gaussian of known σ,
+    use a boxcar width = σ √12 .
+
     Parameters
     ----------
     model_data
         The data associated with the model for a given version of a given instrument.
-    sigma
-        The width (in sigma) of the Boxcar function. This width is used for all values of [w, Q].
+    width
+        The width of the Boxcar function in meV. This width is used for all values of [w, Q].
 
     Attributes
     ----------
@@ -64,8 +68,8 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `ModelData` type.
-    sigma
-        The width (in sigma) of the Boxcar function. This width is used for all values of [w, Q].
+    width
+        The width of the Boxcar function in meV. This width is used for all values of [w, Q].
     citation
 
     Warnings
@@ -78,9 +82,9 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, sigma: float = 1., **_):
+    def __init__(self, model_data: ModelData, width: float = 1., **_):
         super().__init__(model_data)
-        self.sigma = sigma
+        self.width = width
 
     def get_characteristics(self, omega_q: Float[np.ndarray, 'sample dimension=1']
                             ) -> dict[str, Float[np.ndarray, 'sample']]:
@@ -88,7 +92,7 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         Returns the broadening width at each value of energy transfer given by `omega_q`.
 
         This model is a static test model, so it returns the same width for each value of `omega_q`,
-        which is in the form of the standard deviation (sigma) of a Boxcar model.
+        which is in the form of the width of a Boxcar kernel.
 
         Parameters
         ----------
@@ -100,9 +104,11 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         Returns
         -------
         characteristics
-            The characteristics of the broadening function, i.e. the Boxcar width as sigma in meV.
+            The characteristics of the broadening function, i.e. the Boxcar width in meV and derived standard deviation (sigma).
         """
-        return {'sigma': np.ones(len(omega_q)) * self.sigma}
+        characteristics = {'width': np.ones(len(omega_q)) * self.width}
+        characteristics['sigma'] = np.full_like(characteristics['width'], np.sqrt(1/12))
+        return characteristics
 
     def get_kernel(self,
                    omega_q: Float[np.ndarray, 'sample dimension=1'],
@@ -127,11 +133,11 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        radius = self.sigma * 0.5
+        radius = self.width * 0.5
         indices = np.logical_or(mesh <= - radius, mesh >= radius)
 
         kernel = np.zeros((len(omega_q), len(mesh)))
-        kernel[:, indices] = 1 / self.sigma
+        kernel[:, indices] = 1 / self.width
 
         return kernel
 
@@ -159,13 +165,13 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
             `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
             N is the number of w/Q values and M is the length of the `mesh` array.
         """
-        radius = self.sigma * 0.5
+        radius = self.width * 0.5
 
         kernel = np.zeros((len(omega_q), len(mesh)))
         for value in omega_q:
             value = value[0]
             indices = np.logical_or(mesh >= (value - radius), mesh <= (value + radius))
-            kernel[:, indices] = 1 / self.sigma
+            kernel[:, indices] = 1 / self.width
 
         return kernel
 
