@@ -45,11 +45,3 @@ version:
                     defaults: {}
                     restrictions: {}
                 configurations: { }
-            ikeda_carpenter: "ikeda_carpenter_v1"
-            ikeda_carpenter_v1:
-                function: "ikeda_carpenter"
-                citation: [ "" ]
-                parameters:
-                    defaults: {}
-                    restrictions: {}
-                configurations: { }
