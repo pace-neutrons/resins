@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.signal import convolve
-from scipy.stats import cauchy, norm, trapezoid, triang
+from scipy.stats import cauchy, norm, trapezoid, triang, uniform
 
 from .model_base import InstrumentModel, ModelData
 from .mixins import GaussianKernel1DMixin
@@ -40,11 +40,93 @@ class StaticConvolveBroadenMixin:
         spectrum
             The broadened spectrum. This is a 1D array of the same length as `mesh`.
         """
-        kernel = self.get_kernel(np.array([[points[0, 0]]]), mesh)
-        return convolve(kernel, data)
+        bin_width = mesh[1] - mesh[0]
+
+        kernel = self.get_kernel(np.array([[points[0, 0]]]), mesh)[0] * bin_width
+        return convolve(data, kernel, mode="same")
 
 
-class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
+class StaticSnappedPeaksMixin:
+    """Mixin providing a get_peak() based on application of broaden() to quantised delta functions
+
+    In the composed class broaden() must not use get_peak()
+    """
+    @staticmethod
+    def _get_snapped_dirac_peaks(points: Float[np.ndarray, 'sample dimension=1'],
+                                mesh: Float[np.ndarray, 'mesh']
+                                ) -> Float[np.ndarray, 'sample mesh']:
+        """Compute digitized delta functions on the energy-mesh
+
+        These are one-sample peaks with area 1, at the nearest mesh point. No interpolation is
+        performed; this is intended to be convolved to produce a "snapped" spectrum for ease of
+        comparison and interpolation, rather than the best possible representation of the data.
+
+        Mesh is always interpreted as energy-transfer, corresponding to the first column of
+        ``points``.
+
+            Parameters
+            ----------
+            points
+                The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
+                array where N is the number of energy transfers.
+            mesh
+                A regular mesh on which to evaluate the kernel. This is a 1D array which *must* span
+                the `points` transfer space of interest.
+
+            Returns
+            -------
+            binned_points
+                Intensity values corresponding to ``mesh`` for each item in ``points``
+
+        """
+        bin_width = mesh[1] - mesh[0]
+        edges = np.linspace(mesh[0] - (bin_width / 2), mesh[-1] + (bin_width / 2), len(mesh) + 1)
+
+        peaks = np.asarray([
+            np.histogram(point[0], bins=edges)[0] for point in points
+        ])
+
+        return peaks / bin_width
+
+    def get_peak(self,
+                 points: Float[np.ndarray, 'sample dimension=1'],
+                 mesh: Float[np.ndarray, 'mesh']
+                 ) -> Float[np.ndarray, 'sample mesh']:
+        """
+        Apply the kernel at the nearest `mesh` point for at each value of `points` energy transfer.
+
+        Note that:
+        - peak positions are quantized to the nearest mesh point
+
+        As a result the position of peaks in this approach does not vary smoothly with the input
+        parameters.
+
+        Parameters
+        ----------
+        points
+            The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
+            array where N is the number of energy transfers.
+        mesh
+            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
+            `points` transfer space of interest.
+
+        Returns
+        -------
+        kernel
+            The Boxcar kernel at each value of `points` as given by this model, computed on the
+            `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
+            N is the number of w/Q values and M is the length of the `mesh` array.
+        """
+
+        delta_functions = self._get_snapped_dirac_peaks(points, mesh)
+
+        peaks = [self.broaden(points[:1], delta_function, mesh)
+                 for delta_function in delta_functions]
+
+        return np.asarray(peaks)
+
+
+class GenericBoxcar1DModel(StaticSnappedPeaksMixin, StaticConvolveBroadenMixin, InstrumentModel):
     """
     A generic Boxcar model.
 
@@ -112,11 +194,15 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
     def get_kernel(self,
                    points: Float[np.ndarray, 'sample dimension=1'],
-                   mesh: Float[np.ndarray, 'mesh']
+                   mesh: Float[np.ndarray, 'mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Boxcar (square) kernel centered on zero on the provided `mesh` at each value of
         `points` (energy transfer or momentum scalar).
+
+        Note that these kernels generated with scipy.signal.uniform are rounded
+        to an odd-integer width and edges move directly from full-height to
+        zero. Better but more complicated algorithms exist.
 
         Parameters
         ----------
@@ -133,21 +219,35 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        radius = self.width * 0.5
-        indices = np.logical_or(mesh <= - radius, mesh >= radius)
+        kernel = uniform(loc=(-self.width / 2), scale=self.width).pdf(mesh)
+        indices = np.flatnonzero(kernel)
 
-        kernel = np.zeros((len(points), len(mesh)))
-        kernel[:, indices] = 1 / self.width
+        if len(indices) > 1:
+            first, *_, last = indices
+        else:
+            first = last = indices[0]
 
-        return kernel
+        kernel /= np.trapezoid(kernel, mesh)
+
+        out_kernel = np.tile(kernel, (len(points), 1))
+
+        return out_kernel
 
     def get_peak(self,
                  points: Float[np.ndarray, 'sample dimension=1'],
                  mesh: Float[np.ndarray, 'mesh']
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
-        Computes the Boxcar (square) kernel on the provided `mesh` at each value of the `points`
+        Compute the Boxcar (square) kernel on the provided `mesh` at each value of the `points`
         energy transfer.
+
+        Note that:
+        - peak positions are quantized to the nearest mesh point
+        - the boxcar kernel is quantized to an odd number of samples
+        - the boxcar kernel is normalised to total value 1 based on the actual number of samples
+
+        As a result the width, height and position of peaks in this approach do
+        not vary smoothly with the input parameters.
 
         Parameters
         ----------
@@ -165,18 +265,10 @@ class GenericBoxcar1DModel(StaticConvolveBroadenMixin, InstrumentModel):
             `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
             N is the number of w/Q values and M is the length of the `mesh` array.
         """
-        radius = self.width * 0.5
-
-        kernel = np.zeros((len(points), len(mesh)))
-        for value in points:
-            value = value[0]
-            indices = np.logical_or(mesh >= (value - radius), mesh <= (value + radius))
-            kernel[:, indices] = 1 / self.width
-
-        return kernel
+        return super().get_peak(points, mesh)
 
 
-class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
+class GenericTriangle1DModel(StaticConvolveBroadenMixin, StaticSnappedPeaksMixin, InstrumentModel):
     """
     A generic Triangle model.
 
@@ -188,7 +280,8 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         The data associated with the model for a given version of a given instrument.
     fwhm
         The width (in Full-Width Half-Maximum) of the Triangle function. This width is used for all
-        values of [w, Q].
+        values of [w, Q]. When realised on a user mesh, the width is rounded to an integer number of
+        bins to create straight lines from the peak to zero.
 
     Attributes
     ----------
@@ -261,15 +354,28 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(points, mesh, -self.fwhm)
+
+        bin_width = mesh[1] - mesh[0]
+        quantized_fwhm = np.round(self.fwhm / bin_width) * bin_width
+
+        kernel = np.zeros((len(points), len(mesh)))
+        kernel[:, :] = triang.pdf(mesh, 0.5, loc=-quantized_fwhm, scale=quantized_fwhm * 2)
+
+        return kernel
 
     def get_peak(self,
                  points: Float[np.ndarray, 'sample dimension=1'],
                  mesh: Float[np.ndarray, 'mesh']
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
-        Computes the Triangle kernel on the provided `mesh` at each value of the `points`
-        energy transfer.
+        Compute set of triangle functions at ``points`` on ``mesh``.
+
+        Note that:
+        - peak positions are quantized to the nearest mesh point
+        - the triangle width kernel is quantized to run straight from peak to zeros
+
+        As a result the width, height and position of peaks in this approach do
+        not vary smoothly with the input parameters.
 
         Parameters
         ----------
@@ -282,21 +388,12 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
         Returns
         -------
-        kernel
-            The Triangle kernel at each value of `points` as given by this model, computed on the
-            `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
-            N is the number of w/Q values and M is the length of the `mesh` array.
+        peaks
+            Triangle kernel at each value of `points` as given by this model, computed on the
+            `mesh` and centered near the corresponding energy transfer. This is a 2D N x M array
+             where N is the number of ``points and M is the length of ``mesh``.
         """
-        return self._get_kernel(points, mesh, points - self.fwhm)
-
-    def _get_kernel(self,
-                    points: Float[np.ndarray, 'sample dimension=1'],
-                    mesh: Float[np.ndarray, 'mesh'],
-                    displacement: float | Float[np.ndarray, 'sample'] = 0.,
-                    ) -> Float[np.ndarray, 'sample mesh']:
-        kernel = np.zeros((len(points), len(mesh)))
-        kernel[:, :] = triang.pdf(mesh, 0.5, loc=displacement, scale=self.fwhm * 2)
-        return kernel
+        return super().get_peak(points, mesh)
 
 
 class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
@@ -441,7 +538,7 @@ class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
 
 class GenericGaussian1DModel(StaticConvolveBroadenMixin, GaussianKernel1DMixin, InstrumentModel):
     """
-    A generic Boxcar model.
+    A generic Gaussian model.
 
     Models the :term:`resolution` as a Gaussian function.
 
@@ -621,3 +718,4 @@ class GenericLorentzian1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         kernel = np.zeros((len(points), len(mesh)))
         kernel[:, :] = cauchy.pdf(mesh, loc=displacement, scale=self.fwhm * 0.5)
         return kernel
+
