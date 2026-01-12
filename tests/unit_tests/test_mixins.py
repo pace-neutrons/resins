@@ -90,7 +90,6 @@ def generate_data():
             for row in result:
                 ax.plot(mesh, row)
 
-        print(f"saving to {os.path.join(DATA_DIR, name + '.png')}...")
         fig.savefig(os.path.join(DATA_DIR, name + '.png'))
         plt.close(fig)
 
