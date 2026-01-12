@@ -257,6 +257,9 @@ class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Inst
         Computes the Triangle kernel centered on zero on the provided `mesh` at each value of
         `points` (energy transfer or momentum scalar).
 
+        Note that shape and area are only exactly correct when FHWM equals an integer number of
+        bins.
+
         Parameters
         ----------
         points
@@ -273,19 +276,22 @@ class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Inst
             values and M is the length of the `mesh` array.
         """
         bin_width = mesh[1] - mesh[0]
-        quantized_fwhm = np.round(self.fwhm / bin_width) * bin_width
 
         kernel = np.zeros((len(points), len(mesh)))
-        kernel[:, :] = triang.pdf(mesh, 0.5, loc=-quantized_fwhm, scale=quantized_fwhm * 2)
+        kernel[:, :] = triang.pdf(mesh, 0.5, loc=-self.fwhm, scale=self.fwhm * 2)
 
         return kernel
 
 
-class GenericTrapezoid1DModel(SimpleBroaden1DMixin, InstrumentModel):
+class GenericTrapezoid1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, InstrumentModel):
     """
     A generic Trapezoid model.
 
     Models the :term:`resolution` as an isosceles Trapezoid function.
+
+    Note that shape and area are only exactly correct when base lengths correspond to an even number
+    of bin widths. The get_peak() and broaden() methods will snap input points to the nearest mesh
+    value; this results in a consistent peak shape.
 
     Parameters
     ----------
@@ -365,6 +371,9 @@ class GenericTrapezoid1DModel(SimpleBroaden1DMixin, InstrumentModel):
         Computes the Trapezoid kernel centered on zero on the provided `mesh` at each value of
         `points` (energy transfer or momentum scalar).
 
+        Note that shape and area are only exactly correct when base lengths correspond to an even
+        number of bin widths.
+
         Parameters
         ----------
         points
@@ -380,44 +389,11 @@ class GenericTrapezoid1DModel(SimpleBroaden1DMixin, InstrumentModel):
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        return self._get_kernel(points, mesh, - 0.5 * self.long_base)
-
-    def get_peak(self,
-                 points: Float[np.ndarray, 'sample dimension=1'],
-                 mesh: Float[np.ndarray, 'mesh']
-                 ) -> Float[np.ndarray, 'sample mesh']:
-        """
-        Computes the Trapezoid kernel on the provided `mesh` at each value of the `points`
-        energy transfer.
-
-        Parameters
-        ----------
-        points
-            The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
-            array where N is the number of energy transfers.
-        mesh
-            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            energy-transfer space of interest.
-
-        Returns
-        -------
-        kernel
-            The Trapezoid kernel at each value of `points` as given by this model, computed on the
-            `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
-            N is the number of w/Q values and M is the length of the `mesh` array.
-        """
-        return self._get_kernel(points, mesh, points - 0.5 * self.long_base)
-
-    def _get_kernel(self,
-                    points: Float[np.ndarray, 'sample dimension=1'],
-                    mesh: Float[np.ndarray, 'mesh'],
-                    displacement: float | Float[np.ndarray, 'sample'] = 0.,
-                    ) -> Float[np.ndarray, 'sample mesh']:
         slope_length = 0.5 * (self.long_base - self.short_base)
 
         kernel = np.zeros((len(points), len(mesh)))
         kernel[:, :] = trapezoid.pdf(mesh, slope_length, 1 - slope_length,
-                                     loc=displacement, scale=self.long_base)
+                                     loc=(-0.5 * self.long_base), scale=self.long_base)
         return kernel
 
 
