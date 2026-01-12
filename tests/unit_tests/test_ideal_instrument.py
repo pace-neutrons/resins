@@ -46,8 +46,42 @@ def test_boxcar_broaden():
     result, _ = _get_boxcar_broaden()
     assert_allclose(result, np.load(DATA_PATH / '_get_boxcar_broaden.npy'))
 
+def _get_triangle_kernel():
+    points = np.array([[3.], [7.]])
+    mesh = np.arange(-5., 5., 1.)
+    instrument = Instrument.from_default('IDEAL')
+    model = instrument.get_resolution_function('triangle', fwhm=2.)
 
-_GET_DATA_FUNCTIONS = [_get_boxcar_kernel, _get_boxcar_peak, _get_boxcar_broaden]
+    return model.get_kernel(points, mesh), mesh
+
+def _get_triangle_peak():
+    points = np.array([[3.], [7.]])
+    mesh = np.arange(0., 10., 1.)
+
+    instrument = Instrument.from_default('IDEAL')
+    model = instrument.get_resolution_function('triangle', fwhm=2.)
+
+    return model.get_peak(points, mesh), mesh
+
+def _get_triangle_broaden():
+    points = np.array([[3.], [7.]])
+    mesh = np.arange(0., 10., 1.)
+    data = [0.5, 2.]
+    instrument = Instrument.from_default('IDEAL')
+    model = instrument.get_resolution_function('triangle', fwhm=2.)
+
+    return model.broaden(points, data, mesh), mesh
+
+
+_GET_DATA_FUNCTIONS = [
+    _get_boxcar_kernel,
+    _get_boxcar_peak,
+    _get_boxcar_broaden,
+    _get_triangle_kernel,
+    _get_triangle_peak,
+    _get_triangle_broaden,
+]
+
 
 def generate_data():
     import matplotlib

@@ -14,11 +14,13 @@ if TYPE_CHECKING:
 
 
 class StaticSnappedPeaksMixin:
-    """Mixin providing a get_peak() by copying kernels to nearest bins
+    """Mixin providing a get_peak() by copying kernel to nearest bins
 
     This results in 'snapping' to the nearest bin rather than a more accurate evaluation at the true
     point position. However it also eliminates surprising changes to the kernel shape based on the
     sub-bin position, and gives similar results to convolution with pre-binned data.
+
+    get_kernel() must be provided by the inheriting class or another Mixin.
 
     """
 
@@ -29,11 +31,11 @@ class StaticSnappedPeaksMixin:
         """
         Apply the kernel at the nearest `mesh` point for at each value of `points` energy transfer.
 
-        Note that:
-        - peak positions are quantized to the nearest mesh point
+        The kernel is obtained by calling get_kernel() for the first item of ``points``: this is
+        intended for use with energy-independent ("static") broadening functions.
 
-        As a result the position of peaks in this approach does not vary smoothly with the input
-        parameters.
+        Note that peak positions are quantized to the nearest mesh point. As a result, the position
+        of peaks in this approach does not vary smoothly with the input parameters.
 
         Parameters
         ----------
@@ -47,9 +49,9 @@ class StaticSnappedPeaksMixin:
         Returns
         -------
         peaks
-            Kernel aligned to nearest ``mesh`` point for each input point. This is a 2D N x M array
-            where N is the length of ``points`` (i.e. number of ω values) and M is the length of the
-            ``mesh`` array.
+            Broadening kernel aligned to nearest ``mesh`` point for each input point. This is a 2D N
+            x M array where N is the length of ``points`` (i.e. number of ω values) and M is the
+            length of the ``mesh`` array.
         """
         assert points.shape[0] == points.size  # i.e. Nx1 array
         assert mesh.ndim == 1
@@ -64,7 +66,7 @@ class StaticSnappedPeaksMixin:
 
         assert kernel_mesh[mesh_length - 1] == 0.
 
-        kernel = self.get_kernel(points, kernel_mesh[None, :])[0]
+        kernel = self.get_kernel(points[:1], kernel_mesh)[0]
 
         # Create output mesh with additional padding for kernel overlapping edges
         output = np.zeros([len(points), mesh_length * 3 - 2])
@@ -183,40 +185,6 @@ class GenericBoxcar1DModel(StaticSnappedPeaksMixin, SimpleBroaden1DMixin, Instru
 
         return out_kernel
 
-    def get_peak(self,
-                 points: Float[np.ndarray, 'sample dimension=1'],
-                 mesh: Float[np.ndarray, 'mesh']
-                 ) -> Float[np.ndarray, 'sample mesh']:
-        """
-        Compute the Boxcar (square) kernel on the provided `mesh` at each value of the `points`
-        energy transfer.
-
-        Note that:
-        - peak positions are quantized to the nearest mesh point
-        - the boxcar kernel is quantized to an odd number of samples
-        - the boxcar kernel is normalised to total value 1 based on the actual number of samples
-
-        As a result the width, height and position of peaks in this approach do
-        not vary smoothly with the input parameters.
-
-        Parameters
-        ----------
-        points
-            The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
-            array where N is the number of energy transfers.
-        mesh
-            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            `points` transfer space of interest.
-
-        Returns
-        -------
-        kernel
-            The Boxcar kernel at each value of `points` as given by this model, computed on the
-            `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
-            N is the number of w/Q values and M is the length of the `mesh` array.
-        """
-        return super().get_peak(points, mesh)
-
 
 class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, InstrumentModel):
     """
@@ -304,7 +272,6 @@ class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Inst
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-
         bin_width = mesh[1] - mesh[0]
         quantized_fwhm = np.round(self.fwhm / bin_width) * bin_width
 
@@ -312,38 +279,6 @@ class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Inst
         kernel[:, :] = triang.pdf(mesh, 0.5, loc=-quantized_fwhm, scale=quantized_fwhm * 2)
 
         return kernel
-
-    def get_peak(self,
-                 points: Float[np.ndarray, 'sample dimension=1'],
-                 mesh: Float[np.ndarray, 'mesh']
-                 ) -> Float[np.ndarray, 'sample mesh']:
-        """
-        Compute set of triangle functions at ``points`` on ``mesh``.
-
-        Note that:
-        - peak positions are quantized to the nearest mesh point
-        - the triangle width kernel is quantized to run straight from peak to zeros
-
-        As a result the width, height and position of peaks in this approach do
-        not vary smoothly with the input parameters.
-
-        Parameters
-        ----------
-        points
-            The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
-            array where N is the number of energy transfers.
-        mesh
-            The mesh on which to evaluate the kernel. This is a 1D array which *must* span the
-            `points` transfer space of interest.
-
-        Returns
-        -------
-        peaks
-            Triangle kernel at each value of `points` as given by this model, computed on the
-            `mesh` and centered near the corresponding energy transfer. This is a 2D N x M array
-             where N is the number of ``points and M is the length of ``mesh``.
-        """
-        return super().get_peak(points, mesh)
 
 
 class GenericTrapezoid1DModel(SimpleBroaden1DMixin, InstrumentModel):
