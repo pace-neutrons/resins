@@ -47,46 +47,13 @@ class StaticConvolveBroadenMixin:
 
 
 class StaticSnappedPeaksMixin:
-    """Mixin providing a get_peak() based on application of broaden() to quantised delta functions
+    """Mixin providing a get_peak() by copying kernels to nearest bins
 
-    In the composed class broaden() must not use get_peak()
+    This results in 'snapping' to the nearest bin rather than a more accurate evaluation at the true
+    point position. However it also eliminates surprising changes to the kernel shape based on the
+    sub-bin position, and gives similar results to convolution with pre-binned data.
+
     """
-    @staticmethod
-    def _get_snapped_dirac_peaks(points: Float[np.ndarray, 'sample dimension=1'],
-                                mesh: Float[np.ndarray, 'mesh']
-                                ) -> Float[np.ndarray, 'sample mesh']:
-        """Compute digitized delta functions on the energy-mesh
-
-        These are one-sample peaks with area 1, at the nearest mesh point. No interpolation is
-        performed; this is intended to be convolved to produce a "snapped" spectrum for ease of
-        comparison and interpolation, rather than the best possible representation of the data.
-
-        Mesh is always interpreted as energy-transfer, corresponding to the first column of
-        ``points``.
-
-            Parameters
-            ----------
-            points
-                The energy transfer in meV for which to compute the kernel. This *must* be a Nx1 2D
-                array where N is the number of energy transfers.
-            mesh
-                A regular mesh on which to evaluate the kernel. This is a 1D array which *must* span
-                the `points` transfer space of interest.
-
-            Returns
-            -------
-            binned_points
-                Intensity values corresponding to ``mesh`` for each item in ``points``
-
-        """
-        bin_width = mesh[1] - mesh[0]
-        edges = np.linspace(mesh[0] - (bin_width / 2), mesh[-1] + (bin_width / 2), len(mesh) + 1)
-
-        peaks = np.asarray([
-            np.histogram(point[0], bins=edges)[0] for point in points
-        ])
-
-        return peaks / bin_width
 
     def get_peak(self,
                  points: Float[np.ndarray, 'sample dimension=1'],
@@ -112,18 +79,34 @@ class StaticSnappedPeaksMixin:
 
         Returns
         -------
-        kernel
-            The Boxcar kernel at each value of `points` as given by this model, computed on the
-            `mesh` and centered on the corresponding energy transfer. This is a 2D N x M array where
-            N is the number of w/Q values and M is the length of the `mesh` array.
+        peaks
+            Kernel aligned to nearest ``mesh`` point for each input point. This is a 2D N x M array
+            where N is the length of ``points`` (i.e. number of ω values) and M is the length of the
+            ``mesh`` array.
         """
+        assert points.shape[0] == points.size  # i.e. Nx1 array
+        assert mesh.ndim == 1
 
-        delta_functions = self._get_snapped_dirac_peaks(points, mesh)
+        bin_width = mesh[1] - mesh[0]
+        mesh_length = len(mesh)
 
-        peaks = [self.broaden(points[:1], delta_function, mesh)
-                 for delta_function in delta_functions]
+        # Set up kernel mesh: 0-centered with range equal to output mesh on each side
+        kernel_range = (mesh_length - 1) * bin_width
+        kernel_length = 2 * mesh_length - 1
+        kernel_mesh = np.linspace(-kernel_range, kernel_range, kernel_length)
 
-        return np.asarray(peaks)
+        assert kernel_mesh[mesh_length - 1] == 0.
+
+        kernel = self.get_kernel(points, kernel_mesh[None, :])[0]
+
+        # Create output mesh with additional padding for kernel overlapping edges
+        output = np.zeros([len(points), mesh_length * 3 - 2])
+
+        positions = np.searchsorted(mesh, points.flatten() - bin_width * 0.5)
+        for i, (point, position) in enumerate(zip(points, positions)):
+            output[i, position:(position + kernel_length)] = kernel
+
+        return output[:, (mesh_length - 1):(2 * mesh_length - 1)]
 
 
 class GenericBoxcar1DModel(StaticSnappedPeaksMixin, StaticConvolveBroadenMixin, InstrumentModel):
