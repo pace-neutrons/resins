@@ -7,43 +7,10 @@ from scipy.signal import convolve
 from scipy.stats import cauchy, norm, trapezoid, triang, uniform
 
 from .model_base import InstrumentModel, ModelData
-from .mixins import GaussianKernel1DMixin
+from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 if TYPE_CHECKING:
     from jaxtyping import Float
-
-
-class StaticConvolveBroadenMixin:
-    def broaden(self: InstrumentModel,
-                points: Float[np.ndarray, 'sample dimension'],
-                data: Float[np.ndarray, 'data'],
-                mesh: Float[np.ndarray, '...'],
-                ) -> Float[np.ndarray, '...']:
-        """
-        Broadens the `data` on the full `mesh` using a convolution of a single kernel with data.
-
-        Parameters
-        ----------
-        points
-            The independent variable (energy transfer or momentum scalar) whose `data` to broaden.
-            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of w/Q values
-            for which there is `data`. Therefore, the ``sample`` dimension *must* match the length
-            of the `data` array.
-        data
-            The intensities at the points.
-        mesh
-            The mesh to use for the broadening. This is a 1D array which *must* span the entire
-            `points` space of interest.
-
-        Returns
-        -------
-        spectrum
-            The broadened spectrum. This is a 1D array of the same length as `mesh`.
-        """
-        bin_width = mesh[1] - mesh[0]
-
-        kernel = self.get_kernel(np.array([[points[0, 0]]]), mesh)[0] * bin_width
-        return convolve(data, kernel, mode="same")
 
 
 class StaticSnappedPeaksMixin:
@@ -109,7 +76,7 @@ class StaticSnappedPeaksMixin:
         return output[:, (mesh_length - 1):(2 * mesh_length - 1)]
 
 
-class GenericBoxcar1DModel(StaticSnappedPeaksMixin, StaticConvolveBroadenMixin, InstrumentModel):
+class GenericBoxcar1DModel(StaticSnappedPeaksMixin, SimpleBroaden1DMixin, InstrumentModel):
     """
     A generic Boxcar model.
 
@@ -251,7 +218,7 @@ class GenericBoxcar1DModel(StaticSnappedPeaksMixin, StaticConvolveBroadenMixin, 
         return super().get_peak(points, mesh)
 
 
-class GenericTriangle1DModel(StaticConvolveBroadenMixin, StaticSnappedPeaksMixin, InstrumentModel):
+class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, InstrumentModel):
     """
     A generic Triangle model.
 
@@ -379,7 +346,7 @@ class GenericTriangle1DModel(StaticConvolveBroadenMixin, StaticSnappedPeaksMixin
         return super().get_peak(points, mesh)
 
 
-class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
+class GenericTrapezoid1DModel(SimpleBroaden1DMixin, InstrumentModel):
     """
     A generic Trapezoid model.
 
@@ -519,7 +486,7 @@ class GenericTrapezoid1DModel(StaticConvolveBroadenMixin, InstrumentModel):
         return kernel
 
 
-class GenericGaussian1DModel(StaticConvolveBroadenMixin, GaussianKernel1DMixin, InstrumentModel):
+class GenericGaussian1DModel(SimpleBroaden1DMixin, GaussianKernel1DMixin, InstrumentModel):
     """
     A generic Gaussian model.
 
@@ -580,7 +547,7 @@ class GenericGaussian1DModel(StaticConvolveBroadenMixin, GaussianKernel1DMixin, 
         return {'sigma': np.ones(len(points)) * self.sigma}
 
 
-class GenericLorentzian1DModel(StaticConvolveBroadenMixin, InstrumentModel):
+class GenericLorentzian1DModel(SimpleBroaden1DMixin, InstrumentModel):
     """
     A generic Lorentzian model.
 
