@@ -54,6 +54,11 @@ def _get_triangle_kernel():
 
     return model.get_kernel(points, mesh), mesh
 
+def test_triangle_kernel():
+    result, _ = _get_triangle_kernel()
+    assert_allclose(result, np.load(DATA_PATH / '_get_triangle_kernel.npy'))
+
+
 def _get_triangle_peak():
     points = np.array([[3.], [7.]])
     mesh = np.arange(0., 10., 1.)
@@ -63,6 +68,10 @@ def _get_triangle_peak():
 
     return model.get_peak(points, mesh), mesh
 
+def test_triangle_peak():
+    result, _ = _get_triangle_peak()
+    assert_allclose(result, np.load(DATA_PATH / '_get_triangle_peak.npy'))
+
 def _get_triangle_broaden():
     points = np.array([[3.], [7.]])
     mesh = np.arange(0., 10., 1.)
@@ -71,6 +80,10 @@ def _get_triangle_broaden():
     model = instrument.get_resolution_function('triangle', fwhm=2.)
 
     return model.broaden(points, data, mesh), mesh
+
+def test_triangle_broaden():
+    result, _ = _get_triangle_broaden()
+    assert_allclose(result, np.load(DATA_PATH / '_get_triangle_broaden.npy'))
 
 
 _GET_DATA_FUNCTIONS = [
