@@ -5,7 +5,7 @@ import pytest
 import mantid
 from abins.instruments.panther import PantherInstrument
 
-from resolution_functions.instrument import Instrument
+from resins.instrument import Instrument
 
 
 WAVENUMBER_TO_MEV = 0.12398419843320028

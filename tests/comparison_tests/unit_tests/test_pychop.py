@@ -14,9 +14,9 @@ from PyChop.Instruments import Instrument as PyChopInstrument
 from PyChop.Chop import tube_mts
 from PyChop.MulpyRep import calcChopTimes
 
-from resolution_functions.instrument import Instrument
-from resolution_functions.models.pychop import *
-from resolution_functions.models.model_base import InvalidInputError, ModelData
+from resins.instrument import Instrument
+from resins.models.pychop import *
+from resins.models.model_base import InvalidInputError, ModelData
 
 if TYPE_CHECKING:
     from jaxtyping import Float

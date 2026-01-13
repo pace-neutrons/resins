@@ -6,9 +6,9 @@ import typing
 import pytest
 import yaml
 
-from resolution_functions import instrument as i
-from resolution_functions.models import MODELS
-from resolution_functions.models.model_base import ModelData, InstrumentModel
+from resins import instrument as i
+from resins.models import MODELS
+from resins.models.model_base import ModelData, InstrumentModel
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -128,13 +128,13 @@ def test_instrument(data):
 
 
 def test_available_instruments(mock_instrument_map, mocker):
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_MAP', mock_instrument_map)
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
     assert i.Instrument.available_instruments() == ['TEST', 'ALIAS']
 
 
 def test_private_available_versions(mock_instrument_map, mocker):
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
+    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
 
     actual_versions, actual_default = i.Instrument._available_versions(FAKE_YAML)
 
@@ -143,8 +143,8 @@ def test_private_available_versions(mock_instrument_map, mocker):
 
 
 def test_available_versions(mock_instrument_map, mocker):
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
+    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
 
     actual_versions, actual_default = i.Instrument.available_versions('TEST')
 
@@ -153,8 +153,8 @@ def test_available_versions(mock_instrument_map, mocker):
 
 
 def test_available_versions_alias(mock_instrument_map, mocker):
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
+    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
 
     actual_versions, actual_default = i.Instrument.available_versions('ALIAS')
 
@@ -186,8 +186,8 @@ def test_from_file_invalid_version():
 
 
 def test_from_default(data, mock_instrument_map, mocker):
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
+    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
 
     instrument = i.Instrument.from_default('TEST', 'VERSION1')
 
@@ -198,8 +198,8 @@ def test_from_default(data, mock_instrument_map, mocker):
 
 
 def test_from_default_default(data, mock_instrument_map, mocker):
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
+    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
 
     instrument = i.Instrument.from_default('TEST')
 
@@ -212,8 +212,8 @@ def test_from_default_default(data, mock_instrument_map, mocker):
 @pytest.mark.parametrize("name,expected_path,implied_ver",
                          [('TEST', FAKE_YAML, None), ('ALIAS', FAKE_YAML, 'VERSION1')])
 def test_get_file(name, expected_path, implied_ver, mock_instrument_map, mocker):
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
+    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
 
     actual_path, actual_version = i.Instrument._get_file(name)
 
@@ -222,15 +222,15 @@ def test_get_file(name, expected_path, implied_ver, mock_instrument_map, mocker)
 
 
 def test_get_file_invalid(mock_instrument_map, mocker):
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_MAP', mock_instrument_map)
-    mocker.patch('resolution_functions.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
+    mocker.patch('resins.instrument.INSTRUMENT_MAP', mock_instrument_map)
+    mocker.patch('resins.instrument.INSTRUMENT_DATA_PATH', TEST_DIR)
 
     with pytest.raises(i.InvalidInstrumentError):
         i.Instrument._get_file('INVALID_INSTRUMENT')
 
 
 def test_private_get_model_data(instrument, version1_mock_v3_data_nondefault, mock_models, mocker):
-    mocker.patch('resolution_functions.instrument.MODELS', mock_models)
+    mocker.patch('resins.instrument.MODELS', mock_models)
 
     actual_model, actual_name = instrument._get_model_data(model_name='mock_v3', config1='C', config2='Y')
 
@@ -243,7 +243,7 @@ def test_private_get_model_data_default(instrument,
                                         version1_mock_v3_data_default,
                                         mock_models,
                                         mocker):
-    mocker.patch('resolution_functions.instrument.MODELS', mock_models)
+    mocker.patch('resins.instrument.MODELS', mock_models)
 
     actual_model, actual_name = instrument._get_model_data()
 
@@ -258,7 +258,7 @@ def test_private_get_model_data_invalid_model(test_instrument):
 
 
 def test_get_model_data(instrument, version1_mock_v3_data_nondefault, mock_models, mocker):
-    mocker.patch('resolution_functions.instrument.MODELS', mock_models)
+    mocker.patch('resins.instrument.MODELS', mock_models)
 
     actual_model = instrument.get_model_data(model_name='mock_v3', config1='C', config2='Y')
 
@@ -270,7 +270,7 @@ def test_get_model_data_invalid_type_no_error(instrument,
                                               version1_mock_v3_data_nondefault,
                                               mock_models,
                                               mocker):
-    mocker.patch('resolution_functions.instrument.MODELS', mock_models)
+    mocker.patch('resins.instrument.MODELS', mock_models)
 
     # mock_v1 has param1 with invalid type
     actual_model = instrument.get_model_data(model_name='mock_v1', config1='C', config2='Y')
@@ -296,7 +296,7 @@ def test_resolve_model_invalid_alias(test_instrument):
 
 
 def test_get_resolution_function(instrument, version1_mock_v3_data_nondefault, mock_models, mocker):
-    mocker.patch('resolution_functions.instrument.MODELS', mock_models)
+    mocker.patch('resins.instrument.MODELS', mock_models)
 
     arg1, kwarg2 = True, 42
     actual = instrument.get_resolution_function(
@@ -311,14 +311,14 @@ def test_get_resolution_function(instrument, version1_mock_v3_data_nondefault, m
 
 
 def test_get_resolution_function_invalid_function(instrument, mock_models, mocker):
-    mocker.patch('resolution_functions.instrument.MODELS', mock_models)
+    mocker.patch('resins.instrument.MODELS', mock_models)
 
     with pytest.raises(KeyError):
         instrument.get_resolution_function('mock_v2')
 
 
 def test_get_model_signature(instrument, mock_models, mocker):
-    mocker.patch('resolution_functions.instrument.MODELS', mock_models)
+    mocker.patch('resins.instrument.MODELS', mock_models)
 
     expected_names = ['model_name', 'config1', 'config2', 'arg1', 'kwarg1', 'kwarg2']
     expected_annotations = [typing.Optional[str], typing.Literal['A', 'B', 'C'],

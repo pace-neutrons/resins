@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from resolution_functions.models.mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
+from resins.models.mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 

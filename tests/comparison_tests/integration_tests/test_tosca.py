@@ -4,7 +4,7 @@ import pytest
 import mantid
 from abins.instruments.toscainstrument import ToscaInstrument
 
-from resolution_functions.instrument import Instrument
+from resins.instrument import Instrument
 
 
 WAVENUMBER_TO_MEV = 0.12398419843320028
