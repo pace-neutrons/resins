@@ -110,30 +110,44 @@ class InstrumentModel(ABC):
 
     - The ``__init__`` method must be implemented, and it must take the corresponding `ModelData`
       subclass as its first positional argument.
+
       - The ``__init__`` method of this class must be called via ``super()``
+
       - The subclass ``__init__`` method should take all user-choice parameters as arguments, i.e.
         anything that was decided at the time of the experiment, such as the initial energy or
         chopper frequency.
+
         - These parameters should be ``Optional`` wherever possible, with the defaults for each
           instrument in the corresponding yaml files.
+
       - Any number of any other parameters is allowed, though ``__init__`` must not accept the
         energy transfer/momentum ([w, Q]) parameter used in the other methods.
+
       - The ``__init__`` method should perform as much of the computation as possible, i.e. any
         computation that does not involve the [w, Q] parameter.
+
       - No reference to the `ModelData` should be kept.
+
     - The ``get_characteristics``, ``get_kernel``, and ``broaden`` methods must be implemented.
+
       - Some or all of these may come as reusable code (as appropriate) via the use of the mixin
         pattern (see `resins.models.mixins`).
+
       - Each must take the ``omega_q`` argument, which must be a ``sample`` x ``dimension`` 2D
         array, where ``sample`` is the number of [w, Q] values provided by the user and
         ``dimension`` are the [w, Q] variables required by the model, as defined in the ``input``
         class variable. These can be any combination of the energy transfer (i.e. frequencies),
         the momentum value (q), and the momentum vector (q-vectors).
+
         - For example, a model that uses the energy transfer and momentum scalar would have
           ``dimension=2`` and ``input = ('energy transfer', 'momentum')``.
+
       - It must also take ``*args`` and ``**kwargs``.
+
     - The `input` class variable must be given a specific value.
+
     - The `data_class` class variable must be assigned to the corresponding `ModelData` subclass.
+
     - Any additional defined methods should be private, but feel free to use your discretion.
 
     Parameters
