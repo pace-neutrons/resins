@@ -1,5 +1,6 @@
 from collections import ChainMap
 from enum import StrEnum
+from itertools import product
 from pathlib import Path
 
 import numpy as np
@@ -51,6 +52,15 @@ TEST_CASES = {
             'kwargs': {'sigma': 2.}
         },
         'kernel': {'mesh': np.linspace(-6, 6, 13)}
+    },
+    'lorentzian': {
+        'default': {
+            'points': np.array([[3.], [7.]]),
+            'mesh': np.linspace(0., 10., 41),
+            'data': np.array([0.5, 2.]),
+            'kwargs': {'fwhm': 2.}
+        },
+        'kernel': {'mesh': np.linspace(-6, 6, 13)}
     }
 }
 
@@ -59,6 +69,11 @@ class Feature(StrEnum):
     KERNEL = 'kernel'
     PEAK = 'peak'
     BROADEN = 'broaden'
+
+
+test_specs = list(
+    product(("boxcar", "triangle", "trapezoid", "gaussian", "lorentzian"), Feature)
+)
 
 
 def _get_data(name: str, feature: Feature):
@@ -79,20 +94,6 @@ def _get_data(name: str, feature: Feature):
 
     return result, params['mesh']
 
-test_specs = [
-    ("boxcar", Feature.KERNEL),
-    ("boxcar", Feature.PEAK),
-    ("boxcar", Feature.BROADEN),
-    ("triangle", Feature.KERNEL),
-    ("triangle", Feature.PEAK),
-    ("triangle", Feature.BROADEN),
-    ("trapezoid", Feature.KERNEL),
-    ("trapezoid", Feature.PEAK),
-    ("trapezoid", Feature.BROADEN),
-    ("gaussian", Feature.KERNEL),
-    ("gaussian", Feature.PEAK),
-    ("gaussian", Feature.BROADEN),
-]
 
 @pytest.mark.parametrize("name,feature", test_specs)
 def test_ideal_model(name: str, feature: Feature):
