@@ -144,10 +144,8 @@ class GenericBoxcar1DModel(
         characteristics
             The characteristics of the broadening function, i.e. the Boxcar width in meV and derived standard deviation (sigma).
         """
-        characteristics = {"width": np.ones(len(points)) * self.width}
-        characteristics["sigma"] = np.full_like(
-            characteristics["width"], np.sqrt(1 / 12)
-        )
+        characteristics = {"width": np.full(self.width, len(points))}
+        characteristics["sigma"] = characteristics["width"] * np.sqrt(1 / 12)
         return characteristics
 
     def get_kernel(
@@ -159,9 +157,10 @@ class GenericBoxcar1DModel(
         Computes the Boxcar (square) kernel centered on zero on the provided `mesh` at each value of
         `points` (energy transfer or momentum scalar).
 
-        Note that these kernels generated with scipy.signal.uniform are rounded
-        to an odd-integer width and edges move directly from full-height to
-        zero. Better but more complicated algorithms exist.
+        Note that these kernels will always consist of an odd-integer width of full-height samples,
+        moving directly to zero at the surrounding samples. The area is normalised as though this
+        is a trapezoid (i.e. as though lines connect the boxcar top to the surrounding samples),
+        resulting in lower height than the ideal boxcar.
 
         Parameters
         ----------
@@ -194,14 +193,15 @@ class GenericTriangle1DModel(
 
     Models the :term:`resolution` as an isosceles Triangle function.
 
+    Note that shape and area are only exactly correct when FHWM equals an integer number of bins.
+
     Parameters
     ----------
     model_data
         The data associated with the model for a given version of a given instrument.
     fwhm
         The width (in Full-Width Half-Maximum) of the Triangle function. This width is used for all
-        values of [w, Q]. When realised on a user mesh, the width is rounded to an integer number of
-        bins to create straight lines from the peak to zero.
+        values of [w, Q].
 
     Attributes
     ----------
