@@ -2,8 +2,8 @@ import inspect
 import os
 import yaml
 
-from resolution_functions.instrument import Instrument, INSTRUMENT_MAP
-from resolution_functions.models import MODELS
+from resins.instrument import Instrument, INSTRUMENT_MAP
+from resins.models import MODELS
 
 
 OUT_DIR = os.path.join(

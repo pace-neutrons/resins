@@ -23,7 +23,7 @@ investigation is still required. To do this, the :term:`instrument`, the
 :term:`model`, and the :term:`option` for each :term:`configuration` have to
 have been chosen. The first step is to create the instrument:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> maps = Instrument.from_default('MAPS')
 >>> print(maps)
 Instrument(name=MAPS, version=MAPS)
@@ -124,7 +124,7 @@ the ResINS resolution using a library like
 `euphonic <https://euphonic.readthedocs.io/en/stable/>`_.
 Again, we begin by creating the Instrument:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> maps = Instrument.from_default('MAPS')
 >>> print(maps)
 Instrument(name=MAPS, version=MAPS)

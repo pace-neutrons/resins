@@ -3,7 +3,7 @@ Model for the TOSCA :term:`instrument` from the [INS-book]_.
 
 All classes within are exposed for reference only and should not be instantiated directly. For
 obtaining the :term:`resolution function` of an :term:`instrument`, please use the
-`resolution_functions.instrument.Instrument.get_resolution_function` method.
+`resins.instrument.Instrument.get_resolution_function` method.
 
 .. [INS-book] PCH Mitchell, SF Parker, AJ Ramirez-Cuesta and J Tomkinson, Vibrational Spectroscopy with Neutrons With Applications in Chemistry, Biology, Materials Science and Catalysis, World Scientific Publishing Co. Pte. Ltd., Singapore, 2005.
 """

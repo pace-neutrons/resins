@@ -12,7 +12,7 @@ first and last :term:`choppers<chopper>` determine the :term:`chopper` contribut
 
 All classes within are exposed for reference only and should not be instantiated directly. For
 obtaining the :term:`resolution function` of an :term:`instrument`, please use the
-`resolution_functions.instrument.Instrument.get_resolution_function` method.
+`resins.instrument.Instrument.get_resolution_function` method.
 
 .. [PyChop] https://github.com/mducle/pychop/tree/main
 .. [Mantid] https://mantidproject.org/

@@ -1,7 +1,7 @@
-resolution\_functions.instrument
---------------------------------
+resins.instrument
+-----------------
 
-.. automodule:: resolution_functions.instrument
+.. automodule:: resins.instrument
    :members:
    :show-inheritance:
 

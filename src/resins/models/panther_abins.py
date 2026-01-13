@@ -3,7 +3,7 @@ The AbINS :term:`model` of the PANTHER :term:`instrument`.
 
 All classes within are exposed for reference only and should not be instantiated directly. For
 obtaining the :term:`resolution function` of an :term:`instrument`, please use the
-`resolution_functions.instrument.Instrument.get_resolution_function` method.
+`resins.instrument.Instrument.get_resolution_function` method.
 """
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ class PantherAbINSModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
     output model being a Gaussian. This is done by fitting three power-series polynomials (see
     `numpy.polynomial.polynomial.Polynomial`) to the resolution curve, where the result of the sum
     of the polynomials is the width (sigma) of the Gaussian. Each polynomial can be of any degree
-    and is given via the `resolution_functions.models.polynomial.PolynomialModelData`.
+    and is given via the `resins.models.polynomial.PolynomialModelData`.
 
     The :term:`resolution` is modelled as::
 

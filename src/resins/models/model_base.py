@@ -123,7 +123,7 @@ class InstrumentModel(ABC):
       - No reference to the `ModelData` should be kept.
     - The ``get_characteristics``, ``get_kernel``, and ``broaden`` methods must be implemented.
       - Some or all of these may come as reusable code (as appropriate) via the use of the mixin
-        pattern (see `resolution_functions.models.mixins`).
+        pattern (see `resins.models.mixins`).
       - Each must take the ``omega_q`` argument, which must be a ``sample`` x ``dimension`` 2D
         array, where ``sample`` is the number of [w, Q] values provided by the user and
         ``dimension`` are the [w, Q] variables required by the model, as defined in the ``input``

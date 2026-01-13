@@ -3,7 +3,7 @@ How To Programmatically Find Data
 
 The :term:`instrument`/:term:`model` data used by ResINS is available in the
 :doc:`documentation</instruments>` and comes packaged together with the library
-via the YAML files in ``resolution_functions/instrument_data``. However,
+via the YAML files in ``resins/instrument_data``. However,
 one may also obtain the data programmatically at runtime; this could be useful
 when accessing ResINS through other software to ensure the information is
 up-to-date with the code. This guide shows how to to this:
@@ -29,11 +29,11 @@ provided that format the information into nice-looking tables (see
 How To Find the Available Instruments
 -------------------------------------
 
-The :py:class:`~resolution_functions.instrument.Instrument` provides a method,
-:py:meth:`~resolution_functions.instrument.Instrument.available_instruments`,
+The :py:class:`~resins.instrument.Instrument` provides a method,
+:py:meth:`~resins.instrument.Instrument.available_instruments`,
 which lists all the available :term:`instruments<instrument>`:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> Instrument.available_instruments()
 ['ARCS', 'CNCS', 'HYSPEC', 'Lagrange', 'LET', 'MAPS', 'MARI', 'MERLIN', 'PANTHER', 'TFXA', 'TOSCA', 'VISION', 'SEQUOIA']
 
@@ -44,7 +44,7 @@ Advanced
 An advanced way of interacting with available instruments is to access the
 ``INSTRUMENT_MAP`` dictionary directly:
 
->>> from resolution_functions.instrument import INSTRUMENT_MAP
+>>> from resins.instrument import INSTRUMENT_MAP
 >>> INSTRUMENT_MAP
 {'ARCS': ('arcs', None), 'CNCS': ('cncs', None), 'HYSPEC': ('hyspec', None), 'Lagrange': ('lagrange', None), 'LET': ('let', None), 'MAPS': ('maps', None), 'MARI': ('mari', None), 'MERLIN': ('merlin', None), 'PANTHER': ('panther', None), 'TFXA': ('tosca', 'TFXA'), 'TOSCA': ('tosca', None), 'VISION': ('vision', None), 'SEQUOIA': ('sequoia', None)}
 
@@ -58,13 +58,13 @@ normal use.
 How To Find the Versions Available for an Instrument
 ----------------------------------------------------
 
-Once again, the :py:class:`~resolution_functions.instrument.Instrument` provides
+Once again, the :py:class:`~resins.instrument.Instrument` provides
 a method,
-:py:meth:`~resolution_functions.instrument.Instrument.available_versions`,
+:py:meth:`~resins.instrument.Instrument.available_versions`,
 which lists all the :term:`versions<version>` available for an
 :term:`instruments<instrument>`:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> available_versions, default_version = Instrument.available_versions('TOSCA')
 >>> available_versions
 ['TFXA', 'TOSCA1', 'TOSCA']
@@ -90,10 +90,10 @@ How To Find the Models Available for an Instrument
 Given an :ref:`instrument<how-to-instrument>` and its
 :ref:`version<how-to-version>`, it is possible to query the list of available
 :term:`models<model>` by using the
-:py:meth:`~resolution_functions.instrument.Instrument.available_models`
+:py:meth:`~resins.instrument.Instrument.available_models`
 property:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> tosca = Instrument.from_default('TOSCA', 'TOSCA')
 >>> tosca.available_models
 ['AbINS', 'book', 'vision']
@@ -109,13 +109,13 @@ Advanced
 The above property returns only the recommended (usually latest) version of each
 model. These "models" are actually aliases that each point to a versioned model
 which holds the data. These versioned models can be listed by using
-:py:meth:`~resolution_functions.instrument.Instrument.available_unique_models`:
+:py:meth:`~resins.instrument.Instrument.available_unique_models`:
 
 >>> tosca.available_unique_models
 ['AbINS_v1', 'book_v1', 'vision_v1']
 
 Then, to round out the options, *all* models can be listed via
-:py:meth:`~resolution_functions.instrument.Instrument.all_available_models`:
+:py:meth:`~resins.instrument.Instrument.all_available_models`:
 
 >>> tosca.all_available_models
 ['AbINS', 'AbINS_v1', 'book', 'book_v1', 'vision', 'vision_v1']
@@ -133,10 +133,10 @@ How To Find the Configurations that Must be Chosen for a Model
 
 The :term:`configurations<configuration>` required by a given :term:`model` can
 be retrieved using the
-:py:meth:`~resolution_functions.instrument.Instrument.possible_configurations_for_model`
+:py:meth:`~resins.instrument.Instrument.possible_configurations_for_model`
 method:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> tosca = Instrument.from_default('TOSCA', 'TOSCA')
 >>> tosca.possible_configurations_for_model('AbINS')
 []
@@ -165,10 +165,10 @@ If the model and setting are known
 To list the possible :term:`options<option>` for a given :term:`configuration`
 (:ref:`how to find configurations<how-to-config>`) of a given :term:`model`
 (:ref:`how to find models<how-to-model>`), the
-:py:meth:`~resolution_functions.instrument.Instrument.possible_options_for_model_and_configuration`
+:py:meth:`~resins.instrument.Instrument.possible_options_for_model_and_configuration`
 method is provided:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> tosca = Instrument.from_default('TOSCA', 'TOSCA')
 >>> tosca.possible_options_for_model_and_configuration('book', 'detector_bank')
 ['Backward', 'Forward']
@@ -178,10 +178,10 @@ If only the model is known
 
 To list all the :term:`options<option>` for all :term:`configurations<configuration>` of a
 given :term:`model` (:ref:`how to find models<how-to-model>`), the
-:py:meth:`~resolution_functions.instrument.Instrument.possible_options_for_model`
+:py:meth:`~resins.instrument.Instrument.possible_options_for_model`
 method is provided:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> tosca = Instrument.from_default('TOSCA', 'TOSCA')
 >>> tosca.possible_options_for_model('book')
 {'detector_bank': ['Backward', 'Forward']}
@@ -193,10 +193,10 @@ How To Find the Default Option for a Configuration
 Given the :term:`model` name (:ref:`how to find models<how-to-model>`) and the
 :term:`configuration` (:ref:`how to find configurations<how-to-config>`),
 the default option can be retrieved using the
-:py:meth:`~resolution_functions.instrument.Instrument.default_option_for_configuration`
+:py:meth:`~resins.instrument.Instrument.default_option_for_configuration`
 method:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> tosca = Instrument.from_default('TOSCA', 'TOSCA')
 >>> tosca.default_option_for_configuration('book', 'detector_bank')
 'Backward'
@@ -208,13 +208,13 @@ How To Find the Default Values for a Setting
 The default values for all :term:`settings<setting>` associated with a
 :term:`model` can be found using the ``default`` attribute of the model, which
 can be retrieved using the
-:py:meth:`~resolution_functions.instrument.Instrument.get_model_data` method:
+:py:meth:`~resins.instrument.Instrument.get_model_data` method:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> merlin = Instrument.from_default('MERLIN', 'MERLIN')
 >>> model = merlin.get_model_data('PyChop_fit')
 >>> type(model)
-<class 'resolution_functions.models.pychop.PyChopModelDataFermi'>
+<class 'resins.models.pychop.PyChopModelDataFermi'>
 >>> model.defaults
 {'e_init': 400, 'chopper_frequency': 400}
 
@@ -230,13 +230,13 @@ How To Find the Restrictions on the Values of a Setting
 The restrictions on the values for all :term:`settings<setting>` associated with a
 :term:`model` can be found using the ``restrictions`` attribute of the model, which
 can be retrieved using the
-:py:meth:`~resolution_functions.instrument.Instrument.get_model_data` method:
+:py:meth:`~resins.instrument.Instrument.get_model_data` method:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> merlin = Instrument.from_default('MERLIN', 'MERLIN')
 >>> model = merlin.get_model_data('PyChop_fit')
 >>> type(model)
-<class 'resolution_functions.models.pychop.PyChopModelDataFermi'>
+<class 'resins.models.pychop.PyChopModelDataFermi'>
 >>> model.restrictions
 {'e_init': [0, 181], 'chopper_frequency': [50, 601, 50]}
 
@@ -247,7 +247,7 @@ can be retrieved using the
 
 >>> model = merlin.get_model_data('PyChop_fit', chopper_package='S')
 >>> type(model)
-<class 'resolution_functions.models.pychop.PyChopModelDataFermi'>
+<class 'resins.models.pychop.PyChopModelDataFermi'>
 >>> model.restrictions
 {'e_init': [7, 2000], 'chopper_frequency': [50, 601, 50]}
 
@@ -268,10 +268,10 @@ How To Find the Models and Their Configurations
 
 All :term:`configurations<configuration>` for all the :term:`models<model>` can
 be displayed via the
-:py:meth:`~resolution_functions.instrument.Instrument.format_available_models_and_configurations`
+:py:meth:`~resins.instrument.Instrument.format_available_models_and_configurations`
 method:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> tosca = Instrument.from_default('TOSCA', 'TOSCA')
 >>> print(tosca.format_available_models_and_configurations())
 |--------------|--------------|-------------------|
@@ -299,10 +299,10 @@ How To Find the Models and Their Configurations and Their Options
 All the :term:`options<option>` for all the
 :term:`configurations<configuration>` of all :term:`models<model>` can be listed
 by the
-:py:meth:`~resolution_functions.instrument.Instrument.all_available_models_options`
+:py:meth:`~resins.instrument.Instrument.all_available_models_options`
 method:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> tosca = Instrument.from_default('TOSCA', 'TOSCA')
 >>> print(tosca.format_available_models_options())
 |--------------|--------------|-------------------|-----------------------|

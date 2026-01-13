@@ -6,7 +6,7 @@ import warnings
 
 import yaml
 
-from resolution_functions import Instrument
+from resins import Instrument
 
 
 class ValidationError(Exception):
@@ -306,7 +306,7 @@ def validate_with_resins(data: dict) -> None:
 
 def _default_paths():
     """Get instrument data yaml files from this package"""
-    data_dir = Path(__file__).parent.parent / 'src/resolution_functions/instrument_data'
+    data_dir = Path(__file__).parent.parent / 'src/resins/instrument_data'
     return list(data_dir.glob('*.yaml'))
 
 

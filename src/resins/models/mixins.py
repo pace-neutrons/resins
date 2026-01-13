@@ -1,6 +1,6 @@
 """
 Mixins providing generic implementations for
-`~resolution_functions.models.model_base.InstrumentModel` methods.
+`~resins.models.model_base.InstrumentModel` methods.
 
 The classes defined here are mixins to be used by specific models via multiple inheritance, allowing
 common code to be shared between models. Please note, however, that when doing this, the mixin
@@ -23,13 +23,13 @@ class GaussianKernel1DMixin:
     """
     A mixin providing the implementation for the Gaussian kernel ``get_kernel`` method.
 
-    Implements `resolution_functions.models.model_base.InstrumentModel.get_kernel` method of models
+    Implements `resins.models.model_base.InstrumentModel.get_kernel` method of models
     whose broadening can be represented by a 1D Gaussian distribution. Any model that satisfies this
     condition should inherit the ``get_kernel`` method from this mixin instead of writing its own
     implementation.
 
     Technically, any model that implements the
-    `resolution_functions.models.model_base.InstrumentModel.get_characteristics` method and which
+    `resins.models.model_base.InstrumentModel.get_characteristics` method and which
     returns the ``sigma`` parameter in its dictionary can use this mixin to inherit the Gaussian
     ``get_kernel`` method. However, it is recommended that only models that actually model a
     Gaussian kernel should use this mixin.
@@ -102,7 +102,7 @@ class SimpleBroaden1DMixin:
     """
     A mixin providing the most simple implementation for the ``convolve`` method.
 
-    Implements `resolution_functions.models.model_base.InstrumentModel.convolve` method in the
+    Implements `resins.models.model_base.InstrumentModel.convolve` method in the
     most simple and basic way - the dot product between the matrix of kernels (obtained from the
     ``get_kernel`` method) and the intensities.
 

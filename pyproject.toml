@@ -3,7 +3,7 @@ requires = ["setuptools >= 77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = 'resolutions_functions'
+name = 'resins'
 version = "0.1.0"
 authors = [
     {name = "Rastislav Turanyi", email = "rastislav.turanyi@stfc.ac.uk"},
@@ -61,7 +61,7 @@ docs = [
 ]
 
 [project.urls]
-Repository = "https://github.com/pace-neutrons/resolution_functions"
+Repository = "https://github.com/pace-neutrons/resins"
 
 [tool.setuptools]
 include-package-data = true

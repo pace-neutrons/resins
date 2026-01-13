@@ -1,7 +1,7 @@
-resolution\_functions.models
-============================
+resins.models
+=============
 
-.. automodule:: resolution_functions.models
+.. automodule:: resins.models
    :members:
    :undoc-members:
 

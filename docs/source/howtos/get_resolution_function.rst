@@ -3,10 +3,10 @@ How To Get the Resolution Function
 
 The short answer for getting the :term:`resolution function` of a particular
 :term:`version` of a given :term:`instrument` is to use the
-:py:meth:`resolution_functions.instrument.Instrument.get_resolution_function`
+:py:meth:`resins.instrument.Instrument.get_resolution_function`
 method, e.g.:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> tosca = Instrument('TOSCA')
 >>> book = tosca.get_resolution_function('book', detector_bank='Forward')
 >>> print(book)
@@ -25,10 +25,10 @@ How To Get the Model Signature
 ------------------------------
 
 The
-:py:meth:`resolution_functions.instrument.Instrument.get_model_signature`
+:py:meth:`resins.instrument.Instrument.get_model_signature`
 method returns a :py:class:`~inspect.Signature` (from the `inspect` module) that
 contains all the information for calling the
-:py:meth:`resolution_functions.instrument.Instrument.get_resolution_function`
+:py:meth:`resins.instrument.Instrument.get_resolution_function`
 method:
 
 * All arguments available for the :term:`model` & :term:`version` &
@@ -39,21 +39,21 @@ method:
 
 This method does not distinguish between :term:`configurations<configuration>`
 and :term:`settings<setting>`; it only considers
-:py:meth:`resolution_functions.instrument.Instrument.get_resolution_function`
+:py:meth:`resins.instrument.Instrument.get_resolution_function`
 and its call signature:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> maps = Instrument.from_default('MAPS')
 >>> sig = maps.get_model_signature()
 >>> sig
-<Signature (model_name: Optional[str] = 'PyChop_fit', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resolution_functions.models.pychop.PyChopModelFermi>
+<Signature (model_name: Optional[str] = 'PyChop_fit', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resins.models.pychop.PyChopModelFermi>
 
 The returned :py:class:`inspect.Signature` object can be then be queried using
 the full capabilities afforded by this standard library implementation. For
 example, the return annotation and the arguments can be queried separately:
 
 >>> sig.return_annotation
-<class 'resolution_functions.models.pychop.PyChopModelFermi'>
+<class 'resins.models.pychop.PyChopModelFermi'>
 >>> sig.parameters
 mappingproxy(OrderedDict([('model_name', <Parameter "model_name: Optional[str] = 'PyChop_fit'">), ('chopper_package', <Parameter "chopper_package: Literal['A', 'B', 'S'] = 'A'">), ('e_init', <Parameter "e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500">), ('chopper_frequency', <Parameter "chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400">), ('fitting_order', <Parameter "fitting_order: 'int' = 4">), ('_', <Parameter "_">)]))
 

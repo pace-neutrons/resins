@@ -1,6 +1,6 @@
-resolution\_functions.models.mixins
--------------------------------------------
+resins.models.mixins
+--------------------
 
-.. automodule:: resolution_functions.models.mixins
+.. automodule:: resins.models.mixins
    :members:
    :show-inheritance:

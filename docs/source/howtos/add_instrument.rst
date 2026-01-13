@@ -23,7 +23,7 @@ readable way is to construct a YAML file with the instrument details. This file
 necessary information. Then, ResINS can be leveraged to do the rest without
 additional code:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> new_instrument_path = '~/instrument/instrument.yaml'
 >>> version = 'version'  # If the created YAML file contains multiple versions
 >>> new_instrument = Instrument.from_file(new_instrument_path, version)
@@ -54,7 +54,7 @@ a YAML data file for it. All that is required is a Python dictionary, though the
 dictionary still **must** follow the :doc:`data file spec<../dev/yaml_spec>`
 (though only the dict inside :ref:`models: key<spec-models>`):
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> new_instrument_name = 'name'
 >>> new_instrument_version = 'v1'
 >>> new_instrument_default_model = 'AbINS'
@@ -73,17 +73,17 @@ How To Add an Instrument to ResINS
 
 If you would like to contribute a new :term:`instrument` to ResINS (which we do
 appreciate!), do open an issue on
-`our GitHub <https://github.com/pace-neutrons/resolution_functions>`_
+`our GitHub <https://github.com/pace-neutrons/resins>`_
 so that we can help. Otherwise, the process will start out similar to when you
 would :ref:`create an instrument for personal use<add-personal-instrument>` in
 that you will need to create a new YAML file for the instrument, following the
 :doc:`spec<../dev/yaml_spec>`. Then, the file will have to be placed in
-``resolution_functions/src/resolution_functions/instrument_data`` (of course
+``resins/src/resins/instrument_data`` (of course
 working on a new branch of your own fork, see Contributing Guidelines). Lastly,
 to be able to use the new instrument with
-:py:meth:`~resolution_functions.instrument.Instrument.from_default`,
+:py:meth:`~resins.instrument.Instrument.from_default`,
 it has to be added to
-:py:data:`resolution_functions.instrument.INSTRUMENT_MAP`;
+:py:data:`resins.instrument.INSTRUMENT_MAP`;
 create a new entry in the dictionary with the format::
 
     INSTRUMENT_MAP = {
@@ -103,15 +103,15 @@ ResINS provides a shorthand for accessing certain :term:`versions<version>` of
 certain :term:`instruments<instrument>` - for example, it is possible to create
 the TFXA :term:`instrument` even though TFXA is considered a :term:`version` of
 the TOSCA :term:`instrument` in reality (and so can also be accessed that way).
-This is done via the :py:data:`resolution_functions.instrument.INSTRUMENT_MAP`.
+This is done via the :py:data:`resins.instrument.INSTRUMENT_MAP`.
 To add a new alias, for personal use all that is needed is to insert a new
 key-value pair to the dictionary:
 
->>> from resolution_functions.instrument import INSTRUMENT_MAP, Instrument
+>>> from resins.instrument import INSTRUMENT_MAP, Instrument
 >>> INSTRUMENT_MAP['TOSCA1'] = ('tosca.yaml', 'TOSCA1')
 >>> print(Instrument.from_default('TOSCA1'))
 Instrument(name=TOSCA, version=TOSCA1)
 
 To do the same for official ResINS, the same dictionary has to be edited, this
 time by editing it at its source, in
-``resolution_functions/src/resolution_functions/instrument.py``.
+``resins/src/resins/instrument.py``.

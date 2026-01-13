@@ -3,7 +3,7 @@ Model for TOSCA-like :term:`instruments<instrument>` from the [VISION-paper]_.
 
 All classes within are exposed for reference only and should not be instantiated directly. For
 obtaining the :term:`resolution function` of an :term:`instrument`, please use the
-`resolution_functions.instrument.Instrument.get_resolution_function` method.
+`resins.instrument.Instrument.get_resolution_function` method.
 
 .. [VISION-paper] https://doi.org/10.1016/j.nima.2009.03.204
 """

@@ -56,7 +56,7 @@ name
 This key (:iref:ref:`see in spec<spec-name-targ>`) specifies the name of the
 :term:`instrument`, set as a string (`"instrument_name"`). This *should* be the
 public, official name that *should* be used everywhere else in ResINS. This is
-the name that :py:attr:`resolution_functions.instrument.Instrument.name` is set
+the name that :py:attr:`resins.instrument.Instrument.name` is set
 to and that will be shown when printing ``Instrument``, i.e.
 ``print(instrument)``.
 
@@ -72,7 +72,7 @@ default_version
 This key (:iref:ref:`see in spec<spec-default-version-targ>`) specifies the name
 of the :term:`version` that will be used by default for this :term:`instrument`
 when user does not specify which :term:`version` they want to use, i.e. calling
-:py:meth:`~resolution_functions.instrument.Instrument.from_default` with only
+:py:meth:`~resins.instrument.Instrument.from_default` with only
 one argument, e.g. ``Instrument.from_default('TOSCA')``.
 
 The value of this key, specified as a string, **must** match one of the version
@@ -118,7 +118,7 @@ This key (:iref:ref:`see in spec<sspec-default-model-targ>`), found inside the
 :term:`version` (see the :ref:`version key<spec-version>`), specifies the name
 of the :term:`model` that will be used by default when the user does not specify
 which :term:`model` they want to use, e.g. when calling
-:py:meth:`resolution_functions.instrument.Instrument.get_resolution_function`.
+:py:meth:`resins.instrument.Instrument.get_resolution_function`.
 
 The value of this key, specified as a string, **must** match one of the model
 keys (see :ref:`version<spec-models>`).
@@ -191,7 +191,7 @@ The value for this key is a string.
 .. important::
 
     The value for this key **must** correspond to one of the keys in
-    :py:data:`resolution_functions.models.MODELS` (and therefore must be
+    :py:data:`resins.models.MODELS` (and therefore must be
     globally unique. For creating a new model, see :doc:`../howtos/add_model`.
 
 
@@ -355,7 +355,7 @@ required by the ``ModelData``.
 .. important::
 
     While, in the
-    :py:meth:`~resolution_functions.instrument.Instrument.get_resolution_function`
+    :py:meth:`~resins.instrument.Instrument.get_resolution_function`
     method, the :ref:`configurations<spec-configurations>` override the
     :ref:`parameters<spec-parameters>`, using this fact is **heavily discouraged**
     because *it is not guaranteed*.
@@ -371,7 +371,7 @@ This key (:iref:ref:`see in spec<spec-default-option-targ>`), found inside the
 :ref:`configurations key<spec-configurations>`), specifies the name of the
 :term:`option` that will be used by default for this :term:`configuration`
 when user does not specify which :term:`option` they want to use, i.e. calling
-:py:meth:`~resolution_functions.instrument.Instrument.get_resolution_function`
+:py:meth:`~resins.instrument.Instrument.get_resolution_function`
 without specifying the configuration, e.g.
 ``maps.get_resolution_function('PyChop_fit')``.
 
@@ -519,4 +519,4 @@ Validation
 ----------
 
 Validation of data files can be performed using a script found in the GitHub
-repository at ``resolution_functions/dev/validate_data_file.py``.
+repository at ``resins/dev/validate_data_file.py``.

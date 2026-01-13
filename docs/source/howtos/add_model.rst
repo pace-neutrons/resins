@@ -80,7 +80,7 @@ versioned model. The data must follow the
 where can also be found, but the general points to keep in mind are as follows:
 
 * The ``function`` entry must have a value that corresponds to one of the
-  existing models. See :py:const:`resolution_functions.models.MODELS` for a
+  existing models. See :py:const:`resins.models.MODELS` for a
   dictionary that maps these ``function`` values to ResINS model objects. The
   created model will use the corresponding object.
 
@@ -100,7 +100,7 @@ where can also be found, but the general points to keep in mind are as follows:
     mathematics/physics of the :term:`model` and the physical :term:`INS`
     :term:`instrument`. If unsure, and especially when contributing to ResINS,
     do not hesitate to contact us on
-    `our GitHub <https://github.com/pace-neutrons/resolution_functions>`_.
+    `our GitHub <https://github.com/pace-neutrons/resins>`_.
 
 
 .. _howto-model-algorithm:
@@ -117,7 +117,7 @@ on the procedures for different outcomes:
   have to be registered with ResINS as explained below.
 
 * If contributing to ResINS, please use a new file in
-  ``resolution_functions/src/resolution_functions/models``.
+  ``resins/src/resins/models``.
 
 
 .. _howto-model-dataclass:
@@ -131,7 +131,7 @@ immediately - it is ok to continue adding to it as the model is being developed
 - but it is a good starting point since the model class will need this class.
 
 The data class **must be** a subclass of
-:py:class:`resolution_functions.models.model_base.ModelData` (please read its
+:py:class:`resins.models.model_base.ModelData` (please read its
 documentation for details on how it and its subclasses are supposed to work)
 **and** it must be decorated with the :py:func:`dataclasses.dataclass` decorator
 with the following arguments:
@@ -147,7 +147,7 @@ Thus, for example:
 .. code-block:: Python
 
     from dataclasses import dataclass
-    from resolution_functions.models.model_base import ModelData
+    from resins.models.model_base import ModelData
 
     @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
     class TestModelData(ModelData):
@@ -160,7 +160,7 @@ I.e., these should be the combination of the values from the YAML file
 :ref:`parameters<spec-parameters>` and from the chosen
 :ref:`options<spec-configurations>`. How these required values will be split
 between the two places does not matter for the Python code as
-:py:meth:`~resolution_functions.instrument.Instrument.get_resolution_function`
+:py:meth:`~resins.instrument.Instrument.get_resolution_function`
 combines the two before creating the data object (i.e. ``TestModelData``).
 
 .. note::
@@ -169,8 +169,8 @@ combines the two before creating the data object (i.e. ``TestModelData``).
     some arguments for the model (e.g. the model takes ``e_init`` and YAML file
     specifies that the default value is ``100`` and that only values between
     ``10`` and ``1000`` are allowed), you will need to reimplement the
-    :py:attr:`resolution_functions.models.model_base.ModelData.defaults` and/or
-    :py:attr:`resolution_functions.models.model_base.ModelData.restrictions`
+    :py:attr:`resins.models.model_base.ModelData.defaults` and/or
+    :py:attr:`resins.models.model_base.ModelData.restrictions`
     properties (the documentation does not need to be overwritten, just the
     code). For example:
 
@@ -178,7 +178,7 @@ combines the two before creating the data object (i.e. ``TestModelData``).
 
     from dataclasses import dataclass
     from typing import Any
-    from resolution_functions.models.model_base import ModelData
+    from resins.models.model_base import ModelData
 
     @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
     class TestModelData(ModelData):
@@ -199,7 +199,7 @@ How to add a new model class
 
 With the data class in place, it is possible to create the model, which is a
 subclass of
-:py:class:`resolution_functions.models.model_base.InstrumentModel` (see its
+:py:class:`resins.models.model_base.InstrumentModel` (see its
 documentation for detailed specification of how to inherit from it). This
 **must** specify three class-level variables:
 
@@ -249,7 +249,7 @@ For example:
 
 .. code-block:: Python
 
-    from resolution_functions.models.model_base import InstrumentModel, InvalidInputError
+    from resins.models.model_base import InstrumentModel, InvalidInputError
 
     class TestModel(InstrumentModel):
         def __init__(self, model_data: TestModelData, e_init: float | None = None, **_):
@@ -278,7 +278,7 @@ For example:
 
     from jaxtyping import Float
     import numpy as np
-    from resolution_functions.models.model_base import InstrumentModel
+    from resins.models.model_base import InstrumentModel
 
     class TestModel(InstrumentModel):
         def __call__(self, frequencies: Float[np.ndarray, 'frequencies'], *args, **kwargs
@@ -291,12 +291,12 @@ ResINS:
 * If the above code is outside the ResINS repo (i.e. for personal use),
   somewhere in your program (before the model is intended to be used) a
   new key-value pair has to be inserted into
-  :py:const:`resolution_functions.models.MODELS`:
+  :py:const:`resins.models.MODELS`:
 
 .. code-block:: Python
 
-    from resolution_functions.models import MODELS
-    from resolution_functions import Instrument
+    from resins.models import MODELS
+    from resins import Instrument
 
     from custom_model_source import TestModel
 
@@ -307,8 +307,8 @@ ResINS:
     assert isinstance(model, TestModel)
 
 * If the above code is inside the ResINS repo (i.e. to be submitted to the
-  code-base), the :py:const:`resolution_functions.models.MODELS` dictionary
-  (found at ``resolution_functions/src/resolution_functions/models/__init__.py``)
+  code-base), the :py:const:`resins.models.MODELS` dictionary
+  (found at ``resins/src/resins/models/__init__.py``)
   has to be modified by adding a new key-value pair, where the key is the
   "name" of the function and the value is a reference to the above-created
   model.
@@ -319,7 +319,7 @@ ResINS:
 
 .. code-block:: Python
 
-    from resolution_functions.models.test_model import TestModel
+    from resins.models.test_model import TestModel
 
     MODELS = {
         ...
@@ -349,7 +349,7 @@ advice are:
 
     * There is no advice for parameters that depend on a combination of multiple
       different :term:`configurations<configuration>` -
-      `contact the maintainers <https://github.com/pace-neutrons/resolution_functions>`_
+      `contact the maintainers <https://github.com/pace-neutrons/resins>`_
 
 * If the ``parameters`` section contains a large number of parameters, it can be
   a good idea to group some of these parameters into dictionaries.
