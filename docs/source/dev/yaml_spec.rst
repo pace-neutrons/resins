@@ -113,7 +113,7 @@ storing shared data (see :ref:`spec-yaml-magic`).
 default_model
 ^^^^^^^^^^^^^
 
-This key (:iref:ref:`see in spec<sspec-default-model-targ>`), found inside the
+This key (:iref:ref:`see in spec<spec-default-model-targ>`), found inside the
 (YAML) dictionary corresponding to a particular :term:`instrument`
 :term:`version` (see the :ref:`version key<spec-version>`), specifies the name
 of the :term:`model` that will be used by default when the user does not specify
@@ -249,7 +249,7 @@ This key (:iref:ref:`see in spec<spec-defaults-targ>`), found inside the
 :ref:`parameters<spec-parameters>` (YAML) dictionary, specifies the default
 values for the :term:`settings<setting>` of a particular :term:`model`. This key
 is required and its value must be a (YAML) dictionary in which each key is the
-name of a :tern:`setting` of that model, and the value is the default value that
+name of a :term:`setting` of that model, and the value is the default value that
 will be used if user does not provide a value for that setting.
 
 .. note::
@@ -277,7 +277,7 @@ This key (:iref:ref:`see in spec<spec-restrictions-targ>`), found inside the
 :ref:`parameters<spec-parameters>` (YAML) dictionary, specifies the restrictions
 on the values for the :term:`settings<setting>` of a particular :term:`model`.
 This key is required and its value must be a (YAML) dictionary in which each key
-is the name of a :tern:`setting` of that model, and the value is the
+is the name of a :term:`setting` of that model, and the value is the
 specification of the restrictions on the values for that setting. I.e., if the
 user provides a value that lies outside the restrictions (allowed values) an
 exception will be raised.

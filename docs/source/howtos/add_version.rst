@@ -79,7 +79,7 @@ required, see :doc:`add_model`.
 Using a dictionary
 ^^^^^^^^^^^^^^^^^^
 
-An :py:cls:`~resins.instrument.Instrument` can be constructed
+An :py:class:`~resins.instrument.Instrument` can be constructed
 directly from a dictionary containing the data for a particular :term:`version`.
 In this case, the process is identical to
 :ref:`creating a new instrument using a dictionary<howto-instrument-dict>`.
