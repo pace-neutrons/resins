@@ -25,7 +25,7 @@ class StaticSnappedPeaksMixin:
 
     def get_peak(self,
                  points: Float[np.ndarray, 'sample dimension=1'],
-                 mesh: Float[np.ndarray, 'mesh']
+                 mesh: Float[np.ndarray, ' mesh']
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
         Apply the kernel at the nearest `mesh` point for at each value of `points` energy transfer.
@@ -120,7 +120,7 @@ class GenericBoxcar1DModel(StaticSnappedPeaksMixin, SimpleBroaden1DMixin, Instru
         self.width = width
 
     def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
-                            ) -> dict[str, Float[np.ndarray, 'sample']]:
+                            ) -> dict[str, Float[np.ndarray, ' sample']]:
         """
         Returns the broadening width at each value of energy transfer given by `points`.
 
@@ -145,7 +145,7 @@ class GenericBoxcar1DModel(StaticSnappedPeaksMixin, SimpleBroaden1DMixin, Instru
 
     def get_kernel(self,
                    points: Float[np.ndarray, 'sample dimension=1'],
-                   mesh: Float[np.ndarray, 'mesh'],
+                   mesh: Float[np.ndarray, ' mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Boxcar (square) kernel centered on zero on the provided `mesh` at each value of
@@ -227,7 +227,7 @@ class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Inst
         self.fwhm = fwhm
 
     def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
-                            ) -> dict[str, Float[np.ndarray, 'sample']]:
+                            ) -> dict[str, Float[np.ndarray, ' sample']]:
         """
         Returns the broadening width at each value of energy transfer given by `points`.
 
@@ -250,7 +250,7 @@ class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Inst
 
     def get_kernel(self,
                    points: Float[np.ndarray, 'sample dimension=1'],
-                   mesh: Float[np.ndarray, 'mesh'],
+                   mesh: Float[np.ndarray, ' mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Triangle kernel centered on zero on the provided `mesh` at each value of
@@ -334,7 +334,7 @@ class GenericTrapezoid1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Ins
         self.short_base = short_base
 
     def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
-                            ) -> dict[str, Float[np.ndarray, 'sample']]:
+                            ) -> dict[str, Float[np.ndarray, ' sample']]:
         """
         Returns the characteristics of a Trapezoid function for each value of energy transfer given
         by `points`.
@@ -364,7 +364,7 @@ class GenericTrapezoid1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Ins
 
     def get_kernel(self,
                    points: Float[np.ndarray, 'sample dimension=1'],
-                   mesh: Float[np.ndarray, 'mesh'],
+                   mesh: Float[np.ndarray, ' mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Trapezoid kernel centered on zero on the provided `mesh` at each value of
@@ -435,7 +435,7 @@ class GenericGaussian1DModel(SimpleBroaden1DMixin, GaussianKernel1DMixin, Instru
         self.sigma = sigma
 
     def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
-                            ) -> dict[str, Float[np.ndarray, 'sample']]:
+                            ) -> dict[str, Float[np.ndarray, ' sample']]:
         """
         Returns the broadening width at each value of energy transfer given by `points`.
 
@@ -498,7 +498,7 @@ class GenericLorentzian1DModel(SimpleBroaden1DMixin, InstrumentModel):
         self.fwhm = fwhm
 
     def get_characteristics(self, points: Float[np.ndarray, 'sample dimension=1']
-                            ) -> dict[str, Float[np.ndarray, 'sample']]:
+                            ) -> dict[str, Float[np.ndarray, ' sample']]:
         """
         Returns the broadening width at each value of energy transfer given by `points`.
 
@@ -521,7 +521,7 @@ class GenericLorentzian1DModel(SimpleBroaden1DMixin, InstrumentModel):
 
     def get_kernel(self,
                    points: Float[np.ndarray, 'sample dimension=1'],
-                   mesh: Float[np.ndarray, 'mesh'],
+                   mesh: Float[np.ndarray, ' mesh'],
                    ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Lorentzian kernel centered on zero on the provided `mesh` at each value of
@@ -546,7 +546,7 @@ class GenericLorentzian1DModel(SimpleBroaden1DMixin, InstrumentModel):
 
     def get_peak(self,
                  points: Float[np.ndarray, 'sample dimension=1'],
-                 mesh: Float[np.ndarray, 'mesh']
+                 mesh: Float[np.ndarray, ' mesh']
                  ) -> Float[np.ndarray, 'sample mesh']:
         """
         Computes the Lorentzian kernel on the provided `mesh` at each value of the `points`
@@ -572,8 +572,8 @@ class GenericLorentzian1DModel(SimpleBroaden1DMixin, InstrumentModel):
 
     def _get_kernel(self,
                     points: Float[np.ndarray, 'sample dimension=1'],
-                    mesh: Float[np.ndarray, 'mesh'],
-                    displacement: float | Float[np.ndarray, 'sample'] = 0.,
+                    mesh: Float[np.ndarray, ' mesh'],
+                    displacement: float | Float[np.ndarray, ' sample'] = 0.,
                     ) -> Float[np.ndarray, 'sample mesh']:
         kernel = np.zeros((len(points), len(mesh)))
         kernel[:, :] = cauchy.pdf(mesh, loc=displacement, scale=self.fwhm * 0.5)
