@@ -3,7 +3,7 @@ default_version: "IDEAL"
 
 version:
     IDEAL:
-        default_model: "square"
+        default_model: "gaussian"
         models:
             boxcar: "boxcar_v1"
             boxcar_v1:
