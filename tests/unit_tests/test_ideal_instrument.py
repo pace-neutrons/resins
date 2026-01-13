@@ -113,12 +113,17 @@ def generate_data():
         np.save(DATA_PATH / f'_get_{name}_{feature}.npy', result)
 
         fig, ax = plt.subplots()
+
+        fmt = '-o' if len(mesh) < 20 else '-'
+
         if len(np.shape(result)) == 1:
-            ax.plot(mesh, result)
+            ax.plot(mesh, result, fmt)
         else:
             for row in result:
-                ax.plot(mesh, row)
+                ax.plot(mesh, row, fmt)
 
+        ax.set_title(f"{name}: {feature}")
+        fig.tight_layout()
         fig.savefig(DATA_PATH / f'_get_{name}_{feature}.png')
         plt.close(fig)
 
