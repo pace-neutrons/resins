@@ -25,7 +25,7 @@ TEST_CASES = {
     },
     'triangle': {
         'default': {
-            'points': np.array([[3.], [7.]]),                
+            'points': np.array([[3.], [7.]]),
             'mesh': np.arange(0., 10., 1.),
             'data': np.array([0.5, 2.]),
             'kwargs': {'fwhm': 2.}
@@ -33,6 +33,24 @@ TEST_CASES = {
         'kernel': {
             'mesh': np.arange(-5, 5, 1.)
         }
+    },
+    'trapezoid': {
+        'default': {
+            'points': np.array([[3.], [7.]]),
+            'mesh': np.arange(-2., 10., 1.),
+            'data': np.array([0.5, 2.]),
+            'kwargs': {'long_base': 6., 'short_base': 2.},
+        },
+        'kernel': {'mesh': np.linspace(-6, 6, 13)}
+    },
+    'gaussian': {
+        'default': {
+            'points': np.array([[3.], [7.]]),
+            'mesh': np.linspace(0., 10., 41),
+            'data': np.array([0.5, 2.]),
+            'kwargs': {'sigma': 2.}
+        },
+        'kernel': {'mesh': np.linspace(-6, 6, 13)}
     }
 }
 
@@ -68,6 +86,12 @@ test_specs = [
     ("triangle", Feature.KERNEL),
     ("triangle", Feature.PEAK),
     ("triangle", Feature.BROADEN),
+    ("trapezoid", Feature.KERNEL),
+    ("trapezoid", Feature.PEAK),
+    ("trapezoid", Feature.BROADEN),
+    ("gaussian", Feature.KERNEL),
+    ("gaussian", Feature.PEAK),
+    ("gaussian", Feature.BROADEN),
 ]
 
 @pytest.mark.parametrize("name,feature", test_specs)

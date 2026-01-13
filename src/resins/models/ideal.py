@@ -389,7 +389,7 @@ class GenericTrapezoid1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Ins
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        slope_length = 0.5 * (self.long_base - self.short_base)
+        slope_length = 0.5 * (self.long_base - self.short_base) / self.long_base
 
         kernel = np.zeros((len(points), len(mesh)))
         kernel[:, :] = trapezoid.pdf(mesh, slope_length, 1 - slope_length,
