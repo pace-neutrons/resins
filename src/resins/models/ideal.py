@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from scipy.signal import convolve
 from scipy.stats import cauchy, norm, trapezoid, triang, uniform
 
 from .model_base import InstrumentModel, ModelData
