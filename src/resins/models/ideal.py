@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from scipy.stats import cauchy, norm, trapezoid, triang, uniform
+from scipy.stats import cauchy, trapezoid, triang, uniform
 
 from .model_base import InstrumentModel, ModelData
 from .mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
@@ -171,13 +171,6 @@ class GenericBoxcar1DModel(StaticSnappedPeaksMixin, SimpleBroaden1DMixin, Instru
             values and M is the length of the `mesh` array.
         """
         kernel = uniform(loc=(-self.width / 2), scale=self.width).pdf(mesh)
-        indices = np.flatnonzero(kernel)
-
-        if len(indices) > 1:
-            first, *_, last = indices
-        else:
-            first = last = indices[0]
-
         kernel /= np.trapezoid(kernel, mesh)
 
         out_kernel = np.tile(kernel, (len(points), 1))
@@ -274,8 +267,6 @@ class GenericTriangle1DModel(SimpleBroaden1DMixin, StaticSnappedPeaksMixin, Inst
             `mesh` and centered on zero. This is a 2D N x M array where N is the number of w/Q
             values and M is the length of the `mesh` array.
         """
-        bin_width = mesh[1] - mesh[0]
-
         kernel = np.zeros((len(points), len(mesh)))
         kernel[:, :] = triang.pdf(mesh, 0.5, loc=-self.fwhm, scale=self.fwhm * 2)
 

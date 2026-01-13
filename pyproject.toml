@@ -73,7 +73,7 @@ where =  ["src"]
 resins = ["instrument_data/*.yaml"]
 
 [tool.ruff]
-line-length = 79
+line-length = 88
 target-version = "py311"
 
 [tool.ruff.lint]
