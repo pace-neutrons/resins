@@ -24,6 +24,7 @@ Using ResINS
     glossary
     theory
     howto
+    tutorials
     api
     instruments
     dev
