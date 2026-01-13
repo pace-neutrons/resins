@@ -31,8 +31,8 @@ via the
 method:
 
 >>> pychop = maps.get_resolution_function('PyChop_fit', chopper_package='B', e_init=500, chopper_frequency=300)
->>> print(book)
-PyChopModelFermi(citation=[''])
+>>> print(pychop)
+PyChopModelFermi(citation=['R. I. Bewley, R. A. Ewings, M. D. Le, T. G. Perring and D. J. Voneshen, 2018. PyChop', 'https://mantidproject.github.io/docs-versioned/v6.10.0/interfaces/direct/PyChop.html'])
 
 .. note::
 

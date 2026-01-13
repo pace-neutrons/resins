@@ -35,7 +35,7 @@ which lists all the available :term:`instruments<instrument>`:
 
 >>> from resins import Instrument
 >>> Instrument.available_instruments()
-['ARCS', 'CNCS', 'HYSPEC', 'Lagrange', 'LET', 'MAPS', 'MARI', 'MERLIN', 'PANTHER', 'TFXA', 'TOSCA', 'VISION', 'SEQUOIA']
+['ARCS', 'CNCS', 'HYSPEC', 'Lagrange', 'LET', 'MAPS', 'MARI', 'MERLIN', 'PANTHER', 'TFXA', 'TOSCA', 'VISION', 'SEQUOIA', 'TOSCA1']
 
 
 Advanced
@@ -46,11 +46,10 @@ An advanced way of interacting with available instruments is to access the
 
 >>> from resins.instrument import INSTRUMENT_MAP
 >>> INSTRUMENT_MAP
-{'ARCS': ('arcs', None), 'CNCS': ('cncs', None), 'HYSPEC': ('hyspec', None), 'Lagrange': ('lagrange', None), 'LET': ('let', None), 'MAPS': ('maps', None), 'MARI': ('mari', None), 'MERLIN': ('merlin', None), 'PANTHER': ('panther', None), 'TFXA': ('tosca', 'TFXA'), 'TOSCA': ('tosca', None), 'VISION': ('vision', None), 'SEQUOIA': ('sequoia', None)}
+{'ARCS': ('arcs.yaml', None), 'CNCS': ('cncs.yaml', None), 'HYSPEC': ('hyspec.yaml', None), 'Lagrange': ('lagrange.yaml', None), 'LET': ('let.yaml', None), 'MAPS': ('maps.yaml', None), 'MARI': ('mari.yaml', None), 'MERLIN': ('merlin.yaml', None), 'PANTHER': ('panther.yaml', None), 'TFXA': ('tosca.yaml', 'TFXA'), 'TOSCA': ('tosca.yaml', None), 'VISION': ('vision.yaml', None), 'SEQUOIA': ('sequoia.yaml', None), 'TOSCA1': ('tosca.yaml', 'TOSCA1')}
 
-which maps the user-input instrument name to the internal name and the
-instrument :term:`version`. There should be no reason to access this object for
-normal use.
+which maps the user-input instrument name to the instrument data file and version
+name. There should be no reason to access this object for normal use.
 
 
 .. _how-to-version:
@@ -238,7 +237,7 @@ can be retrieved using the
 >>> type(model)
 <class 'resins.models.pychop.PyChopModelDataFermi'>
 >>> model.restrictions
-{'e_init': [0, 181], 'chopper_frequency': [50, 601, 50]}
+{'chopper_frequency': [50, 601, 50], 'e_init': [0, 181]}
 
 .. warning::
 
@@ -249,7 +248,7 @@ can be retrieved using the
 >>> type(model)
 <class 'resins.models.pychop.PyChopModelDataFermi'>
 >>> model.restrictions
-{'e_init': [7, 2000], 'chopper_frequency': [50, 601, 50]}
+{'chopper_frequency': [50, 601, 50], 'e_init': [7, 2000]}
 
 
 .. _howto-query-human:
@@ -289,6 +288,7 @@ method:
 |--------------|--------------|-------------------|
 | vision_v1    |              | detector_bank     |
 |--------------|--------------|-------------------|
+<BLANKLINE>
 
 
 .. _howto-query-models-configs-options:
@@ -314,8 +314,6 @@ method:
 |--------------|--------------|-------------------|-----------------------|
 | book         | book_v1      |                   |                       |
 |--------------|--------------|-------------------|-----------------------|
-| book         | book_v1      |                   |                       |
-|--------------|--------------|-------------------|-----------------------|
 | book_v1      |              | detector_bank     | Backward (default)    |
 |              |              |                   | Forward               |
 |--------------|--------------|-------------------|-----------------------|
@@ -324,3 +322,4 @@ method:
 | vision_v1    |              | detector_bank     | Backward (default)    |
 |              |              |                   | Forward               |
 |--------------|--------------|-------------------|-----------------------|
+<BLANKLINE>
