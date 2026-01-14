@@ -1,7 +1,7 @@
-resolution\_functions.models.pychop module
-------------------------------------------
+resins.models.pychop module
+---------------------------
 
-.. automodule:: resolution_functions.models.pychop
+.. automodule:: resins.models.pychop
    :members:
    :show-inheritance:
    :special-members: __call__

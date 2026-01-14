@@ -367,13 +367,13 @@ class Instrument:
 
         This method can be used for inspecting the parameters of a particular :term:`model`, though
         it cannot be used to modify them. It returns a subclass of the
-        `~resolution_functions.models.model_base.ModelData` class corresponding to the
+        `~resins.models.model_base.ModelData` class corresponding to the
         particular model.
 
         Another use for this method is to inspect the default values for the
         model's :term:`settings<setting>`, as well as any restrictions that they might have, via the
-        `~resolution_functions.models.model_base.ModelData.defaults` and
-        `~resolution_functions.models.model_base.ModelData.restrictions` attributes.
+        `~resins.models.model_base.ModelData.defaults` and
+        `~resins.models.model_base.ModelData.restrictions` attributes.
 
         Parameters
         ----------
@@ -535,7 +535,7 @@ class Instrument:
 
         Examples
         --------
-        >>> from resolution_functions import Instrument
+        >>> from resins import Instrument
         >>> tosca = Instrument.from_default('TOSCA', 'TOSCA')
         >>> print(tosca.get_resolution_function())
         PolynomialModel1D(citation="")
@@ -594,7 +594,7 @@ class Instrument:
         >>> maps = Instrument.from_default('MAPS')
         >>> sig = maps.get_model_signature()
         >>> sig
-        <Signature (model_name: Optional[str] = 'PyChop_fit', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resolution_functions.models.pychop.PyChopModelFermi>
+        <Signature (model_name: Optional[str] = 'PyChop_fit', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resins.models.pychop.PyChopModelFermi>
         >>> sig.parameters['e_init']
         <Parameter "e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500">
         >>> sig.parameters['e_init'].kind

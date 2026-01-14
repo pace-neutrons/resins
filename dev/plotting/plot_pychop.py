@@ -9,8 +9,8 @@ from PyChop.Instruments import Instrument as PyChopInstrument
 import mantid
 from abins.instruments.pychop import PyChopInstrument as AbINSPyChopInstrument
 
-from resolution_functions.instrument import Instrument
-from resolution_functions.models.pychop import SIGMA2FWHM
+from resins.instrument import Instrument
+from resins.models.pychop import SIGMA2FWHM
 
 WAVENUMBER_TO_MEV = 0.12398419843320028
 MEV_TO_WAVENUMBER = 1 / WAVENUMBER_TO_MEV

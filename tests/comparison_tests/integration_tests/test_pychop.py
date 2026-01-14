@@ -9,8 +9,8 @@ import pytest
 import mantid
 from abins.instruments.pychop import PyChopInstrument
 
-from resolution_functions.instrument import Instrument
-from resolution_functions.models.pychop import NoTransmissionError
+from resins.instrument import Instrument
+from resins.models.pychop import NoTransmissionError
 
 WAVENUMBER_TO_MEV = 0.12398419843320028
 MEV_TO_WAVENUMBER = 1 / WAVENUMBER_TO_MEV

@@ -1,7 +1,7 @@
 import re
 import pytest
 
-from resolution_functions.models.model_base import InstrumentModel, InvalidInputError
+from resins.models.model_base import InstrumentModel, InvalidInputError
 
 
 class MockModel(InstrumentModel):

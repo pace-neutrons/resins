@@ -1,4 +1,4 @@
-# Resolution Functions
+# ResINS
 
 Python library for working with resolution functions of inelastic neutron scattering (INS) 
 instruments. This package exists to centralise all things related to resolution of INS instruments 
@@ -13,11 +13,11 @@ literature. The main purposes are:
 
 ## Quick Start
 
-The package can be installed with pip (see Installation). To start, import the main `Instrument` 
+The ``resins`` library can be installed with pip (see Installation). To start, import the main `Instrument` 
 class and get the instrument object of your choice:
 
 ```
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> maps = Instrument.from_default('MAPS', 'MAPS')
 >>> print(maps)
 Instrument(name=MAPS, version=MAPS)
@@ -33,7 +33,7 @@ to broaden the data.
 ['PyChop_fit']
 >>> # There are multiple ways of querying the model-specific parameters, but the most comprehensive is
 >>> maps.get_model_signature('PyChop_fit')
-<Signature (model_name: Optional[str] = 'PyChop_fit_v1', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resolution_functions.models.pychop.PyChopModelFermi>
+<Signature (model_name: Optional[str] = 'PyChop_fit_v1', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resins.models.pychop.PyChopModelFermi>
 >>> # Now we can get the resolution function
 >>> pychop = maps.get_resolution_function('PyChop_fit', chopper_package='B', e_init=500, chopper_frequency=300)
 >>> print(pychop)
@@ -72,14 +72,14 @@ However, the model also provides methods that go lower;
 This package can be installed using pip, though it is not yet on PyPI, so it has to be installed directly from GitHub:
 
 ```
-pip install git+https://github.com/pace-neutrons/resolution_functions.git
+pip install git+https://github.com/pace-neutrons/resins.git
 ```
 
 or from a local copy:
 
 ```
-git clone https://github.com/pace-neutrons/resolution_functions.git
-pip install resolution_functions
+git clone https://github.com/pace-neutrons/resins.git
+pip install resins
 ```
 
 

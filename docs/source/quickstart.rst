@@ -4,7 +4,7 @@ Quick Start
 With the package :doc:`installed<installation>`, the first step is to create an
 instance of a particular :term:`version` of a particular :term:`instrument`:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> maps = Instrument.from_default('MAPS', 'MAPS')
 >>> print(maps)
 Instrument(name=MAPS, version=MAPS)
@@ -23,16 +23,16 @@ programmatically:
 >>> maps.available_models
 ['PyChop_fit']
 >>> maps.get_model_signature('PyChop_fit')
-<Signature (model_name: Optional[str] = 'PyChop_fit_v1', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resolution_functions.models.pychop.PyChopModelFermi>
+<Signature (model_name: Optional[str] = 'PyChop_fit_v1', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resins.models.pychop.PyChopModelFermi>
 
 With this, it is possible to make the choices and obtain the resolution function
 via the
-:py:meth:`~resolution_functions.instrument.Instrument.get_resolution_function`
+:py:meth:`~resins.instrument.Instrument.get_resolution_function`
 method:
 
 >>> pychop = maps.get_resolution_function('PyChop_fit', chopper_package='B', e_init=500, chopper_frequency=300)
->>> print(book)
-PyChopModelFermi(citation=[''])
+>>> print(pychop)
+PyChopModelFermi(citation=['R. I. Bewley, R. A. Ewings, M. D. Le, T. G. Perring and D. J. Voneshen, 2018. PyChop', 'https://mantidproject.github.io/docs-versioned/v6.10.0/interfaces/direct/PyChop.html'])
 
 .. note::
 

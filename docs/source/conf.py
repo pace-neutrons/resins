@@ -17,7 +17,7 @@ del main
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'resolution_functions'
+project = 'resins'
 copyright = '2024, Rastislav Turanyi, Adam J Jackson'
 author = 'Rastislav Turanyi, Adam J Jackson'
 

@@ -55,7 +55,7 @@ this key should be a dictionary containing the data for the :term:`version`. See
 :doc:`../dev/yaml_spec` for more information on how to structure the YAML data
 file. Then, ResINS can be leveraged to do the rest without additional code:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> new_instrument_path = '~/instrument/instrument.yaml'
 >>> version = 'version'  # If the created YAML file contains multiple versions
 >>> new_instrument = Instrument.from_file(new_instrument_path, version)
@@ -79,7 +79,7 @@ required, see :doc:`add_model`.
 Using a dictionary
 ^^^^^^^^^^^^^^^^^^
 
-An :py:cls:`~resolution_functions.instrument.Instrument` can be constructed
+An :py:class:`~resins.instrument.Instrument` can be constructed
 directly from a dictionary containing the data for a particular :term:`version`.
 In this case, the process is identical to
 :ref:`creating a new instrument using a dictionary<howto-instrument-dict>`.
@@ -92,7 +92,7 @@ How to add a version to ResINS
 
 If you would like to contribute a new :term:`version` to ResINS (which we do
 appreciate!), do open an issue on
-`our GitHub <https://github.com/pace-neutrons/resolution_functions>`_
+`our GitHub <https://github.com/pace-neutrons/resins>`_
 so that we can help. Either way, the process to do so is similar to but simpler
 than :ref:`creating a version using YAML files<howto-version-yaml>`. The crux of
 the difference is that now there is no need to worry about creating files - all

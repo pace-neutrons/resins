@@ -23,7 +23,7 @@ investigation is still required. To do this, the :term:`instrument`, the
 :term:`model`, and the :term:`option` for each :term:`configuration` have to
 have been chosen. The first step is to create the instrument:
 
->>> from resolution_functions import Instrument
+>>> from resins import Instrument
 >>> maps = Instrument.from_default('MAPS')
 >>> print(maps)
 Instrument(name=MAPS, version=MAPS)
@@ -38,8 +38,8 @@ which can be used as a starting point to generate some resolution data:
 
 >>> import numpy as np
 >>> model = maps.get_resolution_function('PyChop_fit', chopper_package='B')
->>> energies = np.arange(0, data.defaults['e_init'], 0.5)
->>> resolution = model.get_characteristics(energies)['sigma']
+>>> points = np.arange(0, data.defaults['e_init'], 0.5)[:, None]
+>>> resolution = model.get_characteristics(points)['sigma']
 
 Plotting with matplotlib:
 
@@ -49,7 +49,7 @@ Plotting with matplotlib:
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    ax.plot(energies, resolution)
+    ax.plot(points[:, 0], resolution)
 
     ax.set_xlabel('Energy transfer (meV)', fontsize=20)
     ax.set_ylabel('Sigma (meV)', fontsize=20)
@@ -124,44 +124,52 @@ the ResINS resolution using a library like
 `euphonic <https://euphonic.readthedocs.io/en/stable/>`_.
 Again, we begin by creating the Instrument:
 
->>> from resolution_functions import Instrument
->>> maps = Instrument.from_default('MAPS')
->>> print(maps)
-Instrument(name=MAPS, version=MAPS)
+.. doctest:: euphonic
+
+  >>> from resins import Instrument
+  >>> maps = Instrument.from_default('MAPS')
+  >>> print(maps)
+  Instrument(name=MAPS, version=MAPS)
 
 and getting :term:`settings<setting>` and their defaults:
 
->>> data = maps.get_model_data('PyChop_fit')
->>> data.defaults
-{'e_init': 500, 'chopper_frequency': 400}
+.. doctest:: euphonic
+
+  >>> data = maps.get_model_data('PyChop_fit')
+  >>> data.defaults
+  {'e_init': 500, 'chopper_frequency': 400}
 
 The defaults can be used as the starting point:
 
->>> model = maps.get_resolution_function('PyChop_fit', chopper_package='B')
+.. doctest:: euphonic
+  >>> model = maps.get_resolution_function('PyChop_fit', chopper_package='B')
 
 However, before proceeding, the computational data has to be loaded (here
 represented using ``np.load`` but this will depend on the origin of the data):
 
->>> import numpy as np
->>> energies = np.load('path/energies.npy')
->>> s_qw = np.load('path/sqw.npy')
->>> bin_edges = np.load('path/bin_edges.npy')
+.. doctest:: euphonic
+  >>> import numpy as np
+  >>> energies = np.load('path/energies.npy')
+  >>> s_qw = np.load('path/sqw.npy')
+  >>> bin_edges = np.load('path/bin_edges.npy')
 
 after which euphonic can be used to broaden the spectrum:
 
->>> from euphonic import ureg
->>> from euphonic.spectra import Spectrum2D
->>> spectrum = Spectrum2D(x_data=bin_edges * ureg('1/angstrom'),
-...                       y_data=energies * ureg('meV'),
-...                       z_data=s_qw * ureg('dimensionless'))
->>> spectrum.y_data_unit = 'meV'
->>> broadened = spectrum.broaden(x_width=1e-3 * ureg('1/angstrom'),
-...                              y_width=lambda energy: model(energy.to('meV').magnitude) * ureg('meV'),
-...                              width_convention='std',
-...                              method='convolve')
+.. doctest:: euphonic
+  >>> from euphonic import ureg
+  >>> from euphonic.spectra import Spectrum2D
+  >>> spectrum = Spectrum2D(x_data=bin_edges * ureg('1/angstrom'),
+  ...                       y_data=energies * ureg('meV'),
+  ...                       z_data=s_qw * ureg('dimensionless'))
+  >>> spectrum.y_data_unit = 'meV'
+  >>> broadened = spectrum.broaden(x_width=1e-3 * ureg('1/angstrom'),
+  ...                              y_width=lambda energy: model(energy.to('meV').magnitude) * ureg('meV'),
+  ...                              width_convention='std',
+  ...                              method='convolve')
 
 as well as plot it:
 
->>> from euphonic.plot import plot_2d
->>> fig = plot_2d(broadened)
->>> fig.savefig('test.png')
+.. doctest:: euphonic
+  >>> from euphonic.plot import plot_2d
+  >>> fig = plot_2d(broadened)
+  >>> fig.savefig('test.png')
