@@ -20,6 +20,7 @@ TEST_CASES = {
             "mesh": np.linspace(-5, 5, 11),
             "kwargs": {"width": 3.0},
         },
+        "bad_width_kernel": {"kwargs": {"width": 3.2}},
         "peak": {"points": np.array([[0.0], [2.0]])},
         "broaden": {
             "mesh": np.linspace(0, 5, 11),  # i.e. each bin is 0.5
@@ -36,6 +37,10 @@ TEST_CASES = {
             "kwargs": {"fwhm": 2.0},
         },
         "kernel": {"mesh": np.arange(-5, 5, 1.0)},
+        "bad_width_kernel": {
+            "mesh": np.arange(-5, 5, 1.0),
+            "kwargs": {"fwhm": 1.9},
+        },
     },
     "trapezoid": {
         "default": {
@@ -45,6 +50,7 @@ TEST_CASES = {
             "kwargs": {"long_base": 6.0, "short_base": 2.0},
         },
         "kernel": {"mesh": np.linspace(-6, 6, 13)},
+        "bad_width_peak": {"kwargs": {"long_base": 5.1, "short_base": 2.2}},
     },
     "gaussian": {
         "default": {
@@ -78,12 +84,16 @@ test_specs = list(
 )
 
 
-def _get_data(name: str, feature: Feature):
+def _get_data(model_name: str, feature: Feature, case_name: str = ""):
+    if case_name == "":
+        case_name = str(feature)
+
     params = ChainMap(
-        TEST_CASES[name].get(feature, {}), TEST_CASES[name].get("default", {})
+        TEST_CASES[model_name].get(case_name, {}),
+        TEST_CASES[model_name].get("default", {}),
     )
     instrument = Instrument.from_default("IDEAL")
-    model = instrument.get_resolution_function(name, **params.get("kwargs", {}))
+    model = instrument.get_resolution_function(model_name, **params.get("kwargs", {}))
 
     match feature:
         case Feature.KERNEL:
@@ -102,6 +112,52 @@ def _get_data(name: str, feature: Feature):
 def test_ideal_model(name: str, feature: Feature):
     result, _ = _get_data(name, feature)
     assert_allclose(result, np.load(DATA_PATH / f"_get_{name}_{feature}.npy"))
+
+
+def test_bad_width_boxcar():
+    """Test boxcar kernel where width doesn't divide evenly into bins
+
+    Result should be identical to nearby kernel, as
+    - same set of points are in range so effective width is the same
+    - boxcar values are normalised based on _actual_ kernel area
+    """
+    result, _ = _get_data("boxcar", Feature.KERNEL, case_name="bad_width_kernel")
+    assert_allclose(result, np.load(DATA_PATH / f"_get_boxcar_kernel.npy"))
+
+
+def test_bad_width_triangle():
+    """Test triangle kernel where width doesn't divide evenly into bins
+
+    Same points should be "active" as nearby kernel as shape reaches same
+    points. However values are different as they are drawn from narrower PDF.
+    """
+    result, mesh = _get_data("triangle", Feature.KERNEL, case_name="bad_width_kernel")
+
+    ref_triangle = np.load(DATA_PATH / f"_get_triangle_kernel.npy")
+
+    assert np.flatnonzero(result).tolist() == np.flatnonzero(ref_triangle).tolist()
+
+    # Area is larger for bad triangle: long tails added to reach nearest pixel
+    assert np.greater(
+        np.trapezoid(result[0], mesh), np.trapezoid(ref_triangle[0], mesh)
+    )
+
+
+def test_bad_width_trapezoid():
+    """Test trapezoid kernel where widths don't divide evenly into bins
+
+    Same points should be "active" as base test, as shape reaches same
+    points. However values are different as they are drawn from narrower PDF.
+    """
+    result, mesh = _get_data("trapezoid", Feature.PEAK, case_name="bad_width_peak")
+
+    ref = np.load(DATA_PATH / f"_get_trapezoid_peak.npy")
+
+    # Same non-zero points
+    assert np.flatnonzero(result).tolist() == np.flatnonzero(ref).tolist()
+
+    # Greater overall magnitude (i.e. bad scaling)
+    assert np.all(np.greater(result.sum(axis=1), ref.sum(axis=1)))
 
 
 def generate_data():
