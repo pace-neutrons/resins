@@ -157,10 +157,10 @@ class GenericBoxcar1DModel(
         Computes the Boxcar (square) kernel centered on zero on the provided `mesh` at each value of
         `points` (energy transfer or momentum scalar).
 
-        Note that these kernels will always consist of an odd-integer width of full-height samples,
-        moving directly to zero at the surrounding samples. The area is normalised as though this
-        is a trapezoid (i.e. as though lines connect the boxcar top to the surrounding samples),
-        resulting in lower height than the ideal boxcar.
+        Note that these kernels will always consist of an odd-integer number of full-height samples,
+        approximately ``width`` wide, moving directly to zero at the surrounding samples. The area
+        is normalised as though this is a trapezoid (i.e. as though lines connect the boxcar top to
+        the surrounding samples), resulting in lower height than the ideal boxcar.
 
         Parameters
         ----------
