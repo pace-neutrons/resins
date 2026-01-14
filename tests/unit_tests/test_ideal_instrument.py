@@ -7,7 +7,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from resolution_functions.instrument import Instrument
+from resins.instrument import Instrument
 
 
 DATA_PATH = Path(__file__).parent / "data" / "ideal"
