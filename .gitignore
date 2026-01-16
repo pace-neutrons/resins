@@ -2,6 +2,10 @@
 docs/include/auto-instruments
 tests/unit_tests/data/*.png
 
+# Test debug images
+tests/unit_tests/data/*.png
+tests/unit_tests/data/*/*.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

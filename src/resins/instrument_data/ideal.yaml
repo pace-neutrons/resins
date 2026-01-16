@@ -1,0 +1,47 @@
+name: "IDEAL"
+default_version: "IDEAL"
+
+version:
+    IDEAL:
+        default_model: "gaussian"
+        models:
+            boxcar: "boxcar_v1"
+            boxcar_v1:
+                function: "boxcar"
+                citation: [""]
+                parameters:
+                    defaults: {}
+                    restrictions: {}
+                configurations: {}
+            triangle: "triangle_v1"
+            triangle_v1:
+                function: "triangle"
+                citation: [ "" ]
+                parameters:
+                    defaults: {}
+                    restrictions: {}
+                configurations: { }
+            trapezoid: "trapezoid_v1"
+            trapezoid_v1:
+                function: "trapezoid"
+                citation: [ "" ]
+                parameters:
+                    defaults: {}
+                    restrictions: {}
+                configurations: { }
+            gaussian: "gaussian_v1"
+            gaussian_v1:
+                function: "gaussian"
+                citation: [ "" ]
+                parameters:
+                    defaults: {}
+                    restrictions: {}
+                configurations: { }
+            lorentzian: "lorentzian_v1"
+            lorentzian_v1:
+                function: "lorentzian"
+                citation: [ "" ]
+                parameters:
+                    defaults: {}
+                    restrictions: {}
+                configurations: { }

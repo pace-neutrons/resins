@@ -71,3 +71,18 @@ where =  ["src"]
 
 [tool.setuptools.package-data]
 resins = ["instrument_data/*.yaml"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+# When jaxtyping array with one dimension, include a leading space
+# e.g. Float[np.ndarray, " mesh"]
+# in order to throw F722 (like a higher-D array) rather than F821
+# (which is sometimes a useful error).
+# https://docs.kidger.site/jaxtyping/faq/#flake8-or-ruff-are-throwing-an-error
+
+ignore = [
+        "F722"  # Caused by jaxtyping annotations.
+]

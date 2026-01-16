@@ -24,6 +24,7 @@ INSTRUMENT_MAP: dict[str, tuple[str, None | str]] = {
     'ARCS': ('arcs.yaml', None),
     'CNCS': ('cncs.yaml', None),
     'HYSPEC': ('hyspec.yaml', None),
+    'IDEAL': ('ideal.yaml', None),
     'Lagrange': ('lagrange.yaml', None),
     'LET': ('let.yaml', None),
     'MAPS': ('maps.yaml', None),

@@ -100,7 +100,7 @@ class GaussianKernel1DMixin:
 
 class SimpleBroaden1DMixin:
     """
-    A mixin providing the most simple implementation for the ``convolve`` method.
+    A mixin providing the most simple implementation for the ``broaden`` method.
 
     Implements `resins.models.model_base.InstrumentModel.convolve` method in the
     most simple and basic way - the dot product between the matrix of kernels (obtained from the

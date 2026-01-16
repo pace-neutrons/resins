@@ -68,7 +68,7 @@ def _broaden_simple():
 
 def test_broaden_simple():
     result, _ = _broaden_simple()
-    assert_allclose(result, np.load(os.path.join(DATA_DIR, '_convolve_simple.npy')))
+    assert_allclose(result, np.load(os.path.join(DATA_DIR, '_broaden_simple.npy')))
 
 
 def generate_data():
