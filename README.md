@@ -1,5 +1,4 @@
 # ResINS
-
 Python library for working with resolution functions of inelastic neutron scattering (INS) 
 instruments. This package exists to centralise all things related to resolution of INS instruments 
 and make it easier to work with. It pools related code from existing projects, namely 
@@ -10,6 +9,8 @@ literature. The main purposes are:
 1. Provide one, central place implementing various models for INS instruments (resolution functions)
 2. Provide a simple way to obtain the broadening at a given frequency, for a given instrument and settings
 3. Provide a way to apply broadening to a spectrum
+
+See the [main documentation](https://pace-neutrons.github.io/resins/) for more detail.
 
 ## Quick Start
 
