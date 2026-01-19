@@ -1,0 +1,55 @@
+name: Build docs
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Push to github pages'
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      publish:
+        description: 'Push to github pages'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+
+      - name: Update pip, install package and dependencies
+        shell: bash -l {0}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[docs]
+
+      - name: Build docs HTML
+        working-directory: ./docs
+        shell: bash -l {0}
+        run: make html
+
+      - name: Upload docs as artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/build/html
+
+  deploy:
+    if: ${{ inputs.publish }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.output.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deplay-pages@v4
+ 
