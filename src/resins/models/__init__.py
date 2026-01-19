@@ -13,6 +13,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .ideal import (
+    GenericBoxcar1DModel,
+    GenericTriangle1DModel,
+    GenericTrapezoid1DModel,
+    GenericGaussian1DModel,
+    GenericLorentzian1DModel,
+)
 from .polynomial import PolynomialModel1D, DiscontinuousPolynomialModel1D
 from .panther_abins import PantherAbINSModel
 from .pychop import PyChopModelFermi, PyChopModelNonFermi, PyChopModelCNCS, PyChopModelLET
@@ -24,6 +31,11 @@ if TYPE_CHECKING:
 
 
 MODELS: dict[str, type[InstrumentModel]] = {
+    'boxcar': GenericBoxcar1DModel,
+    'triangle': GenericTriangle1DModel,
+    'trapezoid': GenericTrapezoid1DModel,
+    'gaussian': GenericGaussian1DModel,
+    'lorentzian': GenericLorentzian1DModel,
     'polynomial_1d': PolynomialModel1D,
     'discontinuous_polynomial': DiscontinuousPolynomialModel1D,
     'tosca_book': ToscaBookModel,
