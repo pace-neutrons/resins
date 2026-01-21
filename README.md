@@ -1,4 +1,9 @@
 # ResINS
+
+[![PyPI](https://img.shields.io/pypi/v/resins)](https://pypi.org/project/resins)
+[![Tests](https://github.com/pace-neutrons/resins/actions/workflows/run_tests.yml/badge.svg)](https://github.com/pace-neutrons/resins/actions/workflows/run_tests.yml)
+[![License](https://img.shields.io/pypi/l/resins)](https://github.com/pace-neutrons/resins/blob/main/LICENSE)
+
 Python library for working with resolution functions of inelastic neutron scattering (INS) 
 instruments. This package exists to centralise all things related to resolution of INS instruments 
 and make it easier to work with. It pools related code from existing projects, namely 
@@ -84,17 +89,17 @@ However, the model also provides methods that go lower;
 
 ## Installation
 
-This package can be installed using pip, though it is not yet on PyPI, so it has to be installed directly from GitHub:
+This package can be installed from PyPI
 
 ```
-pip install git+https://github.com/pace-neutrons/resins.git
+pip install resins
 ```
 
 or from a local copy:
 
 ```
 git clone https://github.com/pace-neutrons/resins.git
-pip install resins
+pip install ./resins
 ```
 
 
