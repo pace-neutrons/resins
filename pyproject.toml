@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools >= 77.0.3", "versioningit"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = 'resins'
-version = "0.1.0"
+name = "resins"
+dynamic = ["version"]
 authors = [
     {name = "Rastislav Turanyi", email = "rastislav.turanyi@stfc.ac.uk"},
 ]
@@ -86,3 +86,5 @@ target-version = "py311"
 ignore = [
         "F722"  # Caused by jaxtyping annotations.
 ]
+
+[tool.versioningit]
