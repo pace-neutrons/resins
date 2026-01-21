@@ -18,7 +18,7 @@ del main
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'resins'
-copyright = '2024, Rastislav Turanyi, Adam J Jackson'
+copyright = '2026, Rastislav Turanyi, Adam J Jackson'
 author = 'Rastislav Turanyi, Adam J Jackson'
 
 # -- General configuration ---------------------------------------------------
@@ -60,6 +60,7 @@ html_static_path = ['_static']
 # napoleon_include_special_with_doc = True
 # napoleon_attr_annotations = True
 
+numpydoc_class_members_toctree = False
 numpydoc_xref_param_type = True
 
 # The reST default role (used for this markup: `text`) to use for all

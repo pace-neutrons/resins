@@ -1,6 +1,9 @@
 name: Build docs
 
 on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
   workflow_dispatch:
     inputs:
       publish:
@@ -35,9 +38,10 @@ jobs:
       - name: Build docs HTML
         working-directory: ./docs
         shell: bash -l {0}
-        run: make html
+        run: make html SPHINXOPTS="-W --keep-going"
 
       - name: Upload docs as artifact
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/build/html
@@ -48,8 +52,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.output.page_url }}
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     needs: build
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deplay-pages@v4
- 
+        uses: actions/deploy-pages@v4
