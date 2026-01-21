@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools >= 77.0.3", "versioneer[toml]==0.29"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -86,3 +86,10 @@ target-version = "py311"
 ignore = [
         "F722"  # Caused by jaxtyping annotations.
 ]
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "src/resins/_version.py"
+versionfile_build = "resins/_version.py"
+tag_prefix = ""
