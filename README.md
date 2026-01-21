@@ -19,7 +19,7 @@ See the [main documentation](https://pace-neutrons.github.io/resins/) for more d
 
 ## Note on API stability
 
-While we are on 0.x.y versions, there may be breaking API changes
+While resins is on 0.x.y versions, there may be breaking API changes
 between minor (x) versions, while bugfix (y) versions may
 contain fixes, trivial enhancements and development/deployment/documentation tweaks.
 If you are using ResINS it is highly recommended to pin to a specific minor version e.g.
