@@ -14,7 +14,7 @@ authors:
 title: "ResINS"
 repository-code: https://github.com/pace-neutrons/resins
 license: GPL-3.0
-version: 0.0.1
+version: 0.1.0
 keywords:
   - "Python"
   - "physics"
