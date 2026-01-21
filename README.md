@@ -12,6 +12,20 @@ literature. The main purposes are:
 
 See the [main documentation](https://pace-neutrons.github.io/resins/) for more detail.
 
+## Note on API stability
+
+While we are on 0.x.y versions, there may be breaking API changes
+between minor (x) versions, while bugfix (y) versions may
+contain fixes, trivial enhancements and development/deployment/documentation tweaks.
+If you are using ResINS it is highly recommended to pin to a specific minor version e.g.
+
+```
+dependencies = [ "resins>=0.1.1,<0.2"]
+```
+
+With version 1.0 the project will move to stable semantic versioning,
+and downstream projects will be able to pin to the major version.
+
 ## Quick Start
 
 The ``resins`` library can be installed with pip (see Installation). To start, import the main `Instrument` 
