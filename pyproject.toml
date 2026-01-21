@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools >= 77.0.3", "versioningit"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = 'resins'
-version = "0.1.0"
+name = "resins"
+dynamic = ["version"]
 authors = [
     {name = "Rastislav Turanyi", email = "rastislav.turanyi@stfc.ac.uk"},
 ]
@@ -55,6 +55,7 @@ test = [
 docs = [
     "sphinx >= 8.1.3",
     "numpydoc >= 1.8.0",
+    "packaging",
     "inline_reference",
     "sphinx_parsed_codeblock @ git+https://github.com/RastislavTuranyi/sphinx_parsed_codeblock.git",
     "sphinx_rtd_theme >= 3.0.2",
@@ -86,3 +87,5 @@ target-version = "py311"
 ignore = [
         "F722"  # Caused by jaxtyping annotations.
 ]
+
+[tool.versioningit]
