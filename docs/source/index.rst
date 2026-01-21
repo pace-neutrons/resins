@@ -1,5 +1,5 @@
-ResINS
-******
+ResINS |version|
+****************
 
 Python library for working with resolution functions of inelastic neutron
 scattering (INS) instruments. This package exists to centralise all things related to resolution of

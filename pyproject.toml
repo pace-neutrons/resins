@@ -55,6 +55,7 @@ test = [
 docs = [
     "sphinx >= 8.1.3",
     "numpydoc >= 1.8.0",
+    "packaging",
     "inline_reference",
     "sphinx_parsed_codeblock @ git+https://github.com/RastislavTuranyi/sphinx_parsed_codeblock.git",
     "sphinx_rtd_theme >= 3.0.2",
