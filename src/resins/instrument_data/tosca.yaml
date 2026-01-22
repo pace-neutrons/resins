@@ -148,5 +148,7 @@ version:
                 function: "scaled_tabulated"
                 citation: ["A. Perrichon, Nucl. Instrum. Methods Phys. Res., Sect. A, 2022, 167401. https://doi.org/10.1016/j.nima.2022.167401"]
                 parameters:
+                    defaults: {}
+                    restrictions: {}
                     npz: "tosca_perrichon2022_v1.npz"
                 configurations: {}
