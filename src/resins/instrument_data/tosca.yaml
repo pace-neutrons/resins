@@ -143,3 +143,12 @@ version:
                             <<: *tosca_configurations_forward
                             # TODO: Recompute below once average_secondary_flight_path for Forward has been recomputed
                             distance_sample_analyzer: 0.2312830382624369  # m (as above)
+            perrichon2022: "perrichon2022_v1"
+            perrichon2022_v1:
+                function: "scaled_tabulated"
+                citation: ["A. Perrichon, Nucl. Instrum. Methods Phys. Res., Sect. A, 2022, 167401. https://doi.org/10.1016/j.nima.2022.167401"]
+                parameters:
+                    defaults: {}
+                    restrictions: {}
+                    npz: "tosca_perrichon2022_v1.npz"
+                configurations: {}

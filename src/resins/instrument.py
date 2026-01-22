@@ -10,7 +10,7 @@ import importlib
 
 import numpy as np
 import yaml
-from typing import Iterator, Iterable, Optional, Union, TYPE_CHECKING
+from typing import Iterator, Optional, Union, TYPE_CHECKING
 
 from .models import MODELS
 
