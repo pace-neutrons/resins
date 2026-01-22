@@ -63,7 +63,7 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         The names of the columns in the ``points`` array expected by all computation methods, i.e.
         the names of the independent variables ([Q, w]) that the model models.
     data_class
-        Reference to the `PolynomialModelData` type.
+        Reference to the `ScaledTabulatedModelData` type.
     npz
         The .npz file containing the model data
     citation
@@ -120,6 +120,27 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         points: Float[np.ndarray, "sample dimension=1"],
         mesh: Float[np.ndarray, "mesh"],
     ) -> Float[np.ndarray, "sample mesh"]:
+        """Computes a zero-centered broadening kernel at each value of energy transfer.
+
+        Parameters
+        ----------
+        points
+            The energy transfer or momentum scalar for which to compute the
+            kernel. This *must* be a Nx1 2D array where N is the number of w/Q
+            values.
+        mesh
+            The mesh on which to evaluate the kernel. A 1D array.
+
+        Returns
+        -------
+        kernel
+            The broadening kernel at each value of `points` as given by this
+            model, computed on the `mesh` and centered on zero. This is a 2D N
+            x M array where N is the number of w/Q values and M is the length
+            of the `mesh` array.
+
+        """
+
         assert len(points.shape) == 2 and points.shape[1] == 1
         energy = points
 
@@ -140,6 +161,27 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         points: Float[np.ndarray, "sample dimension=1"],
         mesh: Float[np.ndarray, "mesh"],
     ) -> Float[np.ndarray, "sample mesh"]:
+        """
+        Computes the broadening kernel at each value of energy transfer.
+
+        Parameters
+        ----------
+        points
+            The energy transfer in meV for which to compute the kernel. This
+            *must* be a Nx1 2D array where N is the number of energy transfers.
+        mesh
+            The mesh on which to evaluate the kernel. This is a 1D array which
+            *must* span the `points` transfer space of interest.
+
+        Returns
+        -------
+        kernel
+            The broadening kernel at each value of `points` as given by this
+            model, computed on the `mesh` and centered on the corresponding
+            energy transfer. This is a 2D N x M array where N is the number of
+            w/Q values and M is the length of the `mesh` array.
+        """
+
         shifted_meshes = [mesh - energy for energy in points[:, 0]]
 
         shifted_kernels = [
