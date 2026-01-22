@@ -122,7 +122,7 @@ def test_bad_width_boxcar():
     - boxcar values are normalised based on _actual_ kernel area
     """
     result, _ = _get_data("boxcar", Feature.KERNEL, case_name="bad_width_kernel")
-    assert_allclose(result, np.load(DATA_PATH / f"_get_boxcar_kernel.npy"))
+    assert_allclose(result, np.load(DATA_PATH / "_get_boxcar_kernel.npy"))
 
 
 def test_bad_width_triangle():
@@ -133,7 +133,7 @@ def test_bad_width_triangle():
     """
     result, mesh = _get_data("triangle", Feature.KERNEL, case_name="bad_width_kernel")
 
-    ref_triangle = np.load(DATA_PATH / f"_get_triangle_kernel.npy")
+    ref_triangle = np.load(DATA_PATH / "_get_triangle_kernel.npy")
 
     assert np.flatnonzero(result).tolist() == np.flatnonzero(ref_triangle).tolist()
 
@@ -151,7 +151,7 @@ def test_bad_width_trapezoid():
     """
     result, mesh = _get_data("trapezoid", Feature.PEAK, case_name="bad_width_peak")
 
-    ref = np.load(DATA_PATH / f"_get_trapezoid_peak.npy")
+    ref = np.load(DATA_PATH / "_get_trapezoid_peak.npy")
 
     # Same non-zero points
     assert np.flatnonzero(result).tolist() == np.flatnonzero(ref).tolist()

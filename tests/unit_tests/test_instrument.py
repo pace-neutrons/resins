@@ -3,11 +3,11 @@ import inspect
 from pathlib import Path
 import typing
 
+import numpy as np
 import pytest
 import yaml
 
 from resins import instrument as i
-from resins.models import MODELS
 from resins.models.model_base import ModelData, InstrumentModel
 
 
@@ -45,22 +45,19 @@ class MockModel(InstrumentModel):
         self.kwarg1 = kwarg1
         self.kwarg2 = kwarg2
 
-    def get_characteristics(self, energy_transfer):
-        return {}
-
     def __call__(self, frequencies, *args, **kwargs):
         return frequencies
 
-    def get_characteristics(self, omega_q):
-        return {"sigma": np.ones((len(omega_q), 1))}
+    def get_characteristics(self, points):
+        return {"sigma": np.ones((len(points), 1))}
 
-    def get_kernel(self, omega_q, mesh):
+    def get_kernel(self, points, mesh):
         return np.zeros_like(mesh)
 
-    def get_peak(self, omega_q, mesh):
+    def get_peak(self, points, mesh):
         return np.zeros_like(mesh)
 
-    def broaden(self, omega_q, data, mesh):
+    def broaden(self, points, data, mesh):
         return np.zeros_like(mesh)
 
 
