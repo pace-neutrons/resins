@@ -5,6 +5,7 @@ All classes within are exposed for reference only and should not be instantiated
 obtaining the :term:`resolution function` of an :term:`instrument`, please use the
 `resolution_functions.instrument.Instrument.get_resolution_function` method.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -38,6 +39,7 @@ class ScaledTabulatedModelData(ModelData):
     restrictions
     defaults
     """
+
     npz: str
 
 
@@ -66,25 +68,33 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         The .npz file containing the model data
     citation
     """
-    input = ('energy_transfer',)
+
+    input = ("energy_transfer",)
 
     data_class: ClassVar[type[ScaledTabulatedModelData]] = ScaledTabulatedModelData
 
     def __init__(self, model_data: ScaledTabulatedModelData, **_):
         super().__init__(model_data)
-        self.data = np.load(importlib.resources.files("resins.instrument_data") / model_data.npz)
+        self.data = np.load(
+            importlib.resources.files("resins.instrument_data") / model_data.npz
+        )
 
-        self.polynomial = Polynomial(coef=self.data["coef"],
-                                     domain=self.data["domain"],
-                                                   window=self.data["window"])
-        self._interp = RegularGridInterpolator((self.data["energy_transfer"], self.data["kernel_energies"]),
-                                               self.data["table"],
-                                               method="linear",
-                                               bounds_error=False,
-                                               fill_value=0.)
+        self.polynomial = Polynomial(
+            coef=self.data["coef"],
+            domain=self.data["domain"],
+            window=self.data["window"],
+        )
+        self._interp = RegularGridInterpolator(
+            (self.data["energy_transfer"], self.data["kernel_energies"]),
+            self.data["table"],
+            method="linear",
+            bounds_error=False,
+            fill_value=0.0,
+        )
 
-    def get_characteristics(self, omega_q: Float[np.ndarray, 'energy_transfer dimension=1']
-                            ) -> dict[str, Float[np.ndarray, 'sigma']]:
+    def get_characteristics(
+        self, omega_q: Float[np.ndarray, "energy_transfer dimension=1"]
+    ) -> dict[str, Float[np.ndarray, "sigma"]]:
         """
         Computes the broadening width at each value of energy transfer (`omega_q`).
 
@@ -103,13 +113,13 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        return {'sigma': self.polynomial(omega_q[:, 0])}
+        return {"sigma": self.polynomial(omega_q[:, 0])}
 
-    def get_kernel(self,
-                   points: Float[np.ndarray, 'sample dimension=1'],
-                   mesh: Float[np.ndarray, 'mesh'],
-                   ) -> Float[np.ndarray, 'sample mesh']:
-
+    def get_kernel(
+        self,
+        points: Float[np.ndarray, "sample dimension=1"],
+        mesh: Float[np.ndarray, "mesh"],
+    ) -> Float[np.ndarray, "sample mesh"]:
         assert len(omega_q.shape) == 2 and omega_q.shape[1] == 1
         energy = omega_q
 
@@ -125,10 +135,11 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         interp_kernels = self._interp(lookup_mesh) / scale_factors
         return interp_kernels
 
-    def get_peak(self,
-                 points: Float[np.ndarray, 'sample dimension=1'],
-                 mesh: Float[np.ndarray, 'mesh'],
-                 ) -> Float[np.ndarray, 'sample mesh']:
+    def get_peak(
+        self,
+        points: Float[np.ndarray, "sample dimension=1"],
+        mesh: Float[np.ndarray, "mesh"],
+    ) -> Float[np.ndarray, "sample mesh"]:
         shifted_meshes = [mesh - energy for energy in omega_q[:, 0]]
 
         shifted_kernels = [
