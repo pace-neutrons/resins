@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 from numpy.testing import assert_allclose
-import pytest
 
 from resins.models.mixins import GaussianKernel1DMixin, SimpleBroaden1DMixin
 
