@@ -12,6 +12,8 @@ import importlib
 from typing import ClassVar, TYPE_CHECKING
 
 import numpy as np
+from numpy.polynomial import Polynomial
+from scipy.interpolate import RegularGridInterpolator
 
 from .model_base import InstrumentModel, ModelData
 from .mixins import SimpleBroaden1DMixin
@@ -69,9 +71,6 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
     data_class: ClassVar[type[ScaledTabulatedModelData]] = ScaledTabulatedModelData
 
     def __init__(self, model_data: ScaledTabulatedModelData, **_):
-        from numpy.polynomial import Polynomial
-        from scipy.interpolate import RegularGridInterpolator
-
         super().__init__(model_data)
         self.data = np.load(importlib.resources.files("resins.instrument_data") / model_data.npz)
 
