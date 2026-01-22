@@ -60,7 +60,7 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
     Attributes
     ----------
     input
-        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        The names of the columns in the ``points`` array expected by all computation methods, i.e.
         the names of the independent variables ([Q, w]) that the model models.
     data_class
         Reference to the `PolynomialModelData` type.
@@ -93,17 +93,17 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         )
 
     def get_characteristics(
-        self, omega_q: Float[np.ndarray, "energy_transfer dimension=1"]
+        self, points: Float[np.ndarray, "energy_transfer dimension=1"]
     ) -> dict[str, Float[np.ndarray, "sigma"]]:
         """
-        Computes the broadening width at each value of energy transfer (`omega_q`).
+        Computes the broadening width at each value of energy transfer (`points`).
 
         The model approximates the broadening using the Gaussian distribution, so the returned
         widths are in the form of the standard deviation (sigma).
 
         Parameters
         ----------
-        omega_q
+        points
             The energy transfer in meV at which to compute the width in sigma of the kernel.
             This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
             transfers.
@@ -113,15 +113,15 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         characteristics
             The characteristics of the broadening function, i.e. the Gaussian width as sigma.
         """
-        return {"sigma": self.polynomial(omega_q[:, 0])}
+        return {"sigma": self.polynomial(points[:, 0])}
 
     def get_kernel(
         self,
         points: Float[np.ndarray, "sample dimension=1"],
         mesh: Float[np.ndarray, "mesh"],
     ) -> Float[np.ndarray, "sample mesh"]:
-        assert len(omega_q.shape) == 2 and omega_q.shape[1] == 1
-        energy = omega_q
+        assert len(points.shape) == 2 and points.shape[1] == 1
+        energy = points
 
         scale_factors = self.polynomial(energy)
         scaled_x_values = mesh / scale_factors
@@ -140,7 +140,7 @@ class ScaledTabulatedModel(SimpleBroaden1DMixin, InstrumentModel):
         points: Float[np.ndarray, "sample dimension=1"],
         mesh: Float[np.ndarray, "mesh"],
     ) -> Float[np.ndarray, "sample mesh"]:
-        shifted_meshes = [mesh - energy for energy in omega_q[:, 0]]
+        shifted_meshes = [mesh - energy for energy in points[:, 0]]
 
         shifted_kernels = [
             self.get_kernel(np.array([point]), shifted_mesh)
