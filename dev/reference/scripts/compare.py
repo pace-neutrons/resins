@@ -13,7 +13,6 @@ import sys
 from pathlib import Path
 
 import numpy as np
-
 from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
 from sampling import OUTCOMES
 from summary import data_files, print_size

@@ -12,16 +12,15 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-import mantid  # noqa: F401
 import abins.parameters
+import mantid  # noqa: F401
 import numpy as np
+import sampling
 from abins.constants import MILLI_EV_TO_WAVENUMBER
 from abins.instruments.lagrangeinstrument import LagrangeInstrument
 from abins.instruments.panther import PantherInstrument
 from abins.instruments.pychop import PyChopInstrument
 from abins.instruments.toscainstrument import ToscaInstrument
-
-import sampling
 from common import BUILD_DATA, OUTCOME_CODE, load_config, make_metadata, save_npz
 from generate_pychop import PyChopEvaluator, classify_cases
 

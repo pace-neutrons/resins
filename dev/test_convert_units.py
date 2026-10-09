@@ -1,7 +1,6 @@
 import numpy as np
 import pint
 import pytest
-
 from convert_units import *
 
 ureg = pint.UnitRegistry()

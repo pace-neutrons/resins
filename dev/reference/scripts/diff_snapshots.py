@@ -8,7 +8,6 @@ import argparse
 import sys
 
 import numpy as np
-
 from common import SNAPSHOT_DIR, load_npz
 
 RTOL = 1e-8

@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-import sampling  # noqa: E402
+import sampling
 
 DELTA = 1e-3
 RANGE = (1.0, 1000.0)
@@ -103,7 +103,7 @@ def test_frequency_limit_points_are_outside():
 
 def test_check_restrictions():
     restrictions = {"e_init": [20, 1500], "f": [60, 601, 60]}
-    check = lambda e, f: sampling.check_restrictions(restrictions, e, ["f"], [f])  # noqa: E731
+    check = lambda e, f: sampling.check_restrictions(restrictions, e, ["f"], [f])
     assert check(100, 120) is None
     assert check(19.9, 120) == ("rejected_ei", "e_init")
     assert check(1500.1, 120) == ("rejected_ei", "e_init")

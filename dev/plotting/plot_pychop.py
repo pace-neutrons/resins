@@ -1,13 +1,10 @@
 import argparse
 import os
 
-import numpy as np
 import matplotlib.pyplot as plt
-
-from PyChop.Instruments import Instrument as PyChopInstrument
-
-import mantid
+import numpy as np
 from abins.instruments.pychop import PyChopInstrument as AbINSPyChopInstrument
+from PyChop.Instruments import Instrument as PyChopInstrument
 
 from resins.instrument import Instrument
 from resins.models.pychop import SIGMA2FWHM

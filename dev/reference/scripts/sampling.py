@@ -14,9 +14,9 @@ chosen by three rules:
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, Sequence
 
 import numpy as np
 import yaml

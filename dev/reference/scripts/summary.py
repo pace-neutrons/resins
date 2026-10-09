@@ -10,8 +10,6 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-import numpy as np
-
 from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
 from sampling import OUTCOMES
 
@@ -54,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         counts = Counter(OUTCOMES[c] for c in cases["outcome"]) if "outcome" in cases.dtype.names else {}
         row = " ".join(f"{counts.get(o, 0):18d}" for o in OUTCOMES)
         print(
-            f"{str(path.relative_to(root)):42s} {len(cases):6d} {row}  "
+            f"{path.relative_to(root)!s:42s} {len(cases):6d} {row}  "
             f"{path.stat().st_size / 1e3:5.0f}k  {metadata.get('mantid_version', '?')}"
         )
     print()

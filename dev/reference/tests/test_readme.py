@@ -1,10 +1,8 @@
 """The README must describe commands and files that exist."""
 import re
-import sys
 import tomllib
 from pathlib import Path
 
-import pytest
 import yaml
 
 REFERENCE = Path(__file__).resolve().parents[1]

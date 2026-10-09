@@ -14,8 +14,6 @@ from pathlib import Path
 
 import mantid  # noqa: F401  (puts Mantid's bundled pychop on sys.path)
 import numpy as np
-from pychop.Instruments import Instrument
-
 import sampling
 from common import (
     BUILD_DATA,
@@ -26,6 +24,7 @@ from common import (
     pychop_file_stem,
     save_npz,
 )
+from pychop.Instruments import Instrument
 
 MAX_FREQUENCIES = 2
 

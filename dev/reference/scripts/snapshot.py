@@ -15,7 +15,6 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
-
 import sampling
 from common import (
     BUILD_DATA,
@@ -38,7 +37,7 @@ def default_instruments(config: dict) -> list[str]:
 
 
 def snapshot_entry(entry: dict, path: Path, n_points: int) -> np.ndarray:
-    arrays, metadata = load_npz(path)
+    arrays, _metadata = load_npz(path)
     cases = arrays["cases"]
     config_map = entry.get("configuration_map", {})
 

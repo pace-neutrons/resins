@@ -7,7 +7,6 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-
 from sampling import OUTCOMES, REPO_ROOT
 
 REFERENCE_DIR = Path(__file__).resolve().parents[1]
