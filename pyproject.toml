@@ -47,6 +47,11 @@ dev = [
 ]
 
 [dependency-groups]
+test = [
+    "pytest >= 8.3.2",
+    "pytest-mock >= 3.14.0",
+    "pytest-xdist >= 3.5.0",
+]
 doc = [
     "inline_reference ~= 1.0",
     "numpydoc >= 1.8.0",
@@ -67,6 +72,11 @@ where =  ["src"]
 
 [tool.setuptools.package-data]
 resins = ["instrument_data/*.yaml"]
+
+[tool.pytest.ini_options]
+# dev/ holds developer scripts (their tests need the dev extra) and dev/reference/ has its own
+# environment; the routine suite is tests/.
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 88
