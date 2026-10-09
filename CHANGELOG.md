@@ -1,23 +1,49 @@
 ## [Unreleased](https://github.com/pace-neutrons/resins/compare/0.1.0...HEAD)
 
-### Changed
+### Removed
 
-- The comparison tests now read reference values committed in
-  `tests/reference_data/` and no longer need conda, Mantid or PyChop; they run
-  with `pip install . --group test` and `pytest`. tox, tox-conda and the git
-  dependency on mducle/pychop are removed, and CI runs on a Python version
-  matrix without conda.
-- Reference data is generated reproducibly with locked pixi environments in
-  `dev/reference/` (see its README).
+- **Breaking:** removed the `INSTRUMENT_DATA_PATH` variable from `resins.instrument`. Instrument
+  data files are now located with `importlib.resources`.
+  ([#65](https://github.com/pace-neutrons/resins/pull/65))
 
-### Fixed
+### Documentation
 
-- Test defects: the TOSCA comparison never asserted, its forward and backward
-  fixtures were identical, the meV/cm⁻¹ constants differed from Abins, and the
-  PyChop chopper-width tolerance (1e-8 s², against values of order 1e-10 s²)
-  could not detect any difference.
+- Added a developer page on testing and on regenerating the reference data.
 
-## [0.1.0](https://github.com/pace-neutrons/resins/releases/tag/0.1.0)
+### Maintenance
+
+- Documentation requirements
+  - Moved the documentation requirements from `docs/requirements.txt` to a
+    `doc` dependency group in `pyproject.toml`, installed with `pip install
+    --group doc`. This is possible now that `sphinx_parsed_codeblock` is on
+    PyPI. ([#66](https://github.com/pace-neutrons/resins/pull/66))
+- Unit testing
+  - Patched `importlib.resources.files()` in the `Instrument` unit tests, in
+    place of the removed `INSTRUMENT_DATA_PATH` variable.
+    ([#65](https://github.com/pace-neutrons/resins/pull/65))
+  - Reworked the comparison tests to read reference values committed in
+    `tests/reference_data/`, instead of running Mantid, Abins and PyChop. They
+    now run with `pip install . --group test` and `pytest`, without conda.
+  - Generated the reference data with locked pixi environments in
+    `dev/reference/` (see its README). Regeneration is manual, never part of
+    routine CI.
+  - Removed `tox`, `tox-conda` and the git dependency on mducle/pychop.
+  - Set pytest `testpaths` to `tests/`, so `pytest` skips the developer
+    scripts in `dev/`.
+  - Made the Abins TOSCA test _assert_ agreement with Abins; it previously
+    could not fail.
+  - Replaced the TOSCA "forward" and "backward" fixtures, which were
+    identical, with a single resolution function.
+  - Converted energies with Abins' `MILLI_EV_TO_WAVENUMBER` in both
+    directions, instead of a slightly different inverse constant.
+  - Compared PyChop chopper widths with a relative tolerance of 1e-7; the
+    previous absolute 1e-8 s² exceeded the values themselves (order 1e-10 s²).
+- GitHub Actions
+  - Replaced the Miniconda and `tox` test workflow with `setup-python` on
+    Python 3.11 and 3.14 (Ubuntu) and 3.14 (Windows).
+  - Added a manually triggered `generate_reference_data.yml` workflow.
+
+## [0.1.0](https://github.com/pace-neutrons/resins/releases/tag/0.1.0) - 2026-01-21
 
 Initial PyPI release. API should be considered unstable between minor
 versions until 1.0.
