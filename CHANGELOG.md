@@ -9,6 +9,10 @@
 ### Documentation
 
 - Added a developer page on testing and on regenerating the reference data.
+- Fixed ambiguous cross-references to `data_class` and `polynomial` in the PyChop API
+  pages, which failed the docs build when warnings are errors. `PyChopModelCNCS` and
+  `PyChopModelLET` now declare `data_class` themselves, and `PyChopModelNonFermi` no
+  longer lists inherited members automatically.
 
 ### Maintenance
 
@@ -17,6 +21,8 @@
     `doc` dependency group in `pyproject.toml`, installed with `pip install
     --group doc`. This is possible now that `sphinx_parsed_codeblock` is on
     PyPI. ([#66](https://github.com/pace-neutrons/resins/pull/66))
+  - Pinned `pygments < 2.21` in the `doc` group, because `sphinx_parsed_codeblock`
+    imports `escape_html`, which Pygments 2.21 removed.
 - Unit testing
   - Patched `importlib.resources.files()` in the `Instrument` unit tests, in
     place of the removed `INSTRUMENT_DATA_PATH` variable.
