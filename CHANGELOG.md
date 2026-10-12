@@ -25,7 +25,8 @@
   - Converted energies with Abins' `MILLI_EV_TO_WAVENUMBER` in both directions, not a slightly
     different inverse constant.
 - Developer tools
-  - Removed a now-unused validation script `dev/plotting/plot_pychop.py`.
+  - Removed obsolete developer scratch scripts (`dev/design.md`, `dev/developer_utils.py`,
+    `dev/plotting/plot_pychop.py`, `dev/convert_units.py` and `dev/test_convert_units.py`).
 - Unit testing
   - Patched `importlib.resources.files()` in the `Instrument` tests, in place of the removed
     `INSTRUMENT_DATA_PATH`. ([#65](https://github.com/pace-neutrons/resins/pull/65))
@@ -38,6 +39,7 @@
     which Pygments 2.21 removed.)
   - Added a `test` dependency group, installed with `pip install --group test`.
   - Removed `tox`, `tox-conda` and the git dependency on mducle/pychop.
+  - Removed `Pint` from the `dev` extra now that `dev/convert_units.py` is removed.
 - GitHub Actions
   - Replaced the Miniconda and `tox` test workflow with `setup-python` on Python 3.11 and 3.14
     (Ubuntu) and 3.14 (Windows).

@@ -42,7 +42,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "Pint >= 0.24.3",
     "jaxtyping >= 0.2.34"
 ]
 
