@@ -24,8 +24,8 @@
   - Replaced the identical TOSCA "forward" and "backward" fixtures with one resolution function.
   - Converted energies with Abins' `MILLI_EV_TO_WAVENUMBER` in both directions, not a slightly
     different inverse constant.
-  - Compared PyChop chopper widths with a relative tolerance of 1e-7. (The previous absolute 1e-8 s²
-    exceeded the values themselves, of order 1e-10 s².)
+- Developer tools
+  - Removed a now-unused validation script `dev/plotting/plot_pychop.py`.
 - Unit testing
   - Patched `importlib.resources.files()` in the `Instrument` tests, in place of the removed
     `INSTRUMENT_DATA_PATH`. ([#65](https://github.com/pace-neutrons/resins/pull/65))
@@ -42,6 +42,8 @@
   - Replaced the Miniconda and `tox` test workflow with `setup-python` on Python 3.11 and 3.14
     (Ubuntu) and 3.14 (Windows).
   - Added a manually triggered `generate_reference_data.yml` workflow.
+  - Updated GitHub Actions to current releases (`actions/checkout@v7`, `actions/setup-python@v7`,
+    `prefix-dev/setup-pixi@v0.11.0`, `actions/upload-artifact@v7`).
 
 ## [0.1.0](https://github.com/pace-neutrons/resins/releases/tag/0.1.0) - 2026-01-21
 
