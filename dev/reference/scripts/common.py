@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from cases import OUTCOMES, REPO_ROOT
+from cases import REPO_ROOT, Outcome
 
 REFERENCE_DIR = Path(__file__).resolve().parents[1]
 BUILD_DIR = REFERENCE_DIR / "build"
@@ -17,8 +17,6 @@ SNAPSHOT_DIR = BUILD_DIR / "snapshots"
 COMMITTED_DATA = REPO_ROOT / "tests/reference_data"
 
 GENERATOR_VERSION = 1
-
-OUTCOME_CODE = {name: i for i, name in enumerate(OUTCOMES)}
 
 PYCHOP_CASE_DTYPE = np.dtype(
     [
@@ -70,7 +68,7 @@ def make_metadata(**extra) -> dict:
             "frequency": "Hz",
             "resolution": "FWHM in meV (PyChop getResolution)",
         },
-        "outcomes": list(OUTCOMES),
+        "outcomes": [outcome.value for outcome in Outcome],
     }
     metadata.update(extra)
     return metadata

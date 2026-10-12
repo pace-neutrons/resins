@@ -26,7 +26,7 @@ from abins.instruments.panther import PantherInstrument
 from abins.instruments.pychop import PyChopInstrument
 from abins.instruments.toscainstrument import ToscaInstrument
 from cases import Outcome
-from common import BUILD_DATA, OUTCOME_CODE, load_config, make_metadata, save_npz
+from common import BUILD_DATA, load_config, make_metadata, save_npz
 from generate_pychop import PyChopEvaluator, classify_cases
 
 ABINS_PYCHOP_DTYPE = np.dtype(
@@ -49,8 +49,8 @@ INDIRECT_DTYPE = np.dtype(
     ]
 )
 
-VALUE = OUTCOME_CODE[Outcome.VALUE]
-NO_TRANSMISSION = OUTCOME_CODE[Outcome.NO_TRANSMISSION]
+VALUE = int(Outcome.VALUE)
+NO_TRANSMISSION = int(Outcome.NO_TRANSMISSION)
 
 
 def to_meV(wavenumber):
@@ -158,7 +158,7 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
             case.configuration,
             case.e_init,
             case.frequencies[0],
-            OUTCOME_CODE[outcome],
+            outcome,
             reason,
         )
         sigma[i] = row_sigma
@@ -250,8 +250,8 @@ def generate_lagrange(config: dict, out_dir: Path) -> Path:
 def write(path: Path, arrays: dict, metadata: dict) -> Path:
     save_npz(path, arrays, metadata)
     cases_arr = arrays["cases"]
-    counts = Counter(cases.OUTCOMES[c] for c in cases_arr["outcome"])
-    summary = ", ".join(f"{k}={v}" for k, v in counts.items())
+    counts = Counter(Outcome.from_index(c) for c in cases_arr["outcome"])
+    summary = ", ".join(f"{outcome}={counts.get(outcome, 0)}" for outcome in Outcome)
     print(
         f"abins/{path.name}: {len(cases_arr)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB"
     )

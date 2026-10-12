@@ -11,7 +11,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from cases import OUTCOMES
+from cases import Outcome
 from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
 
 
@@ -60,7 +60,7 @@ def main() -> None:
 
     header = (
         f"{'file':42s} {'cases':>6s} "
-        + " ".join(f"{outcome:>18s}" for outcome in OUTCOMES)
+        + " ".join(f"{outcome:>18s}" for outcome in Outcome)
         + "   size   mantid"
     )
     print(header)
@@ -68,11 +68,11 @@ def main() -> None:
         arrays, metadata = load_npz(path)
         cases_arr = arrays["cases"]
         counts = (
-            Counter(OUTCOMES[code] for code in cases_arr["outcome"])
+            Counter(Outcome.from_index(code) for code in cases_arr["outcome"])
             if "outcome" in cases_arr.dtype.names
             else {}
         )
-        row = " ".join(f"{counts.get(outcome, 0):18d}" for outcome in OUTCOMES)
+        row = " ".join(f"{counts.get(outcome, 0):18d}" for outcome in Outcome)
         print(
             f"{path.relative_to(root)!s:42s} {len(cases_arr):6d} {row}  "
             f"{path.stat().st_size / 1e3:5.0f}k  {metadata.get('mantid_version', '?')}"

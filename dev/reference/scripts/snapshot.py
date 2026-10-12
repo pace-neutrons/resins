@@ -16,7 +16,7 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
-from cases import OUTCOMES, Outcome
+from cases import Outcome
 from common import (
     BUILD_DATA,
     COMMITTED_DATA,
@@ -45,7 +45,7 @@ def snapshot_entry(entry: dict, path: Path, n_points: int) -> np.ndarray:
     evaluators: dict[str, PyChopEvaluator] = {}
     resolution = np.full((len(cases), n_points), np.nan)
     for i, case in enumerate(cases):
-        if OUTCOMES[case["outcome"]] not in EVALUATED:
+        if Outcome.from_index(case["outcome"]) not in EVALUATED:
             continue
         name = str(case["configuration"])
         if name not in evaluators:

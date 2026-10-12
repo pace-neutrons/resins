@@ -23,7 +23,6 @@ import numpy as np
 from cases import Outcome
 from common import (
     BUILD_DATA,
-    OUTCOME_CODE,
     PYCHOP_CASE_DTYPE,
     load_config,
     make_metadata,
@@ -191,7 +190,7 @@ def build_arrays(
             case.e_init,
             frequencies[0],
             frequencies[1],
-            OUTCOME_CODE[outcome],
+            outcome,
             reason,
         )
         if outcome not in (Outcome.VALUE, Outcome.NO_TRANSMISSION):
@@ -256,8 +255,8 @@ def generate_entry(entry: dict, config: dict, all_cases: dict, out_dir: Path) ->
     path = out_dir / f"pychop/{pychop_file_stem(entry)}.npz"
     save_npz(path, arrays, metadata)
 
-    counts = Counter(cases.OUTCOMES[c] for c in arrays["cases"]["outcome"])
-    summary = ", ".join(f"{k}={counts.get(k, 0)}" for k in cases.OUTCOMES)
+    counts = Counter(Outcome.from_index(c) for c in arrays["cases"]["outcome"])
+    summary = ", ".join(f"{outcome}={counts.get(outcome, 0)}" for outcome in Outcome)
     print(
         f"{path.name}: {len(rows)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB"
     )

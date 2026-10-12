@@ -43,14 +43,20 @@ class Outcome(str, Enum):
     def __str__(self) -> str:
         return self.value
 
+    def __index__(self) -> int:
+        return _OUTCOME_TO_INDEX[self]
 
-OUTCOMES = tuple(Outcome)
+    @classmethod
+    def from_index(cls, index: int) -> Outcome:
+        return _INDEX_TO_OUTCOME[index]
 
-# Aliases for backwards compatibility
-OUTCOME_VALUE = Outcome.VALUE
-OUTCOME_NO_TRANSMISSION = Outcome.NO_TRANSMISSION
-OUTCOME_REJECTED_EI = Outcome.REJECTED_EI
-OUTCOME_REJECTED_FREQUENCY = Outcome.REJECTED_FREQUENCY
+    @classmethod
+    def from_code(cls, code: int) -> Outcome:
+        return cls.from_index(code)
+
+
+_INDEX_TO_OUTCOME = tuple(Outcome)
+_OUTCOME_TO_INDEX = {outcome: i for i, outcome in enumerate(_INDEX_TO_OUTCOME)}
 
 # Relative offset for points just inside / outside the Ei and frequency limits.
 LIMIT_DELTA = 1e-3

@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from cases import OUTCOMES
+from cases import Outcome
 from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
 from summary import data_files, print_size
 
@@ -97,8 +97,8 @@ def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, lis
     flips = [
         (
             k,
-            OUTCOMES[old["cases"]["outcome"][old_index[k]]],
-            OUTCOMES[new["cases"]["outcome"][i]],
+            Outcome.from_index(old["cases"]["outcome"][old_index[k]]),
+            Outcome.from_index(new["cases"]["outcome"][i]),
         )
         for i, k in enumerate(new_keys)
         if k in old_index
