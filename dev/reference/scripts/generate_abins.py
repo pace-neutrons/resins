@@ -25,6 +25,7 @@ from abins.instruments.lagrangeinstrument import LagrangeInstrument
 from abins.instruments.panther import PantherInstrument
 from abins.instruments.pychop import PyChopInstrument
 from abins.instruments.toscainstrument import ToscaInstrument
+from cases import Outcome
 from common import BUILD_DATA, OUTCOME_CODE, load_config, make_metadata, save_npz
 from generate_pychop import PyChopEvaluator, classify_cases
 
@@ -48,8 +49,8 @@ INDIRECT_DTYPE = np.dtype(
     ]
 )
 
-VALUE = OUTCOME_CODE[cases.OUTCOME_VALUE]
-NO_TRANSMISSION = OUTCOME_CODE[cases.OUTCOME_NO_TRANSMISSION]
+VALUE = OUTCOME_CODE[Outcome.VALUE]
+NO_TRANSMISSION = OUTCOME_CODE[Outcome.NO_TRANSMISSION]
 
 
 def to_meV(wavenumber):
@@ -137,10 +138,10 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
         }
         for case, outcome, reason in classified:
             # Abins applies no restrictions of its own; only cases PyChop evaluates are compared.
-            if outcome not in (cases.OUTCOME_VALUE, cases.OUTCOME_NO_TRANSMISSION):
+            if outcome not in (Outcome.VALUE, Outcome.NO_TRANSMISSION):
                 continue
             sigma = np.full(n_points, np.nan)
-            if outcome == cases.OUTCOME_VALUE:
+            if outcome == Outcome.VALUE:
                 sigma = abins_pychop_sigma(
                     abins_instruments[case.configuration],
                     case.e_init,

@@ -19,22 +19,38 @@ Outcome codes are assigned by the generator from PyChop and the restrictions, no
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
-OUTCOME_VALUE = "value"
-OUTCOME_NO_TRANSMISSION = "no_transmission"
-OUTCOME_REJECTED_EI = "rejected_ei"
-OUTCOME_REJECTED_FREQUENCY = "rejected_frequency"
-OUTCOMES = (
-    OUTCOME_VALUE,
-    OUTCOME_NO_TRANSMISSION,
-    OUTCOME_REJECTED_EI,
-    OUTCOME_REJECTED_FREQUENCY,
-)
+
+class Outcome(str, Enum):
+    """Expected outcome for a reference case.
+
+    Implemented as ``(str, Enum)`` with explicit ``__str__`` to provide
+    ``StrEnum`` behavior while supporting Python 3.10 for ``mantid611`` pixi
+    environment.
+    """
+
+    VALUE = "value"
+    NO_TRANSMISSION = "no_transmission"
+    REJECTED_EI = "rejected_ei"
+    REJECTED_FREQUENCY = "rejected_frequency"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+OUTCOMES = tuple(Outcome)
+
+# Aliases for backwards compatibility
+OUTCOME_VALUE = Outcome.VALUE
+OUTCOME_NO_TRANSMISSION = Outcome.NO_TRANSMISSION
+OUTCOME_REJECTED_EI = Outcome.REJECTED_EI
+OUTCOME_REJECTED_FREQUENCY = Outcome.REJECTED_FREQUENCY
 
 # Relative offset for points just inside / outside the Ei and frequency limits.
 LIMIT_DELTA = 1e-3
@@ -219,12 +235,12 @@ def check_restrictions(
     ``e_init`` is checked first, then each frequency against its list of allowed values.
     """
     if not (ei_range[0] <= e_init <= ei_range[1]):
-        return OUTCOME_REJECTED_EI, "e_init"
+        return Outcome.REJECTED_EI, "e_init"
 
     for allowed, frequency in zip(frequency_values, frequencies):
         if allowed is None:
             continue
         if frequency not in allowed:
-            return OUTCOME_REJECTED_FREQUENCY, "frequency"
+            return Outcome.REJECTED_FREQUENCY, "frequency"
 
     return None

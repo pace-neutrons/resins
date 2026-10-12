@@ -20,6 +20,7 @@ from pathlib import Path
 import cases
 import mantid  # noqa: F401  (puts Mantid's bundled pychop on sys.path)
 import numpy as np
+from cases import Outcome
 from common import (
     BUILD_DATA,
     OUTCOME_CODE,
@@ -152,7 +153,7 @@ def classify_cases(
                 rows.append(
                     (
                         case,
-                        cases.OUTCOME_REJECTED_FREQUENCY,
+                        Outcome.REJECTED_FREQUENCY,
                         f"pychop:{freq_settings[0]}",
                     )
                 )
@@ -163,9 +164,9 @@ def classify_cases(
 
             resolution = evaluator.resolution(case.e_init)
             outcome = (
-                cases.OUTCOME_NO_TRANSMISSION
+                Outcome.NO_TRANSMISSION
                 if np.any(np.isnan(resolution))
-                else cases.OUTCOME_VALUE
+                else Outcome.VALUE
             )
             rows.append((case, outcome, ""))
     return rows, notes
@@ -193,7 +194,7 @@ def build_arrays(
             OUTCOME_CODE[outcome],
             reason,
         )
-        if outcome not in (cases.OUTCOME_VALUE, cases.OUTCOME_NO_TRANSMISSION):
+        if outcome not in (Outcome.VALUE, Outcome.NO_TRANSMISSION):
             continue
         evaluator = evaluators[case.configuration]
         evaluator.set_frequencies(case.frequencies)

@@ -27,7 +27,7 @@ def readme_task_names() -> set[str]:
             flag = tokens.pop(0)
             if flag in ("-e", "--environment", "--manifest-path"):
                 tokens.pop(0)
-        if tokens and tokens[0] not in ("python",):
+        if tokens and tokens[0] not in ("python", "..."):
             names.add(tokens[0])
     return names
 

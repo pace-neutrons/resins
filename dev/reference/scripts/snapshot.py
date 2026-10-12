@@ -15,8 +15,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-import cases
 import numpy as np
+from cases import OUTCOMES, Outcome
 from common import (
     BUILD_DATA,
     COMMITTED_DATA,
@@ -29,7 +29,7 @@ from common import (
 )
 from generate_pychop import PyChopEvaluator
 
-EVALUATED = (cases.OUTCOME_VALUE, cases.OUTCOME_NO_TRANSMISSION)
+EVALUATED = (Outcome.VALUE, Outcome.NO_TRANSMISSION)
 
 
 def default_instruments(config: dict) -> list[str]:
@@ -45,7 +45,7 @@ def snapshot_entry(entry: dict, path: Path, n_points: int) -> np.ndarray:
     evaluators: dict[str, PyChopEvaluator] = {}
     resolution = np.full((len(cases), n_points), np.nan)
     for i, case in enumerate(cases):
-        if cases.OUTCOMES[case["outcome"]] not in EVALUATED:
+        if OUTCOMES[case["outcome"]] not in EVALUATED:
             continue
         name = str(case["configuration"])
         if name not in evaluators:
