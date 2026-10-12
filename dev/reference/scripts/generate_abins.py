@@ -16,9 +16,13 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+# mantid must be imported first to populate sys.path with Mantid's bundled scripts
+import mantid  # noqa: F401
+
+# isort: split
+
 import abins.parameters
 import cases
-import mantid  # noqa: F401
 import numpy as np
 from abins.constants import MILLI_EV_TO_WAVENUMBER
 from abins.instruments.lagrangeinstrument import LagrangeInstrument
