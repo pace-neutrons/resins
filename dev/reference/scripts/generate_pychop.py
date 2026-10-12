@@ -1,8 +1,12 @@
-"""Generate PyChop component and resolution references (Mantid's bundled ``pychop``).
+"""Generate PyChop resolution references (Mantid's bundled ``pychop``).
 
 Run inside a Mantid pixi environment; only entries of ``config.yaml`` whose ``environment``
-matches ``--env`` are generated. Never imports resins. Output goes to
-``build/reference_data/pychop/<INSTRUMENT>_<model_version>.npz``.
+matches ``--env`` are generated. Never imports resins. Target test points are read from
+``cases.yaml``; outcomes are assigned from PyChop and the restrictions declared there.
+
+Output goes to ``build/reference_data/pychop/<INSTRUMENT>_<model_version>.npz`` and contains
+only the public resolution FWHM at 40 energy-transfer points -- no internal component arrays
+(moderator, chopper, detector, sample widths or chop times).
 """
 from __future__ import annotations
 
@@ -14,7 +18,7 @@ from pathlib import Path
 
 import mantid  # noqa: F401  (puts Mantid's bundled pychop on sys.path)
 import numpy as np
-import sampling
+import cases
 from common import (
     BUILD_DATA,
     OUTCOME_CODE,
@@ -88,72 +92,40 @@ class PyChopEvaluator:
             return False
         return True
 
-    def chopper_width_squared(self, e_init: float) -> tuple[float, float]:
-        self._activate()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            first, second = self.chopper_system.getWidthSquared(e_init)
-        return float(np.squeeze(first)), (np.nan if second is None else float(second))
-
-    def chop_times(self, e_init: float) -> np.ndarray:
-        """Opening windows of the first and the last chopper, as an array (2, windows, 2)."""
-        self._activate()
-        from pychop.MulpyRep import calcChopTimes
-
-        cs = self.chopper_system
-        args = [e_init, cs._long_frequency, cs._instpar, cs.phase]
-        if hasattr(cs, "phaseOffset"):
-            args.append(cs.phaseOffset)
-        windows = calcChopTimes(*args)[1]
-        return [np.array(windows[0], dtype=float), np.array(windows[-1], dtype=float)]
-
-    def moderator_width_squared(self, e_init: float) -> tuple[float, float]:
-        self._activate()
-        moderator = self.instrument.moderator
-        return float(moderator.getWidthSquared(e_init)), float(moderator.getAnalyticWidthsSquared(e_init))
-
-    def detector_width_squared(self, e_init: float) -> np.ndarray:
-        self._activate()
-        # LET has a Detector object without a detector type: no contribution.
-        detector = getattr(self.instrument, "detector", None)
-        if detector is None or not hasattr(detector, "idet"):
-            return np.full(self.n_points, np.nan)
-        return np.array([detector.getWidthSquared(e_init, en) for en in self.energy_transfers(e_init)])
-
-    def sample_width_squared(self) -> float:
-        self._activate()
-        sample = getattr(self.instrument, "sample", None)
-        if sample is None:
-            return np.nan
-        return float(sample.getWidthSquared())
-
-    def distances(self) -> np.ndarray:
-        """(moderator->last chopper, aperture->last chopper, chopper->sample, sample->detector,
-        moderator->first chopper) in metres."""
-        self._activate()
-        return np.array(self.chopper_system.getDistances(), dtype=float)
-
 
 def classify_cases(
     entry: dict,
+    cases_data: dict,
     evaluators: dict[str, PyChopEvaluator],
-    restrictions: dict[str, dict],
-    sampled: dict[str, list[sampling.SampledCase]],
+    sampled: dict[str, list[cases.SampledCase]],
 ) -> tuple[list[tuple], Counter]:
     """Assign an outcome to every sampled case.
 
     Returns rows ``(case, outcome, reason)`` and a counter of PyChop/resins disagreements.
     """
-    frequency_settings = entry["frequency_settings"]
+    freq_settings = entry["frequency_settings"]
     rows = []
     notes: Counter = Counter()
 
-    for name, cases in sampled.items():
+    for name, cs in sampled.items():
         evaluator = evaluators[name]
-        for case in cases:
-            rejected = sampling.check_restrictions(
-                restrictions[name], case.e_init, frequency_settings, case.frequencies
-            )
+        config_entry = cases_data.get(name, {})
+        ei_range = config_entry.get("ei_range", cases_data["__ei_range__"])
+
+        # Build frequency allowed-values lists for restriction checking
+        freq_values = []
+        for s in freq_settings:
+            if "restrictions" in config_entry and s in config_entry["restrictions"]:
+                # Per-config override: reconstruct the allowed values from [start, stop, step]
+                start, stop, step = config_entry["restrictions"][s]
+                freq_values.append(list(range(start, stop, step)))
+            elif s in cases_data["__grid__"]:
+                freq_values.append(cases_data["__grid__"][s])
+            else:
+                freq_values.append(None)
+
+        for case in cs:
+            rejected = cases.check_restrictions(ei_range, freq_values, case.e_init, list(case.frequencies))
             if rejected is not None:
                 outcome, setting = rejected
                 rows.append((case, outcome, f"resins:{setting}"))
@@ -168,19 +140,17 @@ def classify_cases(
                     f"{case.frequencies} allowed by resins",
                     file=sys.stderr,
                 )
-                rows.append((case, sampling.OUTCOME_REJECTED_FREQUENCY, f"pychop:{frequency_settings[0]}"))
+                rows.append((case, cases.OUTCOME_REJECTED_FREQUENCY, f"pychop:{freq_settings[0]}"))
                 continue
 
             if evaluator.is_fermi and not evaluator.ei_accepted(case.e_init):
-                # PyChop's setEi limits are not applied by getResolution, which is what resins
-                # is compared with, so the case keeps its getResolution outcome.
                 notes["setEi limits narrower than resins' e_init restriction"] += 1
 
             resolution = evaluator.resolution(case.e_init)
             outcome = (
-                sampling.OUTCOME_NO_TRANSMISSION
+                cases.OUTCOME_NO_TRANSMISSION
                 if np.any(np.isnan(resolution))
-                else sampling.OUTCOME_VALUE
+                else cases.OUTCOME_VALUE
             )
             rows.append((case, outcome, ""))
     return rows, notes
@@ -193,14 +163,12 @@ def build_arrays(
     n_points: int,
 ) -> dict[str, np.ndarray]:
     n_cases = len(rows)
-    cases = np.zeros(n_cases, dtype=PYCHOP_CASE_DTYPE)
+    cases_arr = np.zeros(n_cases, dtype=PYCHOP_CASE_DTYPE)
     resolution = np.full((n_cases, n_points), np.nan)
-    chopper_width_sq = np.full((n_cases, 2), np.nan)
-    chop_times_list: list = [None] * n_cases
 
     for i, (case, outcome, reason) in enumerate(rows):
         frequencies = list(case.frequencies) + [np.nan] * (MAX_FREQUENCIES - len(case.frequencies))
-        cases[i] = (
+        cases_arr[i] = (
             case.configuration,
             case.e_init,
             frequencies[0],
@@ -208,91 +176,44 @@ def build_arrays(
             OUTCOME_CODE[outcome],
             reason,
         )
-        if outcome not in (sampling.OUTCOME_VALUE, sampling.OUTCOME_NO_TRANSMISSION):
+        if outcome not in (cases.OUTCOME_VALUE, cases.OUTCOME_NO_TRANSMISSION):
             continue
         evaluator = evaluators[case.configuration]
         evaluator.set_frequencies(case.frequencies)
         resolution[i] = evaluator.resolution(case.e_init)
-        chopper_width_sq[i] = evaluator.chopper_width_squared(case.e_init)
-        if not evaluator.is_fermi:
-            chop_times_list[i] = evaluator.chop_times(case.e_init)
 
-    arrays: dict[str, np.ndarray] = {
-        "cases": cases,
-        "resolution": resolution,
-        "chopper_width_sq": chopper_width_sq,
-    }
-
-    # Non-Fermi: opening windows of first and last chopper, NaN-padded to a common length.
-    if any(t is not None for t in chop_times_list):
-        n_windows = max(len(w) for t in chop_times_list if t is not None for w in t)
-        chop_times = np.full((n_cases, 2, n_windows, 2), np.nan)
-        for i, times in enumerate(chop_times_list):
-            if times is None:
-                continue
-            for k, windows in enumerate(times):
-                chop_times[i, k, : len(windows)] = windows
-        arrays["chop_times"] = chop_times
-
-    # Per (configuration, Ei): quantities that do not depend on chopper frequency.
-    evaluated = [
-        (c, e)
-        for (c, e) in dict.fromkeys(
-            (case.configuration, case.e_init)
-            for case, outcome, _ in rows
-            if outcome in (sampling.OUTCOME_VALUE, sampling.OUTCOME_NO_TRANSMISSION)
-        )
-    ]
-    ei_keys = np.zeros(len(evaluated), dtype=[("configuration", "U32"), ("e_init", "f8")])
-    moderator = np.full(len(evaluated), np.nan)
-    moderator_analytical = np.full(len(evaluated), np.nan)
-    detector = np.full((len(evaluated), n_points), np.nan)
-    for k, (configuration, e_init) in enumerate(evaluated):
-        evaluator = evaluators[configuration]
-        ei_keys[k] = (configuration, e_init)
-        moderator[k], moderator_analytical[k] = evaluator.moderator_width_squared(e_init)
-        detector[k] = evaluator.detector_width_squared(e_init)
-    arrays["ei_keys"] = ei_keys
-    arrays["moderator_width_sq"] = moderator
-    arrays["moderator_width_sq_analytical"] = moderator_analytical
-    arrays["detector_width_sq"] = detector
-
-    # Per configuration
-    names = list(evaluators)
-    arrays["config_names"] = np.array(names, dtype="U32")
-    arrays["sample_width_sq"] = np.array([evaluators[n].sample_width_squared() for n in names])
-    arrays["distances"] = np.array([evaluators[n].distances() for n in names])
-    return arrays
+    return {"cases": cases_arr, "resolution": resolution}
 
 
-def generate_entry(entry: dict, config: dict, out_dir: Path) -> Path:
-    sampling_config = {**config["sampling"], **entry.get("sampling", {})}
-    params = sampling.SamplingParameters.from_config(sampling_config)
+def generate_entry(entry: dict, config: dict, all_cases: dict, out_dir: Path) -> Path:
     n_points = config["sampling"]["n_resolution_points"]
-    frequency_settings = entry["frequency_settings"]
-
-    model = sampling.load_model(entry["instrument"], entry["model_version"])
-    options = sampling.configuration_options(model)
-    defaults = model["parameters"]["defaults"]
+    freq_settings = entry["frequency_settings"]
     config_map = entry.get("configuration_map", {})
 
-    evaluators: dict[str, PyChopEvaluator] = {}
-    restrictions: dict[str, dict] = {}
-    sampled: dict[str, list[sampling.SampledCase]] = {}
-    for name, option in options.items():
-        evaluator = PyChopEvaluator(entry["pychop_name"], config_map.get(name, name), n_points)
-        evaluators[name] = evaluator
-        restrictions[name] = sampling.effective_restrictions(model, option)
-        sampled[name] = sampling.sample_configuration(
-            name,
-            restrictions[name],
-            defaults,
-            frequency_settings,
-            evaluator.transmits,
-            params,
-        )
+    # Look up the cases.yaml entry for this instrument+model
+    key = f"{entry['instrument']}_{entry['model_version']}"
+    cases_entry = all_cases.get(key)
+    if cases_entry is None:
+        print(f"WARNING: no cases.yaml entry for {key}", file=sys.stderr)
+        return out_dir  # will be handled by caller
 
-    rows, notes = classify_cases(entry, evaluators, restrictions, sampled)
+    # Expand cases per configuration
+    expanded = cases.expand_entry(cases_entry)
+
+    # Build evaluators for each configuration
+    evaluators: dict[str, PyChopEvaluator] = {}
+    sampled: dict[str, list[cases.SampledCase]] = {}
+    for name in cases.configuration_names(cases_entry):
+        evaluators[name] = PyChopEvaluator(entry["pychop_name"], config_map.get(name, name), n_points)
+        sampled[name] = expanded[name]
+
+    # Build a dict for restriction checking (with access to grid and per-config overrides)
+    cases_data = {"__ei_range__": cases_entry["ei_range"], "__grid__": cases_entry["grid"]}
+    for name in cases.configuration_names(cases_entry):
+        config_data = cases_entry.get("configurations", {}).get(name, {}) or {}
+        cases_data[name] = config_data
+
+    rows, notes = classify_cases(entry, cases_data, evaluators, sampled)
     arrays = build_arrays(entry, evaluators, rows, n_points)
 
     metadata = make_metadata(
@@ -302,9 +223,8 @@ def generate_entry(entry: dict, config: dict, out_dir: Path) -> Path:
         pychop_name=entry["pychop_name"],
         pychop_source=str(Path(sys.modules[Instrument.__module__].__file__).parent),
         environment=entry["environment"],
-        frequency_settings=frequency_settings,
+        frequency_settings=freq_settings,
         configuration_map=config_map,
-        sampling=sampling_config,
         n_resolution_points=n_points,
         resolution_grid="linspace(0, e_init, n_resolution_points, endpoint=False)",
         notes=dict(notes),
@@ -313,8 +233,8 @@ def generate_entry(entry: dict, config: dict, out_dir: Path) -> Path:
     path = out_dir / "pychop" / f"{pychop_file_stem(entry)}.npz"
     save_npz(path, arrays, metadata)
 
-    counts = Counter(sampling.OUTCOMES[c] for c in arrays["cases"]["outcome"])
-    summary = ", ".join(f"{k}={counts.get(k, 0)}" for k in sampling.OUTCOMES)
+    counts = Counter(cases.OUTCOMES[c] for c in arrays["cases"]["outcome"])
+    summary = ", ".join(f"{k}={counts.get(k, 0)}" for k in cases.OUTCOMES)
     print(f"{path.name}: {len(rows)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB")
     for note, count in notes.items():
         print(f"  note: {count} cases where {note}")
@@ -329,6 +249,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     config = load_config()
+    all_cases = cases.load_cases()
     entries = [e for e in config["pychop"] if e["environment"] == args.env]
     if args.only:
         entries = [e for e in entries if pychop_file_stem(e) in args.only]
@@ -337,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     for entry in entries:
-        generate_entry(entry, config, args.out)
+        generate_entry(entry, config, all_cases, args.out)
     return 0
 
 

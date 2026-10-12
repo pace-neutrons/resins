@@ -14,30 +14,18 @@ from pathlib import Path
 
 import numpy as np
 from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
-from sampling import OUTCOMES
+from cases import OUTCOMES
 from summary import data_files, print_size
 
 RTOL = 1e-7
-ATOL = 1e-12  # absolute tolerance floor for values that are exactly zero or tiny (e.g. s^2 widths)
+ATOL = 1e-12  # absolute tolerance floor for values that are exactly zero or tiny
 
-# Arrays aligned with the case table. Other arrays are keyed by their own tables.
-KEYED_ARRAYS = {
-    "ei_keys": ["moderator_width_sq", "moderator_width_sq_analytical", "detector_width_sq"],
-    "config_names": ["sample_width_sq", "distances"],
-}
 NOT_KEY_COLUMNS = {"outcome", "reason"}
 
 
 def case_keys(table: np.ndarray, exclude=NOT_KEY_COLUMNS) -> list[tuple]:
     names = [n for n in table.dtype.names if n not in exclude]
     return [tuple(None if (isinstance(v, float) and np.isnan(v)) else v for v in (row[n].item() for n in names)) for row in table]
-
-
-def array_keys(arrays: dict, key_name: str) -> list[tuple]:
-    table = arrays[key_name]
-    if table.dtype.names:
-        return [tuple(row.item()) for row in table]
-    return [(str(v),) for v in table]
 
 
 def max_deviation(a: np.ndarray, b: np.ndarray) -> tuple[float, float]:
@@ -110,9 +98,8 @@ def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, lis
         for key, was, now in flips[:5]:
             report.append(f"      {key}: {was} -> {now}")
 
-    keyed = set(KEYED_ARRAYS) | {v for values in KEYED_ARRAYS.values() for v in values}
     for name in new:
-        if name == "cases" or name in keyed or name not in old:
+        if name == "cases" or name not in old:
             continue
         if new[name].shape[1:] != old[name].shape[1:]:
             ok = False
@@ -122,14 +109,7 @@ def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, lis
             continue
         ok &= compare_aligned(name, new[name], old[name], new_keys, old_keys, rtol, report)
 
-    for key_name, value_names in KEYED_ARRAYS.items():
-        if key_name not in new or key_name not in old:
-            continue
-        nk, ok_ = array_keys(new, key_name), array_keys(old, key_name)
-        for name in value_names:
-            ok &= compare_aligned(name, new[name], old[name], nk, ok_, rtol, report)
-
-    for field in ("mantid_version", "model_versions", "sampling"):
+    for field in ("mantid_version", "model_versions", "n_resolution_points"):
         if new_meta.get(field) != old_meta.get(field):
             report.append(f"    metadata {field}: {old_meta.get(field)} -> {new_meta.get(field)}")
     return ok, report

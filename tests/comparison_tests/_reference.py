@@ -96,7 +96,7 @@ class KnownDiscrepancy:
     file
         The reference file stem.
     scopes
-        The kinds of test the discrepancy shows up in (``"components"``, ``"resolution"``,
+        The kinds of test the discrepancy shows up in (``"resolution"``,
         ``"abins"``); other tests of the same cases are unaffected.
     applies
         Predicate on ``(reference_file, case_index)`` selecting the affected cases.
@@ -154,7 +154,7 @@ def _lagrange_cu220_window(ref: ReferenceFile, i: int) -> bool:
 KNOWN_DISCREPANCIES = (
     KnownDiscrepancy(
         file="pychop/ARCS_PyChop_fit_v2",
-        scopes=frozenset({"components:chopper", "resolution"}),
+        scopes=frozenset({"resolution"}),
         applies=_arcs_700_1_5_smi,
         reason="Mantid has pslit: 1.0 mm for ARCS-700-1.5-SMI while resins has 1.5 mm "
         "(to be raised with Mantid/SNS)",
@@ -251,22 +251,3 @@ def case_params(
 def resolve(param: tuple[str, int]) -> tuple[ReferenceFile, int]:
     stem, i = param
     return load(stem), i
-
-
-def row_params(stem_list: list[str], table: str) -> list:
-    """``pytest.param((stem, row))`` for each row of a per-key table (``ei_keys``/``config_names``).
-
-    Ids are made of the instrument, model version, configuration and (if present) incident
-    energy.
-    """
-    params = []
-    for stem in stem_list:
-        ref = load(stem)
-        for k, row in enumerate(ref[table]):
-            if ref[table].dtype.names:
-                configuration, e_init = str(row["configuration"]), row["e_init"]
-                name = f"{ref.instrument}-{ref.model_version}-{configuration}-ei={_format_number(e_init)}"
-            else:
-                name = f"{ref.instrument}-{ref.model_version}-{row}"
-            params.append(pytest.param((stem, k), id=name))
-    return params

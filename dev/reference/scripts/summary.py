@@ -11,7 +11,7 @@ from collections import Counter
 from pathlib import Path
 
 from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
-from sampling import OUTCOMES
+from cases import OUTCOMES
 
 
 def data_files(root: Path) -> list[Path]:

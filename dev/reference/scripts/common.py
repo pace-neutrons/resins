@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from sampling import OUTCOMES, REPO_ROOT
+from cases import OUTCOMES, REPO_ROOT
 
 REFERENCE_DIR = Path(__file__).resolve().parents[1]
 BUILD_DIR = REFERENCE_DIR / "build"

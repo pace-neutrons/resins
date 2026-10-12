@@ -90,8 +90,7 @@ def test_marks_depend_on_scope():
         if case["configuration"] == "ARCS-700-1.5-SMI" and case["outcome"] == VALUE
     )
     assert known_discrepancy_marks(ref, i, "resolution")
-    assert known_discrepancy_marks(ref, i, "components:chopper")
-    assert not known_discrepancy_marks(ref, i, "components:chop_times")
+    assert not known_discrepancy_marks(ref, i, "abins")
 
 
 def test_lagrange_discrepancy_window():
