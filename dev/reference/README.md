@@ -43,18 +43,11 @@ summary`).
 
 Each `.npz` file (loaded with `allow_pickle=False`) holds:
 
-- `cases`: a table of cases, each with every model parameter and one outcome:
-  `value`, `no_transmission`, `rejected_ei` or `rejected_frequency`;
-- the reference values for each case, in meV (NaN where the outcome has none);
-- for PyChop files, component values (moderator, chopper, detector and sample
-  widths, distances, chop times) for each component-level comparison;
-- `metadata`: JSON with the generator version, Mantid version, sampling
-  parameters, resins commit whose YAML was read, and units.
+- `cases`: a structured table of model inputs and their expected outcome (`value`, `no_transmission`, or rejected input);
+- `resolution` (PyChop files) or `sigma` (Abins files): 2D float64 reference values in meV aligned with `cases` (`NaN` where no transmission exists);
+- `metadata`: JSON provenance recording the Mantid version, generator settings, and unit conventions.
 
-Cases come from three rules (see `scripts/sampling.py`): a coarse regular grid
-of incident energies at every allowed chopper frequency; one point on each side
-of every zero-transmission edge in incident energy; and points just inside and
-just outside the incident energy and frequency limits.
+Cases are declared in `cases.yaml` to sample regular frequency/energy grids, zero-transmission slit edges, and parameter limits.
 
 ## 2. Setup
 
