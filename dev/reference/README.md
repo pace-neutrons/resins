@@ -4,42 +4,40 @@
 
 resins resolution models are validated against other implementations: Mantid's
 bundled `pychop` (PyChop), and Abins (PyChop-based, PANTHER, TOSCA and Lagrange
-resolution). Running those implementations needs Mantid, which is only
-available through conda and pins old Python and numpy versions. So the
-reference values are generated here, once, and committed to
-`tests/reference_data/`. The routine test suite (`tests/comparison_tests/`)
-reads those files and never imports Mantid, Abins or PyChop, so it runs with a
-plain `pip install` and `pytest`.
+resolution). Running those implementations needs [Mantid](https://mantidproject.org), which is available
+available through conda with strict dependency pins.
+The reference values are generated on a supported platform using [pixi](https://pixi.prefix.dev)
+environments and committed to `tests/reference_data/`.
+This doesn't require resins to be imported, so avoids e.g. Numpy version conflicts.
+
+The resins validation test suite (`tests/comparison_tests/`) reads
+those files and never needs to directly import Mantid, Abins or
+PyChop.
 
 This directory holds everything needed to regenerate the files:
 
 | Path | Content |
 |---|---|
-| `pixi.toml`, `pixi.lock` | Locked Mantid environments and all maintenance commands |
+| `pixi.toml`, `pixi.lock` | Locked Mantid environments and maintenance "tasks" (`pixi run ...`) |
 | `config.yaml` | Which (instrument, model version) pairs are compared, in which environment, and the sampling parameters |
 | `scripts/` | Generators and tools. They never import resins; configurations and limits are read from `src/resins/instrument_data/*.yaml` as plain data |
 | `tests/` | Unit tests for the sampling code |
 | `build/` | Scratch output (git-ignored): `build/reference_data/` and `build/snapshots/` |
 
-Reference data is generated only by hand (or by the manual
-`generate_reference_data` GitHub workflow). It is not part of routine CI.
+Reference data is not regenerated in routine CI; the workflows are run as needed on a developer workstation or by actively dispatching the `generate_reference_data` GitHub workflow.
 
 ### Which Mantid version produces which file
 
-Each environment is named after, and pinned to, one Mantid minor version.
-`pixi.lock` fixes the exact builds, and each reference file records the Mantid
-version that produced it in its metadata (see `pixi run summary`).
+Multiple Mantid versions are required to reproduce different model
+versions:  each is pinned by a different pixi environment.
+`pixi.lock` fixes the exact builds, and each reference file records
+the Mantid version that produced it in its metadata (see `pixi run
+summary`).
 
 | Environment | Python | Mantid | Reference files |
 |---|---|---|---|
 | `mantid611` | 3.10 | 6.11 | `pychop/ARCS_PyChop_fit_v1`, `pychop/SEQUOIA_PyChop_fit_v1` |
 | `mantid615` | 3.11 | 6.15 | `pychop/ARCS_PyChop_fit_v2`, `pychop/SEQUOIA_PyChop_fit_v2`, `pychop/MAPS_PyChop_fit_v1`, `pychop/MARI_PyChop_fit_v1`, `pychop/MERLIN_PyChop_fit_v1`, `pychop/HYSPEC_PyChop_fit_v1`, `pychop/CNCS_PyChop_fit_v1`, `pychop/LET_PyChop_fit_v1`, `abins/pychop`, `abins/panther`, `abins/tosca`, `abins/lagrange` |
-
-Why two: the PyChop data behind resins' `PyChop_fit_v1` for ARCS and SEQUOIA is
-the one in Mantid 6.11; Mantid 6.15 changed those two instruments (resins'
-`PyChop_fit_v2`) and left every other instrument's PyChop output unchanged.
-Mantid 6.11 needs Python 3.10 and numpy 1.26, so resins itself cannot be
-installed next to it. That is why the generators do not import resins.
 
 ### What a reference file contains
 
