@@ -1,4 +1,5 @@
 """Shared helpers for the reference data scripts (paths, config, npz IO, metadata)."""
+
 from __future__ import annotations
 
 import json
@@ -13,7 +14,7 @@ REFERENCE_DIR = Path(__file__).resolve().parents[1]
 BUILD_DIR = REFERENCE_DIR / "build"
 BUILD_DATA = BUILD_DIR / "reference_data"
 SNAPSHOT_DIR = BUILD_DIR / "snapshots"
-COMMITTED_DATA = REPO_ROOT / "tests" / "reference_data"
+COMMITTED_DATA = REPO_ROOT / "tests/reference_data"
 
 GENERATOR_VERSION = 1
 
@@ -32,8 +33,7 @@ PYCHOP_CASE_DTYPE = np.dtype(
 
 
 def load_config() -> dict:
-    with open(REFERENCE_DIR / "config.yaml") as f:
-        return yaml.safe_load(f)
+    return yaml.safe_load((REFERENCE_DIR / "config.yaml").read_text())
 
 
 def pychop_file_stem(entry: dict) -> str:
@@ -69,7 +69,6 @@ def make_metadata(**extra) -> dict:
             "energy": "meV",
             "frequency": "Hz",
             "resolution": "FWHM in meV (PyChop getResolution)",
-            "width_sq": "time FWHM squared in s^2 (PyChop convention)",
         },
         "outcomes": list(OUTCOMES),
     }
@@ -79,7 +78,9 @@ def make_metadata(**extra) -> dict:
 
 def save_npz(path: Path, arrays: dict, metadata: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(path, metadata=np.array(json.dumps(metadata, sort_keys=True)), **arrays)
+    np.savez_compressed(
+        path, metadata=np.array(json.dumps(metadata, sort_keys=True)), **arrays
+    )
 
 
 def load_npz(path: Path) -> tuple[dict, dict]:

@@ -1,4 +1,5 @@
 """Checks of the case parametrization helpers in ``_reference.py``."""
+
 from __future__ import annotations
 
 import pytest
@@ -7,9 +8,9 @@ from ._reference import (
     EVALUATED,
     KNOWN_DISCREPANCIES,
     NO_TRANSMISSION,
-    VALUE,
     REJECTED_EI,
     REJECTED_FREQUENCY,
+    VALUE,
     case_id,
     case_params,
     known_discrepancy_marks,
@@ -23,7 +24,12 @@ ALL_STEMS = pychop_stems() + stems("abins")
 
 def test_reference_files_are_present():
     assert len(pychop_stems()) == 10
-    assert stems("abins") == ["abins/lagrange", "abins/panther", "abins/pychop", "abins/tosca"]
+    assert stems("abins") == [
+        "abins/lagrange",
+        "abins/panther",
+        "abins/pychop",
+        "abins/tosca",
+    ]
 
 
 @pytest.mark.parametrize("stem", ALL_STEMS)
@@ -55,7 +61,9 @@ def test_case_id_is_readable():
 def test_marks_attach_only_to_matching_cases(discrepancy):
     ref = load(discrepancy.file)
     marked = {
-        i for i in range(len(ref.cases)) if known_discrepancy_marks(ref, i, next(iter(discrepancy.scopes)))
+        i
+        for i in range(len(ref.cases))
+        if known_discrepancy_marks(ref, i, next(iter(discrepancy.scopes)))
     }
     expected = {i for i in range(len(ref.cases)) if discrepancy.applies(ref, i)}
     assert marked == expected
@@ -67,7 +75,8 @@ def test_marks_attach_only_to_matching_cases(discrepancy):
             other = load(stem)
             for scope in discrepancy.scopes:
                 assert not any(
-                    known_discrepancy_marks(other, i, scope) for i in range(len(other.cases))
+                    known_discrepancy_marks(other, i, scope)
+                    for i in range(len(other.cases))
                 )
 
 
@@ -97,7 +106,9 @@ def test_lagrange_discrepancy_window():
     ref = load("abins/lagrange")
     for i, case in enumerate(ref.cases):
         marked = bool(known_discrepancy_marks(ref, i, "abins"))
-        expected = case["configuration"] == "Cu(220)" and 25 <= case["energy_transfer"] < 34.5
+        expected = (
+            case["configuration"] == "Cu(220)" and 25 <= case["energy_transfer"] < 34.5
+        )
         assert marked == expected
 
 

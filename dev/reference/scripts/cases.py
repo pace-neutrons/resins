@@ -15,12 +15,12 @@ come from three sources, all declared in ``cases.yaml``:
 
 Outcome codes are assigned by the generator from PyChop and the restrictions, not stored here.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 
-import numpy as np
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -51,8 +51,8 @@ class SampledCase:
 
 def load_cases() -> dict:
     """Load and return the ``cases.yaml`` content."""
-    with open(Path(__file__).resolve().parent.parent / "cases.yaml") as f:
-        return yaml.safe_load(f)
+    cases_path = Path(__file__).resolve().parents[1] / "cases.yaml"
+    return yaml.safe_load(cases_path.read_text())
 
 
 def _ei_limit_points(ei_range: list[float]) -> list[float]:
@@ -95,7 +95,9 @@ def _frequency_limit_points_from_values(values: list[int]) -> list[float]:
     return [above, off_grid]
 
 
-def _frequency_combinations(frequency_lists: list[list[int]]) -> list[tuple[float, ...]]:
+def _frequency_combinations(
+    frequency_lists: list[list[int]],
+) -> list[tuple[float, ...]]:
     """Frequency tuples such that every allowed value of each chopper occurs at least once.
 
     One chopper: every value. Several choppers: a cyclic pairing instead of the full product.
@@ -107,7 +109,10 @@ def _frequency_combinations(frequency_lists: list[list[int]]) -> list[tuple[floa
     combinations = []
     for i in range(n):
         combinations.append(
-            tuple(float(values[(i + k) % len(values)]) for k, values in enumerate(frequency_lists))
+            tuple(
+                float(values[(i + k) % len(values)])
+                for k, values in enumerate(frequency_lists)
+            )
         )
     return combinations
 
@@ -125,11 +130,9 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
     configs = entry.get("configurations", {})
 
     grid_eis = grid["e_init"]
-    freq_lists = [grid[s] for s in freq_settings]
-    combinations = _frequency_combinations(freq_lists)
+    freq_lists = [grid[setting] for setting in freq_settings]
 
     nominal_ei = float(defaults["e_init"])
-    nominal_freqs = tuple(float(defaults[s]) for s in freq_settings)
 
     result: dict[str, list[SampledCase]] = {}
 
@@ -144,16 +147,18 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
 
         # Frequency restrictions: config override or instrument base
         config_freq_lists = []
-        for idx, s in enumerate(freq_settings):
-            if "restrictions" in config and s in config["restrictions"]:
-                start, stop, step = config["restrictions"][s]
+        for idx, setting in enumerate(freq_settings):
+            if "restrictions" in config and setting in config["restrictions"]:
+                start, stop, step = config["restrictions"][setting]
                 config_freq_lists.append(list(range(start, stop, step)))
             else:
                 config_freq_lists.append(freq_lists[idx])
 
         config_combinations = _frequency_combinations(config_freq_lists)
         # If the config has frequency overrides, recompute default frequencies for limit cases
-        config_nominal_freqs = tuple(float(defaults[s]) for s in freq_settings)
+        config_nominal_freqs = tuple(
+            float(defaults[setting]) for setting in freq_settings
+        )
 
         # If the default Ei is outside this config's range, use the middle of the grid
         config_nominal_ei = nominal_ei
@@ -162,9 +167,13 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
 
         cases: dict[tuple, SampledCase] = {}
 
-        def add(e_init: float, frequencies, _cases=cases) -> None:
+        def add(
+            e_init: float, frequencies, _cases=cases, _config_name=config_name
+        ) -> None:
             key = (round(e_init, 9), tuple(frequencies))
-            _cases.setdefault(key, SampledCase(config_name, e_init, tuple(frequencies)))
+            _cases.setdefault(
+                key, SampledCase(_config_name, e_init, tuple(frequencies))
+            )
 
         # Regular grid
         for frequencies in config_combinations:
@@ -173,7 +182,7 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
 
         # Edge pairs
         for edge in config.get("edges", []):
-            freq_values = tuple(float(edge[s]) for s in freq_settings)
+            freq_values = tuple(float(edge[setting]) for setting in freq_settings)
             for e_init in edge["e_init"]:
                 add(float(e_init), freq_values)
 
@@ -183,8 +192,8 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
 
         # Limit frequencies: each chopper in turn, others at nominal
         for i, name in enumerate(freq_settings):
-            r = config_freq_lists[i]
-            for frequency in _frequency_limit_points_from_values(r):
+            freq_values_list = config_freq_lists[i]
+            for frequency in _frequency_limit_points_from_values(freq_values_list):
                 frequencies = list(config_nominal_freqs)
                 frequencies[i] = frequency
                 add(config_nominal_ei, frequencies)

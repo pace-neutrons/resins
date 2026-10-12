@@ -4,6 +4,7 @@ Abins values were generated with the Abins package bundled with Mantid (see ``de
 and stored in meV, converted with Abins' own constants in both directions. Every comparison
 asserts agreement.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -32,11 +33,11 @@ def test_pychop_against_abins(param):
     case = ref.cases[i]
     instrument = Instrument.from_default(str(case["instrument"]))
     model_version = ref.metadata["model_versions"][str(case["instrument"])]
-    kwargs = dict(
-        chopper_package=str(case["configuration"]),
-        e_init=float(case["e_init"]),
-        chopper_frequency=float(case["f0"]),
-    )
+    kwargs = {
+        "chopper_package": str(case["configuration"]),
+        "e_init": float(case["e_init"]),
+        "chopper_frequency": float(case["f0"]),
+    }
 
     if case["outcome"] == NO_TRANSMISSION:
         # Abins' PyChop reports no transmission here; resins must agree.
@@ -54,7 +55,9 @@ def test_pychop_against_abins(param):
 def test_panther_against_abins(param):
     ref, i = resolve(param)
     e_init = float(ref.cases[i]["e_init"])
-    model = Instrument.from_default("PANTHER").get_resolution_function("AbINS", e_init=e_init)
+    model = Instrument.from_default("PANTHER").get_resolution_function(
+        "AbINS", e_init=e_init
+    )
     energies = np.linspace(0, e_init, ref.metadata["n_points"])
 
     assert_allclose(sigma_at(model, energies), ref["sigma"][i])

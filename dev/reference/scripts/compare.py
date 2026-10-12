@@ -6,6 +6,7 @@ exceeds the tolerance, unless ``--report-only`` is given.
 
 Cases are matched on all case-table columns except ``outcome`` and ``reason``.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -13,8 +14,8 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
 from cases import OUTCOMES
+from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
 from summary import data_files, print_size
 
 RTOL = 1e-7
@@ -24,20 +25,26 @@ NOT_KEY_COLUMNS = {"outcome", "reason"}
 
 
 def case_keys(table: np.ndarray, exclude=NOT_KEY_COLUMNS) -> list[tuple]:
-    names = [n for n in table.dtype.names if n not in exclude]
-    return [tuple(None if (isinstance(v, float) and np.isnan(v)) else v for v in (row[n].item() for n in names)) for row in table]
+    names = [name for name in table.dtype.names if name not in exclude]
+    return [
+        tuple(
+            None if (isinstance(val, float) and np.isnan(val)) else val
+            for val in (row[name].item() for name in names)
+        )
+        for row in table
+    ]
 
 
-def max_deviation(a: np.ndarray, b: np.ndarray) -> tuple[float, float]:
+def max_deviation(first: np.ndarray, second: np.ndarray) -> tuple[float, float]:
     """Max relative deviation and max absolute deviation over entries finite in both.
 
     Entries NaN in only one array are counted by the caller as ``nan_mismatches``.
     """
-    both = ~np.isnan(a) & ~np.isnan(b)
+    both = ~np.isnan(first) & ~np.isnan(second)
     if not both.any():
         return 0.0, 0.0
-    diff = np.abs(a[both] - b[both])
-    scale = np.maximum(np.abs(a[both]), np.abs(b[both]))
+    diff = np.abs(first[both] - second[both])
+    scale = np.maximum(np.abs(first[both]), np.abs(second[both]))
     with np.errstate(invalid="ignore", divide="ignore"):
         rel = np.where(scale > 0, diff / scale, 0.0)
     return float(rel.max()), float(diff.max())
@@ -88,9 +95,14 @@ def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, lis
 
     old_index = {k: i for i, k in enumerate(old_keys)}
     flips = [
-        (k, OUTCOMES[old["cases"]["outcome"][old_index[k]]], OUTCOMES[new["cases"]["outcome"][i]])
+        (
+            k,
+            OUTCOMES[old["cases"]["outcome"][old_index[k]]],
+            OUTCOMES[new["cases"]["outcome"][i]],
+        )
         for i, k in enumerate(new_keys)
-        if k in old_index and old["cases"]["outcome"][old_index[k]] != new["cases"]["outcome"][i]
+        if k in old_index
+        and old["cases"]["outcome"][old_index[k]] != new["cases"]["outcome"][i]
     ]
     if flips:
         ok = False
@@ -103,35 +115,64 @@ def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, lis
             continue
         if new[name].shape[1:] != old[name].shape[1:]:
             ok = False
-            report.append(f"    {name}: shape changed {old[name].shape} -> {new[name].shape}")
+            report.append(
+                f"    {name}: shape changed {old[name].shape} -> {new[name].shape}"
+            )
             continue
         if new[name].dtype.kind != "f":
             continue
-        ok &= compare_aligned(name, new[name], old[name], new_keys, old_keys, rtol, report)
+        ok &= compare_aligned(
+            name, new[name], old[name], new_keys, old_keys, rtol, report
+        )
 
     for field in ("mantid_version", "model_versions", "n_resolution_points"):
         if new_meta.get(field) != old_meta.get(field):
-            report.append(f"    metadata {field}: {old_meta.get(field)} -> {new_meta.get(field)}")
+            report.append(
+                f"    metadata {field}: {old_meta.get(field)} -> {new_meta.get(field)}"
+            )
     return ok, report
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--build", type=Path, default=BUILD_DATA, help="Regenerated data directory")
-    parser.add_argument("--committed", type=Path, default=COMMITTED_DATA, help="Committed data directory")
-    parser.add_argument("--rtol", type=float, default=RTOL)
-    parser.add_argument(
-        "--report-only", action="store_true", help="Print the report but always exit with status 0"
+def get_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--build", type=Path, default=BUILD_DATA, help="Regenerated data directory"
+    )
+    parser.add_argument(
+        "--committed",
+        type=Path,
+        default=COMMITTED_DATA,
+        help="Committed data directory",
+    )
+    parser.add_argument(
+        "--rtol", type=float, default=RTOL, help="Relative tolerance for comparisons"
+    )
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="Print the report but always exit with status 0",
+    )
+    return parser
 
-    new_files = {p.relative_to(args.build): p for p in data_files(args.build)}
-    old_files = {p.relative_to(args.committed): p for p in data_files(args.committed)}
+
+def main() -> None:
+    args = get_parser().parse_args()
+
+    new_files = {path.relative_to(args.build): path for path in data_files(args.build)}
+    old_files = {
+        path.relative_to(args.committed): path for path in data_files(args.committed)
+    }
     ok = True
 
     if not new_files:
-        print(f"ERROR: no regenerated data in {args.build}; run `pixi run generate`", file=sys.stderr)
-        return 1
+        print(
+            f"ERROR: no regenerated data in {args.build}; run `pixi run generate`",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     for rel in sorted(set(old_files) - set(new_files)):
         print(f"{rel}: committed but not regenerated")
@@ -150,8 +191,9 @@ def main(argv: list[str] | None = None) -> int:
     ok &= print_size(args.build, load_config()["max_total_size_mb"])
 
     print("PASS" if ok else "FAIL: regenerated data differs from committed data")
-    return 0 if (ok or args.report_only) else 1
+    if not (ok or args.report_only):
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

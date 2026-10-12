@@ -8,6 +8,7 @@ Output goes to ``build/reference_data/pychop/<INSTRUMENT>_<model_version>.npz`` 
 only the public resolution FWHM at 40 energy-transfer points -- no internal component arrays
 (moderator, chopper, detector, sample widths or chop times).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,9 +17,9 @@ import warnings
 from collections import Counter
 from pathlib import Path
 
+import cases
 import mantid  # noqa: F401  (puts Mantid's bundled pychop on sys.path)
 import numpy as np
-import cases
 from common import (
     BUILD_DATA,
     OUTCOME_CODE,
@@ -75,7 +76,10 @@ class PyChopEvaluator:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             return np.asarray(
-                self.instrument.getResolution(Etrans=list(energy_transfers), Ei_in=e_init), dtype=float
+                self.instrument.getResolution(
+                    Etrans=list(energy_transfers), Ei_in=e_init
+                ),
+                dtype=float,
             )
 
     def transmits(self, e_init: float, frequencies) -> bool:
@@ -107,25 +111,30 @@ def classify_cases(
     rows = []
     notes: Counter = Counter()
 
-    for name, cs in sampled.items():
+    for name, case_list in sampled.items():
         evaluator = evaluators[name]
         config_entry = cases_data.get(name, {})
         ei_range = config_entry.get("ei_range", cases_data["__ei_range__"])
 
         # Build frequency allowed-values lists for restriction checking
         freq_values = []
-        for s in freq_settings:
-            if "restrictions" in config_entry and s in config_entry["restrictions"]:
+        for setting in freq_settings:
+            if (
+                "restrictions" in config_entry
+                and setting in config_entry["restrictions"]
+            ):
                 # Per-config override: reconstruct the allowed values from [start, stop, step]
-                start, stop, step = config_entry["restrictions"][s]
+                start, stop, step = config_entry["restrictions"][setting]
                 freq_values.append(list(range(start, stop, step)))
-            elif s in cases_data["__grid__"]:
-                freq_values.append(cases_data["__grid__"][s])
+            elif setting in cases_data["__grid__"]:
+                freq_values.append(cases_data["__grid__"][setting])
             else:
                 freq_values.append(None)
 
-        for case in cs:
-            rejected = cases.check_restrictions(ei_range, freq_values, case.e_init, list(case.frequencies))
+        for case in case_list:
+            rejected = cases.check_restrictions(
+                ei_range, freq_values, case.e_init, list(case.frequencies)
+            )
             if rejected is not None:
                 outcome, setting = rejected
                 rows.append((case, outcome, f"resins:{setting}"))
@@ -140,7 +149,13 @@ def classify_cases(
                     f"{case.frequencies} allowed by resins",
                     file=sys.stderr,
                 )
-                rows.append((case, cases.OUTCOME_REJECTED_FREQUENCY, f"pychop:{freq_settings[0]}"))
+                rows.append(
+                    (
+                        case,
+                        cases.OUTCOME_REJECTED_FREQUENCY,
+                        f"pychop:{freq_settings[0]}",
+                    )
+                )
                 continue
 
             if evaluator.is_fermi and not evaluator.ei_accepted(case.e_init):
@@ -167,7 +182,9 @@ def build_arrays(
     resolution = np.full((n_cases, n_points), np.nan)
 
     for i, (case, outcome, reason) in enumerate(rows):
-        frequencies = list(case.frequencies) + [np.nan] * (MAX_FREQUENCIES - len(case.frequencies))
+        frequencies = list(case.frequencies) + [np.nan] * (
+            MAX_FREQUENCIES - len(case.frequencies)
+        )
         cases_arr[i] = (
             case.configuration,
             case.e_init,
@@ -204,11 +221,16 @@ def generate_entry(entry: dict, config: dict, all_cases: dict, out_dir: Path) ->
     evaluators: dict[str, PyChopEvaluator] = {}
     sampled: dict[str, list[cases.SampledCase]] = {}
     for name in cases.configuration_names(cases_entry):
-        evaluators[name] = PyChopEvaluator(entry["pychop_name"], config_map.get(name, name), n_points)
+        evaluators[name] = PyChopEvaluator(
+            entry["pychop_name"], config_map.get(name, name), n_points
+        )
         sampled[name] = expanded[name]
 
     # Build a dict for restriction checking (with access to grid and per-config overrides)
-    cases_data = {"__ei_range__": cases_entry["ei_range"], "__grid__": cases_entry["grid"]}
+    cases_data = {
+        "__ei_range__": cases_entry["ei_range"],
+        "__grid__": cases_entry["grid"],
+    }
     for name in cases.configuration_names(cases_entry):
         config_data = cases_entry.get("configurations", {}).get(name, {}) or {}
         cases_data[name] = config_data
@@ -230,37 +252,51 @@ def generate_entry(entry: dict, config: dict, all_cases: dict, out_dir: Path) ->
         notes=dict(notes),
     )
 
-    path = out_dir / "pychop" / f"{pychop_file_stem(entry)}.npz"
+    path = out_dir / f"pychop/{pychop_file_stem(entry)}.npz"
     save_npz(path, arrays, metadata)
 
     counts = Counter(cases.OUTCOMES[c] for c in arrays["cases"]["outcome"])
     summary = ", ".join(f"{k}={counts.get(k, 0)}" for k in cases.OUTCOMES)
-    print(f"{path.name}: {len(rows)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB")
+    print(
+        f"{path.name}: {len(rows)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB"
+    )
     for note, count in notes.items():
         print(f"  note: {count} cases where {note}")
     return path
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--env", required=True, help="Mantid environment name, e.g. mantid615")
+def get_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--env", required=True, help="Mantid environment name, e.g. mantid615"
+    )
     parser.add_argument("--out", type=Path, default=BUILD_DATA, help="Output directory")
-    parser.add_argument("--only", nargs="*", help="Restrict to these file stems, e.g. MARI_PyChop_fit_v1")
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--only",
+        nargs="*",
+        help="Restrict to these file stems, e.g. MARI_PyChop_fit_v1",
+    )
+    return parser
+
+
+def main() -> None:
+    args = get_parser().parse_args()
 
     config = load_config()
     all_cases = cases.load_cases()
-    entries = [e for e in config["pychop"] if e["environment"] == args.env]
+    entries = [entry for entry in config["pychop"] if entry["environment"] == args.env]
     if args.only:
-        entries = [e for e in entries if pychop_file_stem(e) in args.only]
+        entries = [entry for entry in entries if pychop_file_stem(entry) in args.only]
     if not entries:
         print(f"No PyChop entries for environment {args.env}")
-        return 0
+        return
 
     for entry in entries:
         generate_entry(entry, config, all_cases, args.out)
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

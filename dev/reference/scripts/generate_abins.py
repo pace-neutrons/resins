@@ -8,6 +8,7 @@ and stored in meV. Output goes to ``build/reference_data/abins/<name>.npz``.
 The PyChop-based cases are read from ``cases.yaml`` (same points as the PyChop reference
 generator), so the Abins generator does not import resins or parse its YAML restrictions.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,9 +17,9 @@ from collections import Counter
 from pathlib import Path
 
 import abins.parameters
+import cases
 import mantid  # noqa: F401
 import numpy as np
-import cases
 from abins.constants import MILLI_EV_TO_WAVENUMBER
 from abins.instruments.lagrangeinstrument import LagrangeInstrument
 from abins.instruments.panther import PantherInstrument
@@ -39,7 +40,12 @@ ABINS_PYCHOP_DTYPE = np.dtype(
 )
 PANTHER_DTYPE = np.dtype([("e_init", "f8"), ("outcome", "i1"), ("reason", "U64")])
 INDIRECT_DTYPE = np.dtype(
-    [("configuration", "U32"), ("energy_transfer", "f8"), ("outcome", "i1"), ("reason", "U64")]
+    [
+        ("configuration", "U32"),
+        ("energy_transfer", "f8"),
+        ("outcome", "i1"),
+        ("reason", "U64"),
+    ]
 )
 
 VALUE = OUTCOME_CODE[cases.OUTCOME_VALUE]
@@ -58,7 +64,9 @@ def arange_from(spec: dict) -> np.ndarray:
     return np.arange(spec["start"], spec["stop"], spec["step"], dtype=float)
 
 
-def abins_pychop_sigma(abins: PyChopInstrument, e_init: float, frequency: float, n_points: int) -> np.ndarray:
+def abins_pychop_sigma(
+    abins: PyChopInstrument, e_init: float, frequency: float, n_points: int
+) -> np.ndarray:
     """Sigma in meV of the Abins PyChop polynomial at ``n_points`` energy transfers 0..e_init."""
     abins.set_incident_energy(e_init, "meV")
     abins._chopper_frequency = frequency
@@ -71,14 +79,16 @@ def abins_pychop_sigma(abins: PyChopInstrument, e_init: float, frequency: float,
 def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
     n_points = config["sampling"]["n_abins_points"]
     n_resolution_points = config["sampling"]["n_resolution_points"]
-    pychop_entries = {(e["instrument"], e["model_version"]): e for e in config["pychop"]}
+    pychop_entries = {
+        (entry["instrument"], entry["model_version"]): entry
+        for entry in config["pychop"]
+    }
 
     rows = []
     notes: Counter = Counter()
     for item in config["abins"]["pychop"]:
         entry = pychop_entries[(item["instrument"], item["model_version"])]
         config_map = entry.get("configuration_map", {})
-        freq_settings = entry["frequency_settings"]
 
         # Load and expand cases from cases.yaml
         key = f"{entry['instrument']}_{entry['model_version']}"
@@ -93,16 +103,25 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
         supported = abins.parameters.instruments[entry["pychop_name"]]["settings"]
 
         # Filter to configurations that Abins supports
-        config_names = [n for n in cases.configuration_names(cases_entry) if config_map.get(n, n) in supported]
+        config_names = [
+            config_name
+            for config_name in cases.configuration_names(cases_entry)
+            if config_map.get(config_name, config_name) in supported
+        ]
 
         evaluators: dict[str, PyChopEvaluator] = {}
         sampled: dict[str, list[cases.SampledCase]] = {}
         for name in config_names:
-            evaluators[name] = PyChopEvaluator(entry["pychop_name"], config_map.get(name, name), n_resolution_points)
+            evaluators[name] = PyChopEvaluator(
+                entry["pychop_name"], config_map.get(name, name), n_resolution_points
+            )
             sampled[name] = expanded[name]
 
         # Build cases_data for restriction checking
-        cases_data = {"__ei_range__": cases_entry["ei_range"], "__grid__": cases_entry["grid"]}
+        cases_data = {
+            "__ei_range__": cases_entry["ei_range"],
+            "__grid__": cases_entry["grid"],
+        }
         for name in config_names:
             config_data = cases_entry.get("configurations", {}).get(name, {}) or {}
             cases_data[name] = config_data
@@ -111,7 +130,9 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
         notes.update(entry_notes)
 
         abins_instruments = {
-            name: PyChopInstrument(name=entry["pychop_name"], setting=config_map.get(name, name))
+            name: PyChopInstrument(
+                name=entry["pychop_name"], setting=config_map.get(name, name)
+            )
             for name in config_names
         }
         for case, outcome, reason in classified:
@@ -121,14 +142,24 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
             sigma = np.full(n_points, np.nan)
             if outcome == cases.OUTCOME_VALUE:
                 sigma = abins_pychop_sigma(
-                    abins_instruments[case.configuration], case.e_init, case.frequencies[0], n_points
+                    abins_instruments[case.configuration],
+                    case.e_init,
+                    case.frequencies[0],
+                    n_points,
                 )
             rows.append((entry["instrument"], case, outcome, reason, sigma))
 
     cases_arr = np.zeros(len(rows), dtype=ABINS_PYCHOP_DTYPE)
     sigma = np.full((len(rows), n_points), np.nan)
     for i, (instrument, case, outcome, reason, row_sigma) in enumerate(rows):
-        cases_arr[i] = (instrument, case.configuration, case.e_init, case.frequencies[0], OUTCOME_CODE[outcome], reason)
+        cases_arr[i] = (
+            instrument,
+            case.configuration,
+            case.e_init,
+            case.frequencies[0],
+            OUTCOME_CODE[outcome],
+            reason,
+        )
         sigma[i] = row_sigma
 
     metadata = make_metadata(
@@ -137,15 +168,20 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
         n_points=n_points,
         energy_grid="linspace(0, e_init, n_points) in meV",
         sigma="meV, Abins polynomial fit (order 4, 40 points) to PyChop resolution",
-        model_versions={i["instrument"]: i["model_version"] for i in config["abins"]["pychop"]},
+        model_versions={
+            item["instrument"]: item["model_version"]
+            for item in config["abins"]["pychop"]
+        },
         notes=dict(notes),
     )
-    return write(out_dir / "abins" / "pychop.npz", {"cases": cases_arr, "sigma": sigma}, metadata)
+    return write(
+        out_dir / "abins/pychop.npz", {"cases": cases_arr, "sigma": sigma}, metadata
+    )
 
 
 def generate_panther(config: dict, out_dir: Path) -> Path:
     n_points = config["abins"]["n_panther_points"]
-    energies = [float(e) for e in config["abins"]["panther_e_init"]]
+    energies = [float(energy) for energy in config["abins"]["panther_e_init"]]
     cases_arr = np.zeros(len(energies), dtype=PANTHER_DTYPE)
     sigma = np.zeros((len(energies), n_points))
     instrument = PantherInstrument()
@@ -162,7 +198,9 @@ def generate_panther(config: dict, out_dir: Path) -> Path:
         energy_grid="linspace(0, e_init, n_points) in meV",
         sigma="meV",
     )
-    return write(out_dir / "abins" / "panther.npz", {"cases": cases_arr, "sigma": sigma}, metadata)
+    return write(
+        out_dir / "abins/panther.npz", {"cases": cases_arr, "sigma": sigma}, metadata
+    )
 
 
 def generate_tosca(config: dict, out_dir: Path) -> Path:
@@ -177,12 +215,16 @@ def generate_tosca(config: dict, out_dir: Path) -> Path:
         abins_class="abins.instruments.toscainstrument.ToscaInstrument",
         sigma="meV",
     )
-    return write(out_dir / "abins" / "tosca.npz", {"cases": cases_arr, "sigma": sigma}, metadata)
+    return write(
+        out_dir / "abins/tosca.npz", {"cases": cases_arr, "sigma": sigma}, metadata
+    )
 
 
 def generate_lagrange(config: dict, out_dir: Path) -> Path:
     spec = config["abins"]["lagrange_energy_transfer"]
-    energies = np.unique(np.concatenate([arange_from(spec["coarse"]), arange_from(spec["dense"])]))
+    energies = np.unique(
+        np.concatenate([arange_from(spec["coarse"]), arange_from(spec["dense"])])
+    )
     rows = []
     sigma = []
     for monochromator in config["abins"]["lagrange_monochromators"]:
@@ -198,7 +240,7 @@ def generate_lagrange(config: dict, out_dir: Path) -> Path:
         sigma="meV",
     )
     return write(
-        out_dir / "abins" / "lagrange.npz",
+        out_dir / "abins/lagrange.npz",
         {"cases": np.array(rows, dtype=INDIRECT_DTYPE), "sigma": np.array(sigma)},
         metadata,
     )
@@ -209,14 +251,23 @@ def write(path: Path, arrays: dict, metadata: dict) -> Path:
     cases_arr = arrays["cases"]
     counts = Counter(cases.OUTCOMES[c] for c in cases_arr["outcome"])
     summary = ", ".join(f"{k}={v}" for k, v in counts.items())
-    print(f"abins/{path.name}: {len(cases_arr)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB")
+    print(
+        f"abins/{path.name}: {len(cases_arr)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB"
+    )
     return path
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", type=Path, default=BUILD_DATA)
-    args = parser.parse_args(argv)
+def get_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument("--out", type=Path, default=BUILD_DATA, help="Output directory")
+    return parser
+
+
+def main() -> None:
+    args = get_parser().parse_args()
 
     config = load_config()
     all_cases = cases.load_cases()
@@ -224,8 +275,7 @@ def main(argv: list[str] | None = None) -> int:
     generate_panther(config, args.out)
     generate_tosca(config, args.out)
     generate_lagrange(config, args.out)
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

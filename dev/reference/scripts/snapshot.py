@@ -6,6 +6,7 @@ evaluated case of the selected instruments, so that two Mantid environments can 
 snapshotted: their data come from one Mantid version, so a change in another one means upstream
 changed the instrument. Use ``--instruments`` to snapshot others deliberately.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -14,8 +15,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-import numpy as np
 import cases
+import numpy as np
 from common import (
     BUILD_DATA,
     COMMITTED_DATA,
@@ -48,47 +49,74 @@ def snapshot_entry(entry: dict, path: Path, n_points: int) -> np.ndarray:
             continue
         name = str(case["configuration"])
         if name not in evaluators:
-            evaluators[name] = PyChopEvaluator(entry["pychop_name"], config_map.get(name, name), n_points)
+            evaluators[name] = PyChopEvaluator(
+                entry["pychop_name"], config_map.get(name, name), n_points
+            )
         evaluator = evaluators[name]
-        frequencies = [f for f in (case["f0"], case["f1"]) if not np.isnan(f)]
+        frequencies = [freq for freq in (case["f0"], case["f1"]) if not np.isnan(freq)]
         evaluator.set_frequencies(frequencies)
         resolution[i] = evaluator.resolution(float(case["e_init"]))
     return resolution
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+def get_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "--name",
         default=os.environ.get("PIXI_ENVIRONMENT_NAME", "default"),
-        help="Snapshot name (default: the active pixi environment)",
+        help="Snapshot name",
     )
-    parser.add_argument("--instruments", nargs="*", help="Instruments to snapshot (default: single-version ones)")
-    parser.add_argument("--build", action="store_true", help="Use cases from build/ instead of tests/reference_data")
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--instruments",
+        nargs="*",
+        help="Instruments to snapshot (default: single-version ones)",
+    )
+    parser.add_argument(
+        "--build",
+        action="store_true",
+        help="Use cases from build/ instead of tests/reference_data",
+    )
+    return parser
+
+
+def main() -> None:
+    args = get_parser().parse_args()
 
     config = load_config()
     n_points = config["sampling"]["n_resolution_points"]
     root = BUILD_DATA if args.build else COMMITTED_DATA
-    instruments = [i.upper() for i in args.instruments] if args.instruments else default_instruments(config)
+    instruments = (
+        [inst.upper() for inst in args.instruments]
+        if args.instruments
+        else default_instruments(config)
+    )
 
     snapshot: dict[str, np.ndarray] = {}
     for entry in config["pychop"]:
         if entry["instrument"] not in instruments:
             continue
         stem = pychop_file_stem(entry)
-        path = root / "pychop" / f"{stem}.npz"
+        path = root / f"pychop/{stem}.npz"
         if not path.exists():
-            print(f"ERROR: no reference file {path}; run `pixi run update` first", file=sys.stderr)
-            return 1
+            print(
+                f"ERROR: no reference file {path}; run `pixi run update` first",
+                file=sys.stderr,
+            )
+            sys.exit(1)
         snapshot[stem] = snapshot_entry(entry, path, n_points)
         print(f"{stem}: {len(snapshot[stem])} cases")
 
     out = SNAPSHOT_DIR / f"{args.name}.npz"
-    save_npz(out, snapshot, make_metadata(kind="snapshot", name=args.name, instruments=instruments))
+    save_npz(
+        out,
+        snapshot,
+        make_metadata(kind="snapshot", name=args.name, instruments=instruments),
+    )
     print(f"Wrote {out}")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

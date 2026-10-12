@@ -4,6 +4,7 @@ For each reference case the model is built through the public
 ``Instrument.get_resolution_function``, and the recorded outcome is asserted: a resolution
 within tolerance, a no-transmission error, or an input rejected as invalid.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -46,7 +47,9 @@ def test_resolution(param):
     model = get_model(ref, i)
 
     instrument = Instrument.from_default(ref.instrument)
-    data = instrument.get_model_data(ref.model_version, chopper_package=str(case["configuration"]))
+    data = instrument.get_model_data(
+        ref.model_version, chopper_package=str(case["configuration"])
+    )
     energy_transfers, resolution = type(model)._precompute_resolution(
         data, float(case["e_init"]), ref.frequencies(i)
     )
@@ -61,7 +64,9 @@ def test_resolution(param):
     assert_allclose(fitted, expected / SIGMA2FWHM, rtol=0.1, atol=1e-3 * expected.max())
 
 
-@pytest.mark.parametrize("param", case_params(pychop_stems(), "resolution", (NO_TRANSMISSION,)))
+@pytest.mark.parametrize(
+    "param", case_params(pychop_stems(), "resolution", (NO_TRANSMISSION,))
+)
 def test_no_transmission(param):
     ref, i = resolve(param)
     with pytest.raises(NoTransmissionError):
@@ -69,7 +74,8 @@ def test_no_transmission(param):
 
 
 @pytest.mark.parametrize(
-    "param", case_params(pychop_stems(), "resolution", (REJECTED_EI, REJECTED_FREQUENCY))
+    "param",
+    case_params(pychop_stems(), "resolution", (REJECTED_EI, REJECTED_FREQUENCY)),
 )
 def test_rejected_input(param):
     ref, i = resolve(param)
