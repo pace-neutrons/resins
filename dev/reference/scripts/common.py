@@ -8,12 +8,13 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from cases import REPO_ROOT, Outcome
+from cases import Outcome
 
 REFERENCE_DIR = Path(__file__).resolve().parents[1]
 BUILD_DIR = REFERENCE_DIR / "build"
 BUILD_DATA = BUILD_DIR / "reference_data"
 SNAPSHOT_DIR = BUILD_DIR / "snapshots"
+REPO_ROOT = Path(__file__).resolve().parents[3]
 COMMITTED_DATA = REPO_ROOT / "tests/reference_data"
 
 GENERATOR_VERSION = 1
