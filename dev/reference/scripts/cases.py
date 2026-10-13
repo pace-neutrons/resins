@@ -68,7 +68,7 @@ class SampledCase:
 
     configuration: str
     e_init: float
-    frequencies: tuple[float, ...]
+    frequencies: tuple[int, ...]
 
 
 def load_cases() -> dict:
@@ -93,15 +93,12 @@ def _ei_limit_points(ei_limits: tuple[float, float]) -> list[float]:
     return [round(p, 6) for p in points]
 
 
-def _frequency_limit_points(values: list[int]) -> list[float]:
-    """Frequencies just outside the allowed set, given the explicit list of allowed values."""
-    highest = values[-1]
-    above = round(highest * SCALE_UP, 4)
-    step = values[1] - values[0] if len(values) > 1 else 1
-    start = values[0]
-    off_grid = float(start + step // 2 if step > 1 else start + 0.5)
-    if off_grid in values:  # pragma: no cover - only with exotic ranges
-        off_grid += 0.5
+def _frequency_limit_points(values: list[int]) -> list[int]:
+    """Integer frequencies just outside the allowed set: above the maximum and off the grid."""
+    above = values[-1] + 1
+    off_grid = values[0] + 1
+    if above in values or off_grid in values:
+        raise ValueError(f"Frequency steps of 1 leave no off-grid probe in {values}")
     return [above, off_grid]
 
 
@@ -122,19 +119,19 @@ class ConfigurationSpec:
 
     name: str
     energies: list[float]
-    frequency_combinations: list[tuple[float, ...]]
+    frequency_combinations: list[tuple[int, ...]]
     frequency_limits: list[list[int]]
     ei_limits: tuple[float, float]
     default_ei: float
-    default_frequencies: tuple[float, ...]
-    edges: list[tuple[tuple[float, ...], list[float]]]
+    default_frequencies: tuple[int, ...]
+    edges: list[tuple[tuple[int, ...], list[float]]]
     frequency_settings: list[str]
 
     def expand(self) -> list[SampledCase]:
         """Generate all sampled cases for this configuration."""
         cases: dict[tuple, SampledCase] = {}
 
-        def add(energy: float, frequencies: tuple[float, ...]) -> None:
+        def add(energy: float, frequencies: tuple[int, ...]) -> None:
             key = (round(energy, 9), tuple(frequencies))
             cases.setdefault(key, SampledCase(self.name, energy, tuple(frequencies)))
 
@@ -173,7 +170,7 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
 
     if "frequencies" in grid:
         base_combinations = [
-            tuple(float(f) for f in pair) for pair in grid["frequencies"]
+            tuple(int(f) for f in pair) for pair in grid["frequencies"]
         ]
         base_freq_values = [
             sorted({pair[idx] for pair in grid["frequencies"]})
@@ -181,29 +178,24 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
         ]
     else:
         setting = freq_settings[0]
-        base_combinations = [(float(f),) for f in grid[setting]]
+        base_combinations = [(int(f),) for f in grid[setting]]
         base_freq_values = [grid[setting]]
 
     default_ei = float(defaults["e_init"])
-    default_frequencies = tuple(
-        float(defaults[setting]) for setting in freq_settings
-    )
+    default_frequencies = tuple(int(defaults[setting]) for setting in freq_settings)
 
     specs = []
     for config_name, config in entry.get("configurations", {}).items():
         config_grid = [
-            float(e)
-            for e in config.get("grid", {}).get("e_init", grid["e_init"])
+            float(e) for e in config.get("grid", {}).get("e_init", grid["e_init"])
         ]
         config_ei_limits = tuple(
-            float(e)
-            for e in config.get("ei_limits", config.get("ei_range", ei_limits))
+            float(e) for e in config.get("ei_limits", config.get("ei_range", ei_limits))
         )
 
         if "frequencies" in config.get("grid", {}):
             config_combinations = [
-                tuple(float(f) for f in pair)
-                for pair in config["grid"]["frequencies"]
+                tuple(int(f) for f in pair) for pair in config["grid"]["frequencies"]
             ]
             config_freq_values = [
                 sorted({pair[idx] for pair in config["grid"]["frequencies"]})
@@ -225,7 +217,7 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
 
         edges = [
             (
-                tuple(float(edge[setting]) for setting in freq_settings),
+                tuple(int(edge[setting]) for setting in freq_settings),
                 [float(e) for e in edge["e_init"]],
             )
             for edge in config.get("edges", [])
@@ -254,9 +246,7 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
     Returns a dict mapping configuration name to a list of :class:`SampledCase`, without
     duplicates, in a deterministic order.
     """
-    return {
-        spec.name: spec.expand() for spec in _parse_configuration_specs(entry)
-    }
+    return {spec.name: spec.expand() for spec in _parse_configuration_specs(entry)}
 
 
 def configuration_names(entry: dict) -> list[str]:
@@ -267,20 +257,24 @@ def configuration_names(entry: dict) -> list[str]:
 def check_restrictions(
     ei_limits: tuple[float, float],
     frequency_values: list[list[int] | None],
+    frequency_settings: list[str],
     e_init: float,
-    frequencies: list[float],
+    frequencies: list[int],
 ) -> tuple[Outcome, str] | None:
     """Apply restriction rules, returning ``(outcome, setting)`` on rejection.
 
     ``e_init`` is checked first, then each frequency against its list of allowed values.
+    ``setting`` is the name of the offending resins setting.
     """
     if not (ei_limits[0] <= e_init <= ei_limits[1]):
         return Outcome.REJECTED_EI, "e_init"
 
-    for allowed, frequency in zip(frequency_values, frequencies):
+    for allowed, setting, frequency in zip(
+        frequency_values, frequency_settings, frequencies
+    ):
         if allowed is None:
             continue
         if frequency not in allowed:
-            return Outcome.REJECTED_FREQUENCY, "frequency"
+            return Outcome.REJECTED_FREQUENCY, setting
 
     return None

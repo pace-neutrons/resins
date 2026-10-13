@@ -52,13 +52,13 @@ class ReferenceFile:
         """Setting names of the chopper frequencies, in column order (PyChop files)."""
         return self.metadata["frequency_settings"]
 
-    def frequencies(self, i: int) -> list[float]:
-        """The chopper frequencies of case ``i``: ``f0``, ``f1`` where defined."""
+    def frequencies(self, i: int) -> list[int]:
+        """The chopper frequencies of case ``i``: ``f0``, ``f1`` where used (0 marks unused)."""
         case = self.cases[i]
         names = [n for n in ("f0", "f1") if n in case.dtype.names]
-        return [float(case[n]) for n in names if not np.isnan(case[n])]
+        return [int(case[n]) for n in names if case[n]]
 
-    def frequency_kwargs(self, i: int) -> dict[str, float]:
+    def frequency_kwargs(self, i: int) -> dict[str, int]:
         return dict(zip(self.frequency_settings, self.frequencies(i)))
 
 

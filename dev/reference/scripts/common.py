@@ -22,8 +22,8 @@ PYCHOP_CASE_DTYPE = np.dtype(
     [
         ("configuration", "U32"),
         ("e_init", "f8"),
-        ("f0", "f8"),
-        ("f1", "f8"),
+        ("f0", "i2"),
+        ("f1", "i2"),
         ("outcome", "i1"),
         ("reason", "U64"),
     ]

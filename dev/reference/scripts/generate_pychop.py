@@ -138,7 +138,11 @@ def classify_cases(
 
         for case in case_list:
             rejected = cases.check_restrictions(
-                ei_limits, freq_values, case.e_init, list(case.frequencies)
+                ei_limits,
+                freq_values,
+                freq_settings,
+                case.e_init,
+                list(case.frequencies),
             )
             if rejected is not None:
                 outcome, setting = rejected
@@ -187,7 +191,7 @@ def build_arrays(
     resolution = np.full((n_cases, n_points), np.nan)
 
     for i, (case, outcome, reason) in enumerate(rows):
-        frequencies = list(case.frequencies) + [np.nan] * (
+        frequencies = list(case.frequencies) + [0] * (
             MAX_FREQUENCIES - len(case.frequencies)
         )
         cases_arr[i] = (

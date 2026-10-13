@@ -38,7 +38,7 @@ ABINS_PYCHOP_DTYPE = np.dtype(
         ("instrument", "U16"),
         ("configuration", "U32"),
         ("e_init", "f8"),
-        ("f0", "f8"),
+        ("f0", "i2"),
         ("outcome", "i1"),
         ("reason", "U64"),
     ]
@@ -123,9 +123,7 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
             sampled[name] = expanded[name]
 
         # Build cases_data for restriction checking
-        raw_ei_limits = cases_entry.get(
-            "ei_limits", cases_entry.get("ei_range")
-        )
+        raw_ei_limits = cases_entry.get("ei_limits", cases_entry.get("ei_range"))
         cases_data = {
             "__ei_limits__": tuple(float(e) for e in raw_ei_limits),
             "__grid__": cases_entry["grid"],

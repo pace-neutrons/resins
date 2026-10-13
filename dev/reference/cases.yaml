@@ -1251,6 +1251,10 @@ SEQUOIA_PyChop_fit_v1:
         e_init:
         - 1149.7
         - 1152.0
+      - chopper_frequency: 420.0
+        e_init:
+        - 16.827
+        - 16.861
     ARCS-100-1.5-SMI:
       edges:
       - chopper_frequency: 120.0
@@ -1293,6 +1297,10 @@ SEQUOIA_PyChop_fit_v1:
         e_init:
         - 1149.7
         - 1152.0
+      - chopper_frequency: 420.0
+        e_init:
+        - 16.827
+        - 16.861
     ARCS-700-0.5-AST:
       edges:
       - chopper_frequency: 120.0
@@ -1447,7 +1455,16 @@ SEQUOIA_PyChop_fit_v1:
         e_init:
         - 296.04
         - 296.63
-    SEQ-700-3.5-AST: {}
+      - chopper_frequency: 420.0
+        e_init:
+        - 12.976
+        - 13.002
+    SEQ-700-3.5-AST:
+      edges:
+      - chopper_frequency: 420.0
+        e_init:
+        - 11.878
+        - 11.902
     Sloppy:
       edges:
       - chopper_frequency: 540.0
@@ -1458,6 +1475,10 @@ SEQUOIA_PyChop_fit_v1:
         e_init:
         - 44.038
         - 44.126
+      - chopper_frequency: 420.0
+        e_init:
+        - 21.579
+        - 21.622
 SEQUOIA_PyChop_fit_v2:
   grid:
     e_init:
@@ -1529,6 +1550,10 @@ SEQUOIA_PyChop_fit_v2:
         e_init:
         - 1149.7
         - 1152.0
+      - chopper_frequency: 420.0
+        e_init:
+        - 16.827
+        - 16.861
     ARCS-100-1.5-SMI:
       edges:
       - chopper_frequency: 120.0
@@ -1571,6 +1596,10 @@ SEQUOIA_PyChop_fit_v2:
         e_init:
         - 1149.7
         - 1152.0
+      - chopper_frequency: 420.0
+        e_init:
+        - 16.827
+        - 16.861
     ARCS-700-0.5-AST:
       edges:
       - chopper_frequency: 120.0
@@ -1685,7 +1714,12 @@ SEQUOIA_PyChop_fit_v2:
         e_init:
         - 85.122
         - 85.292
-    High-Flux: {}
+    High-Flux:
+      edges:
+      - chopper_frequency: 420.0
+        e_init:
+        - 7.869
+        - 7.885
     High-Resolution:
       edges:
       - chopper_frequency: 120.0
@@ -1704,6 +1738,10 @@ SEQUOIA_PyChop_fit_v2:
         e_init:
         - 296.04
         - 296.63
+      - chopper_frequency: 420.0
+        e_init:
+        - 12.976
+        - 13.002
     SEQ-100-2.0-AST:
       edges:
       - chopper_frequency: 120.0
@@ -1722,5 +1760,14 @@ SEQUOIA_PyChop_fit_v2:
         e_init:
         - 296.04
         - 296.63
-    SEQ-700-3.5-AST: {}
+      - chopper_frequency: 420.0
+        e_init:
+        - 12.976
+        - 13.002
+    SEQ-700-3.5-AST:
+      edges:
+      - chopper_frequency: 420.0
+        e_init:
+        - 7.869
+        - 7.885
 
