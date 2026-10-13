@@ -82,10 +82,6 @@ class PyChopEvaluator:
                 dtype=float,
             )
 
-    def transmits(self, e_init: float, frequencies) -> bool:
-        self.set_frequencies(frequencies)
-        return not np.any(np.isnan(self.resolution(e_init, [0.0])))
-
     def ei_accepted(self, e_init: float) -> bool:
         """Whether PyChop's ``setEi`` accepts the energy (a GUI-level check, not used by
         ``getResolution``)."""

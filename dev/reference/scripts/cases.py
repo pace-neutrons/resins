@@ -29,6 +29,7 @@ LIMIT_DELTA = 1e-3
 SCALE_UP = 1.0 + LIMIT_DELTA
 SCALE_DOWN = 1.0 - LIMIT_DELTA
 
+
 class Outcome(str, Enum):
     """Expected outcome for a reference case.
 
@@ -92,19 +93,7 @@ def _ei_limit_points(ei_range: list[float]) -> list[float]:
     return [round(p, 6) for p in points]
 
 
-def _frequency_limit_points(restriction: list[int]) -> list[float]:
-    """Frequencies just outside the allowed set: above the maximum, and one not on the grid."""
-    start, stop, step = restriction
-    values = range(start, stop, step)
-    highest = values[-1]
-    above = round(highest * SCALE_UP, 4)
-    off_grid = float(start + step // 2 if step > 1 else start + 0.5)
-    if off_grid in values:  # pragma: no cover - only with exotic ranges
-        off_grid += 0.5
-    return [above, off_grid]
-
-
-def _frequency_limit_points_from_values(values: list[int]) -> list[float]:
+def _frequency_limit_points(values: list[int]) -> list[float]:
     """Frequencies just outside the allowed set, given the explicit list of allowed values."""
     highest = values[-1]
     above = round(highest * SCALE_UP, 4)
@@ -214,7 +203,7 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
         # Limit frequencies: each chopper in turn, others at nominal
         for i, name in enumerate(freq_settings):
             freq_values_list = config_freq_lists[i]
-            for frequency in _frequency_limit_points_from_values(freq_values_list):
+            for frequency in _frequency_limit_points(freq_values_list):
                 frequencies = list(config_nominal_freqs)
                 frequencies[i] = frequency
                 add(config_nominal_ei, frequencies)
