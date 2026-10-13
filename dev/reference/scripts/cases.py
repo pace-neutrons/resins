@@ -105,19 +105,58 @@ def _frequency_limit_points(values: list[int]) -> list[float]:
     return [above, off_grid]
 
 
-def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
-    """Expand one instrument-model entry from ``cases.yaml`` into cases per configuration.
+@dataclass(frozen=True)
+class ConfigurationSpec:
+    """Fully resolved parameter specification for one instrument configuration."""
 
-    Returns a dict mapping configuration name to a list of :class:`SampledCase`, without
-    duplicates, in a deterministic order.
-    """
+    name: str
+    energies: list[float]
+    frequency_combinations: list[tuple[float, ...]]
+    frequency_limits: list[list[int]]
+    ei_range: tuple[float, float]
+    nominal_ei: float
+    nominal_frequencies: tuple[float, ...]
+    edges: list[tuple[tuple[float, ...], list[float]]]
+    frequency_settings: list[str]
+
+    def expand(self) -> list[SampledCase]:
+        """Generate all sampled cases for this configuration."""
+        cases: dict[tuple, SampledCase] = {}
+
+        def add(energy: float, frequencies: tuple[float, ...]) -> None:
+            key = (round(energy, 9), tuple(frequencies))
+            cases.setdefault(key, SampledCase(self.name, energy, tuple(frequencies)))
+
+        # 1. Regular grid
+        for frequencies in self.frequency_combinations:
+            for energy in self.energies:
+                add(energy, frequencies)
+
+        # 2. Edge points
+        for frequencies, edge_energies in self.edges:
+            for energy in edge_energies:
+                add(energy, frequencies)
+
+        # 3. Energy limits
+        for energy in _ei_limit_points(list(self.ei_range)):
+            add(energy, self.nominal_frequencies)
+
+        # 4. Frequency limits
+        for index, freq_values in enumerate(self.frequency_limits):
+            for frequency in _frequency_limit_points(freq_values):
+                perturbed = list(self.nominal_frequencies)
+                perturbed[index] = frequency
+                add(self.nominal_ei, tuple(perturbed))
+
+        return list(cases.values())
+
+
+def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
+    """Resolve base grids and configuration overrides into ConfigurationSpec instances."""
     grid = entry["grid"]
     freq_settings = entry["frequency_settings"]
     defaults = entry["defaults"]
     ei_range = entry["ei_range"]
-    configs = entry.get("configurations", {})
-
-    grid_eis = grid["e_init"]
 
     if "frequencies" in grid:
         base_combinations = [
@@ -133,19 +172,21 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
         base_freq_values = [grid[setting]]
 
     nominal_ei = float(defaults["e_init"])
+    nominal_frequencies = tuple(
+        float(defaults[setting]) for setting in freq_settings
+    )
 
-    result: dict[str, list[SampledCase]] = {}
+    specs = []
+    for config_name, config in entry.get("configurations", {}).items():
+        config = config or {}
+        config_grid = [
+            float(e)
+            for e in config.get("grid", {}).get("e_init", grid["e_init"])
+        ]
+        config_ei_range = tuple(
+            float(e) for e in config.get("ei_range", ei_range)
+        )
 
-    # Determine the set of configurations: those named in cases.yaml, plus any that the
-    # config.yaml maps to this entry (the caller passes the full set).
-    for config_name in configs:
-        config = configs[config_name] or {}
-
-        # Grid: config override or instrument base
-        config_grid = config.get("grid", {}).get("e_init", grid_eis)
-        config_ei_range = config.get("ei_range", ei_range)
-
-        # Frequency restrictions: config override or instrument base
         if "frequencies" in config.get("grid", {}):
             config_combinations = [
                 tuple(float(f) for f in pair)
@@ -159,58 +200,53 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
             config_combinations = base_combinations
             config_freq_values = []
             for idx, setting in enumerate(freq_settings):
-                if "restrictions" in config and setting in config["restrictions"]:
+                if (
+                    "restrictions" in config
+                    and setting in config["restrictions"]
+                ):
                     start, stop, step = config["restrictions"][setting]
                     config_freq_values.append(list(range(start, stop, step)))
                 else:
                     config_freq_values.append(base_freq_values[idx])
 
-        # If the config has frequency overrides, recompute default frequencies for limit cases
-        config_nominal_freqs = tuple(
-            float(defaults[setting]) for setting in freq_settings
-        )
-
-        # If the default Ei is outside this config's range, use the middle of the grid
         config_nominal_ei = nominal_ei
         if not (config_ei_range[0] <= config_nominal_ei <= config_ei_range[1]):
             config_nominal_ei = float(config_grid[len(config_grid) // 2])
 
-        cases: dict[tuple, SampledCase] = {}
-
-        def add(
-            e_init: float, frequencies, _cases=cases, _config_name=config_name
-        ) -> None:
-            key = (round(e_init, 9), tuple(frequencies))
-            _cases.setdefault(
-                key, SampledCase(_config_name, e_init, tuple(frequencies))
+        edges = [
+            (
+                tuple(float(edge[setting]) for setting in freq_settings),
+                [float(e) for e in edge["e_init"]],
             )
+            for edge in config.get("edges", [])
+        ]
 
-        # Regular grid
-        for frequencies in config_combinations:
-            for e_init in config_grid:
-                add(float(e_init), frequencies)
+        specs.append(
+            ConfigurationSpec(
+                name=config_name,
+                energies=config_grid,
+                frequency_combinations=config_combinations,
+                frequency_limits=config_freq_values,
+                ei_range=config_ei_range,
+                nominal_ei=config_nominal_ei,
+                nominal_frequencies=nominal_frequencies,
+                edges=edges,
+                frequency_settings=freq_settings,
+            )
+        )
 
-        # Edge pairs
-        for edge in config.get("edges", []):
-            freq_values = tuple(float(edge[setting]) for setting in freq_settings)
-            for e_init in edge["e_init"]:
-                add(float(e_init), freq_values)
+    return specs
 
-        # Limit Ei: at nominal (or mid-grid) frequencies
-        for e_init in _ei_limit_points(config_ei_range):
-            add(e_init, config_nominal_freqs)
 
-        # Limit frequencies: each chopper in turn, others at nominal
-        for i, name in enumerate(freq_settings):
-            freq_values_list = config_freq_values[i]
-            for frequency in _frequency_limit_points(freq_values_list):
-                frequencies = list(config_nominal_freqs)
-                frequencies[i] = frequency
-                add(config_nominal_ei, frequencies)
+def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
+    """Expand one instrument-model entry from ``cases.yaml`` into cases per configuration.
 
-        result[config_name] = list(cases.values())
-
-    return result
+    Returns a dict mapping configuration name to a list of :class:`SampledCase`, without
+    duplicates, in a deterministic order.
+    """
+    return {
+        spec.name: spec.expand() for spec in _parse_configuration_specs(entry)
+    }
 
 
 def configuration_names(entry: dict) -> list[str]:
