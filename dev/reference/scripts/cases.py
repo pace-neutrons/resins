@@ -18,6 +18,7 @@ Outcome codes are assigned by the generator from PyChop and the restrictions, no
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -76,11 +77,7 @@ def load_cases() -> dict:
 
 
 def _ei_limit_points(lower: float, upper: float) -> list[float]:
-    """Energies just inside and just outside both ends of the allowed limits.
-
-    Mirrors the old ``sampling.ei_limit_points``: the lower end is skipped on the inside
-    if it is zero (PyChop is undefined there); its outside point is a small negative energy.
-    """
+    """Energies straddling both ends of the allowed limits."""
     return [
         round(p, 6)
         for p in (
@@ -145,7 +142,7 @@ class ConfigurationSpec:
                 add(energy, frequencies)
 
         # 3. Energy limits
-        for energy in _ei_limit_points(self.ei_limits):
+        for energy in _ei_limit_points(*self.ei_limits):
             add(energy, self.default_frequencies)
 
         # 4. Frequency limits
@@ -157,86 +154,105 @@ class ConfigurationSpec:
 
         return list(cases.values())
 
+    def check_restrictions(
+        self, e_init: float, frequencies: Sequence[int]
+    ) -> tuple[Outcome, str] | None:
+        """Apply restriction rules, returning ``(outcome, setting)`` on rejection."""
+        if not (self.ei_limits[0] <= e_init <= self.ei_limits[1]):
+            return Outcome.REJECTED_EI, "e_init"
+
+        for allowed, setting, frequency in zip(
+            self.frequency_limits, self.frequency_settings, frequencies
+        ):
+            if allowed is None:
+                continue
+            if frequency not in allowed:
+                return Outcome.REJECTED_FREQUENCY, setting
+
+        return None
+
+
+@dataclass(frozen=True)
+class InstrumentSpec:
+    """Instrument-level specification parsed from cases.yaml."""
+
+    frequency_settings: list[str]
+    ei_limits: tuple[float, float]
+    default_ei: float
+    default_frequencies: tuple[int, ...]
+    grid_energies: list[float]
+    frequency_combinations: list[tuple[int, ...]]
+    frequency_limits: list[list[int]]
+    configurations: dict[str, dict]
+
+    @classmethod
+    def from_dict(cls, data: dict) -> InstrumentSpec:
+        settings = data["frequency_settings"]
+        grid = data["grid"]
+        defaults = data["defaults"]
+
+        if "frequencies" in grid:
+            combinations = [tuple(int(f) for f in p) for p in grid["frequencies"]]
+            limits = [
+                sorted({p[i] for p in grid["frequencies"]})
+                for i in range(len(settings))
+            ]
+        else:
+            combinations = [(int(f),) for f in grid[settings[0]]]
+            limits = [grid[settings[0]]]
+
+        return cls(
+            frequency_settings=settings,
+            ei_limits=tuple(float(e) for e in data["ei_limits"]),
+            default_ei=float(defaults["e_init"]),
+            default_frequencies=tuple(int(defaults[s]) for s in settings),
+            grid_energies=[float(e) for e in grid["e_init"]],
+            frequency_combinations=combinations,
+            frequency_limits=limits,
+            configurations=data["configurations"],
+        )
+
+    def parse_configurations(self) -> dict[str, ConfigurationSpec]:
+        """Produce fully resolved ConfigurationSpec instances per configuration."""
+        specs = {}
+        for name, cfg in self.configurations.items():
+            energies = (
+                [float(e) for e in cfg["grid"]["e_init"]]
+                if "grid" in cfg and "e_init" in cfg["grid"]
+                else self.grid_energies
+            )
+            ei_limits = (
+                tuple(float(e) for e in cfg["ei_limits"])
+                if "ei_limits" in cfg
+                else self.ei_limits
+            )
+            # Override exists for MARI G-chopper which doesn't work at the
+            # general default Eᵢ
+            default_ei = float(cfg.get("defaults", {}).get("e_init", self.default_ei))
+            edges = [
+                (
+                    tuple(int(edge[s]) for s in self.frequency_settings),
+                    [float(e) for e in edge["e_init"]],
+                )
+                for edge in cfg.get("edges", [])
+            ]
+            specs[name] = ConfigurationSpec(
+                name=name,
+                energies=energies,
+                frequency_combinations=self.frequency_combinations,
+                frequency_limits=self.frequency_limits,
+                ei_limits=ei_limits,
+                default_ei=default_ei,
+                default_frequencies=self.default_frequencies,
+                edges=edges,
+                frequency_settings=self.frequency_settings,
+            )
+        return specs
+
 
 def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
     """Resolve base grids and configuration overrides into ConfigurationSpec instances."""
-    grid = entry["grid"]
-    freq_settings = entry["frequency_settings"]
-    defaults = entry["defaults"]
-    ei_limits = tuple(
-        float(e) for e in entry.get("ei_limits", entry.get("ei_range", ()))
-    )
-
-    if "frequencies" in grid:
-        base_combinations = [
-            tuple(int(f) for f in pair) for pair in grid["frequencies"]
-        ]
-        base_freq_values = [
-            sorted({pair[idx] for pair in grid["frequencies"]})
-            for idx in range(len(freq_settings))
-        ]
-    else:
-        setting = freq_settings[0]
-        base_combinations = [(int(f),) for f in grid[setting]]
-        base_freq_values = [grid[setting]]
-
-    default_ei = float(defaults["e_init"])
-    default_frequencies = tuple(int(defaults[setting]) for setting in freq_settings)
-
-    specs = []
-    for config_name, config in entry.get("configurations", {}).items():
-        config_grid = [
-            float(e) for e in config.get("grid", {}).get("e_init", grid["e_init"])
-        ]
-        config_ei_limits = tuple(
-            float(e) for e in config.get("ei_limits", config.get("ei_range", ei_limits))
-        )
-
-        if "frequencies" in config.get("grid", {}):
-            config_combinations = [
-                tuple(int(f) for f in pair) for pair in config["grid"]["frequencies"]
-            ]
-            config_freq_values = [
-                sorted({pair[idx] for pair in config["grid"]["frequencies"]})
-                for idx in range(len(freq_settings))
-            ]
-        else:
-            config_combinations = base_combinations
-            config_freq_values = []
-            for idx, setting in enumerate(freq_settings):
-                if setting in config.get("restrictions", {}):
-                    start, stop, step = config["restrictions"][setting]
-                    config_freq_values.append(list(range(start, stop, step)))
-                else:
-                    config_freq_values.append(base_freq_values[idx])
-
-        cfg_default_ei = default_ei
-        if not (config_ei_limits[0] <= cfg_default_ei <= config_ei_limits[1]):
-            cfg_default_ei = float(config_grid[len(config_grid) // 2])
-
-        edges = [
-            (
-                tuple(int(edge[setting]) for setting in freq_settings),
-                [float(e) for e in edge["e_init"]],
-            )
-            for edge in config.get("edges", [])
-        ]
-
-        specs.append(
-            ConfigurationSpec(
-                name=config_name,
-                energies=config_grid,
-                frequency_combinations=config_combinations,
-                frequency_limits=config_freq_values,
-                ei_limits=config_ei_limits,
-                default_ei=cfg_default_ei,
-                default_frequencies=default_frequencies,
-                edges=edges,
-                frequency_settings=freq_settings,
-            )
-        )
-
-    return specs
+    return list(InstrumentSpec.from_dict(entry).parse_configurations().values())
 
 
 def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
@@ -245,7 +261,10 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
     Returns a dict mapping configuration name to a list of :class:`SampledCase`, without
     duplicates, in a deterministic order.
     """
-    return {spec.name: spec.expand() for spec in _parse_configuration_specs(entry)}
+    return {
+        name: spec.expand()
+        for name, spec in InstrumentSpec.from_dict(entry).parse_configurations().items()
+    }
 
 
 def configuration_names(entry: dict) -> list[str]:

@@ -1027,6 +1027,8 @@ MARI_PyChop_fit_v1:
         - 21.74
         - 62.73
         - 181.0
+      defaults:
+        e_init: 21.74
       ei_limits:
       - 0
       - 181
@@ -1131,6 +1133,10 @@ MERLIN_PyChop_fit_v1:
   configurations:
     G:
       edges:
+      - chopper_frequency: 400.0
+        e_init:
+        - 0.51531
+        - 0.51634
       - chopper_frequency: 550.0
         e_init:
         - 0.97426
@@ -1147,6 +1153,8 @@ MERLIN_PyChop_fit_v1:
         - 21.74
         - 62.73
         - 181.0
+      defaults:
+        e_init: 21.74
       ei_limits:
       - 0
       - 181

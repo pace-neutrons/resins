@@ -95,9 +95,8 @@ class PyChopEvaluator:
 
 def classify_cases(
     entry: dict,
-    cases_data: dict,
+    config_specs: dict[str, cases.ConfigurationSpec],
     evaluators: dict[str, PyChopEvaluator],
-    sampled: dict[str, list[cases.SampledCase]],
 ) -> tuple[list[tuple], Counter]:
     """Assign an outcome to every sampled case.
 
@@ -107,43 +106,10 @@ def classify_cases(
     rows = []
     notes: Counter = Counter()
 
-    for name, case_list in sampled.items():
+    for name, spec in config_specs.items():
         evaluator = evaluators[name]
-        config_entry = cases_data.get(name, {})
-        ei_limits = tuple(
-            float(e)
-            for e in config_entry.get(
-                "ei_limits",
-                config_entry.get("ei_range", cases_data["__ei_limits__"]),
-            )
-        )
-
-        # Build frequency allowed-values lists for restriction checking
-        freq_values = []
-        for idx, setting in enumerate(freq_settings):
-            if (
-                "restrictions" in config_entry
-                and setting in config_entry["restrictions"]
-            ):
-                # Per-config override: reconstruct the allowed values from [start, stop, step]
-                start, stop, step = config_entry["restrictions"][setting]
-                freq_values.append(list(range(start, stop, step)))
-            elif "frequencies" in cases_data["__grid__"]:
-                pairs = cases_data["__grid__"]["frequencies"]
-                freq_values.append(sorted({pair[idx] for pair in pairs}))
-            elif setting in cases_data["__grid__"]:
-                freq_values.append(cases_data["__grid__"][setting])
-            else:
-                freq_values.append(None)
-
-        for case in case_list:
-            rejected = cases.check_restrictions(
-                ei_limits,
-                freq_values,
-                freq_settings,
-                case.e_init,
-                list(case.frequencies),
-            )
+        for case in spec.expand():
+            rejected = spec.check_restrictions(case.e_init, case.frequencies)
             if rejected is not None:
                 outcome, setting = rejected
                 rows.append((case, outcome, f"resins:{setting}"))
@@ -223,29 +189,19 @@ def generate_entry(entry: dict, config: dict, all_cases: dict, out_dir: Path) ->
         print(f"WARNING: no cases.yaml entry for {key}", file=sys.stderr)
         return out_dir  # will be handled by caller
 
-    # Expand cases per configuration
-    expanded = cases.expand_entry(cases_entry)
+    # Parse specifications per configuration
+    instrument_spec = cases.InstrumentSpec.from_dict(cases_entry)
+    config_specs = instrument_spec.parse_configurations()
 
     # Build evaluators for each configuration
-    evaluators: dict[str, PyChopEvaluator] = {}
-    sampled: dict[str, list[cases.SampledCase]] = {}
-    for name in cases.configuration_names(cases_entry):
-        evaluators[name] = PyChopEvaluator(
+    evaluators = {
+        name: PyChopEvaluator(
             entry["pychop_name"], config_map.get(name, name), n_points
         )
-        sampled[name] = expanded[name]
-
-    # Build a dict for restriction checking (with access to grid and per-config overrides)
-    raw_ei_limits = cases_entry.get("ei_limits", cases_entry.get("ei_range"))
-    cases_data = {
-        "__ei_limits__": tuple(float(e) for e in raw_ei_limits),
-        "__grid__": cases_entry["grid"],
+        for name in config_specs
     }
-    for name in cases.configuration_names(cases_entry):
-        config_data = cases_entry.get("configurations", {}).get(name, {}) or {}
-        cases_data[name] = config_data
 
-    rows, notes = classify_cases(entry, cases_data, evaluators, sampled)
+    rows, notes = classify_cases(entry, config_specs, evaluators)
     arrays = build_arrays(entry, evaluators, rows, n_points)
 
     metadata = make_metadata(

@@ -95,51 +95,41 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
         entry = pychop_entries[(item["instrument"], item["model_version"])]
         config_map = entry.get("configuration_map", {})
 
-        # Load and expand cases from cases.yaml
+        # Load and parse cases from cases.yaml
         key = f"{entry['instrument']}_{entry['model_version']}"
         cases_entry = all_cases.get(key)
         if cases_entry is None:
             print(f"WARNING: no cases.yaml entry for {key}", file=sys.stderr)
             continue
 
-        expanded = cases.expand_entry(cases_entry)
+        instrument_spec = cases.InstrumentSpec.from_dict(cases_entry)
+        all_specs = instrument_spec.parse_configurations()
 
         # Abins knows only some of the choppers PyChop does (e.g. no MAPS "B").
         supported = abins.parameters.instruments[entry["pychop_name"]]["settings"]
 
         # Filter to configurations that Abins supports
-        config_names = [
-            config_name
-            for config_name in cases.configuration_names(cases_entry)
-            if config_map.get(config_name, config_name) in supported
-        ]
+        config_specs = {
+            name: spec
+            for name, spec in all_specs.items()
+            if config_map.get(name, name) in supported
+        }
 
-        evaluators: dict[str, PyChopEvaluator] = {}
-        sampled: dict[str, list[cases.SampledCase]] = {}
-        for name in config_names:
-            evaluators[name] = PyChopEvaluator(
+        evaluators = {
+            name: PyChopEvaluator(
                 entry["pychop_name"], config_map.get(name, name), n_resolution_points
             )
-            sampled[name] = expanded[name]
-
-        # Build cases_data for restriction checking
-        raw_ei_limits = cases_entry.get("ei_limits", cases_entry.get("ei_range"))
-        cases_data = {
-            "__ei_limits__": tuple(float(e) for e in raw_ei_limits),
-            "__grid__": cases_entry["grid"],
+            for name in config_specs
         }
-        for name in config_names:
-            config_data = cases_entry.get("configurations", {}).get(name, {}) or {}
-            cases_data[name] = config_data
 
-        classified, entry_notes = classify_cases(entry, cases_data, evaluators, sampled)
+        classified, entry_notes = classify_cases(entry, config_specs, evaluators)
         notes.update(entry_notes)
 
         abins_instruments = {
             name: PyChopInstrument(
                 name=entry["pychop_name"], setting=config_map.get(name, name)
             )
-            for name in config_names
+            for name in config_specs
         }
         for case, outcome, reason in classified:
             # Abins applies no restrictions of its own; only cases PyChop evaluates are compared.
