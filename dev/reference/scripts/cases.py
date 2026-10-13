@@ -24,10 +24,8 @@ from pathlib import Path
 
 import yaml
 
-# Relative offset for points just inside / outside the Ei and frequency limits.
-LIMIT_DELTA = 1e-3
-SCALE_UP = 1.0 + LIMIT_DELTA
-SCALE_DOWN = 1.0 - LIMIT_DELTA
+# Offset for points just inside / outside the Ei limits
+ABS_DELTA = 0.1
 
 
 class Outcome(str, Enum):
@@ -77,20 +75,21 @@ def load_cases() -> dict:
     return yaml.safe_load(cases_path.read_text())
 
 
-def _ei_limit_points(ei_limits: tuple[float, float]) -> list[float]:
+def _ei_limit_points(lower: float, upper: float) -> list[float]:
     """Energies just inside and just outside both ends of the allowed limits.
 
     Mirrors the old ``sampling.ei_limit_points``: the lower end is skipped on the inside
     if it is zero (PyChop is undefined there); its outside point is a small negative energy.
     """
-    lower, upper = ei_limits
-    points = []
-    if lower > 0:
-        points += [lower, lower * SCALE_UP, lower * SCALE_DOWN]
-    else:
-        points += [-LIMIT_DELTA * upper if upper else -LIMIT_DELTA]
-    points += [upper, upper * SCALE_DOWN, upper * SCALE_UP]
-    return [round(p, 6) for p in points]
+    return [
+        round(p, 6)
+        for p in (
+            lower - ABS_DELTA,
+            lower + ABS_DELTA,
+            upper - ABS_DELTA,
+            upper + ABS_DELTA,
+        )
+    ]
 
 
 def _frequency_limit_points(values: list[int]) -> list[int]:
@@ -132,8 +131,8 @@ class ConfigurationSpec:
         cases: dict[tuple, SampledCase] = {}
 
         def add(energy: float, frequencies: tuple[int, ...]) -> None:
-            key = (round(energy, 9), tuple(frequencies))
-            cases.setdefault(key, SampledCase(self.name, energy, tuple(frequencies)))
+            key = (round(energy, 9), frequencies)
+            cases.setdefault(key, SampledCase(self.name, energy, frequencies))
 
         # 1. Regular grid
         for frequencies in self.frequency_combinations:
