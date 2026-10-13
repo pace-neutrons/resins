@@ -191,7 +191,6 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
 
     specs = []
     for config_name, config in entry.get("configurations", {}).items():
-        config = config or {}
         config_grid = [
             float(e)
             for e in config.get("grid", {}).get("e_init", grid["e_init"])
@@ -214,10 +213,7 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
             config_combinations = base_combinations
             config_freq_values = []
             for idx, setting in enumerate(freq_settings):
-                if (
-                    "restrictions" in config
-                    and setting in config["restrictions"]
-                ):
+                if setting in config.get("restrictions", {}):
                     start, stop, step = config["restrictions"][setting]
                     config_freq_values.append(list(range(start, stop, step)))
                 else:
