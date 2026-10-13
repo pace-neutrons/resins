@@ -37,8 +37,6 @@ generate = { depends-on = [
     { task = "generate-mantid615", environment = "mantid615" },
     "size",
 ], description = "Regenerate all reference data into build/reference_data/" }
-compare-report = { cmd = "python scripts/compare.py --report-only", cwd = ".", description = "Like compare, but always exits with status 0" }
-
 # Maintenance workflows (see README.md)
 validate = { depends-on = [
     "generate",
@@ -46,7 +44,6 @@ validate = { depends-on = [
 ], description = "Non-destructive sanity check: regenerate into build/, compare with committed data" }
 update = { depends-on = [
     "generate",
-    "compare-report",
     "install",
     "summary",
 ], description = "Regenerate and replace the committed reference data, then summarise the change" }

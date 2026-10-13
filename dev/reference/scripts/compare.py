@@ -1,8 +1,12 @@
 """Compare regenerated reference data (``build/``) with the committed data.
 
-Per file: added/removed cases, outcome flips, and the maximum deviation of every value array
-over the cases present in both. Also checks the total size budget. Exits non-zero if anything
-exceeds the tolerance, unless ``--report-only`` is given.
+For each file, reports:
+- added/removed cases
+- changed outcomes
+- maximum deviations between value arrays
+- total size of files.
+
+Exits non-zero if anything exceeds the tolerance.
 
 Cases are matched on all case-table columns except ``outcome`` and ``reason``.
 """
@@ -150,11 +154,6 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--rtol", type=float, default=RTOL, help="Relative tolerance for comparisons"
     )
-    parser.add_argument(
-        "--report-only",
-        action="store_true",
-        help="Print the report but always exit with status 0",
-    )
     return parser
 
 
@@ -191,7 +190,7 @@ def main() -> None:
     ok &= print_size(args.build, load_config()["max_total_size_mb"])
 
     print("PASS" if ok else "FAIL: regenerated data differs from committed data")
-    if not (ok or args.report_only):
+    if not ok:
         sys.exit(1)
 
 

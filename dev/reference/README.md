@@ -110,18 +110,15 @@ Edit the sampling parameters in `config.yaml`, or the resins instrument YAML
 pixi run update
 ```
 
-`update` runs `generate`, then `compare --report-only` (prints what changed; it
-does not fail), then `install` (replaces `tests/reference_data/` with the
+`update` runs `generate`, then `install` (replaces `tests/reference_data/` with the
 regenerated files, removing stale ones), then `summary` (case counts per file and
 outcome, sizes, and the Mantid version of each file).
 
 Then:
 
-1. read the `compare` report and the summary; every outcome flip or changed case
-   should have an explanation;
-2. check `git diff --stat tests/reference_data`;
-3. run the resins test suite from the repository root: `pytest -n auto`;
-4. commit the data together with the YAML or `config.yaml` change.
+1. check `git diff --stat tests/reference_data` and the summary;
+2. run the resins test suite from the repository root: `pytest -n auto`;
+3. commit the data together with the YAML or `config.yaml` change.
 
 ## 5. Adding an instrument, model version or configuration
 
