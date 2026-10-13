@@ -114,7 +114,7 @@ def classify_cases(
 
         # Build frequency allowed-values lists for restriction checking
         freq_values = []
-        for setting in freq_settings:
+        for idx, setting in enumerate(freq_settings):
             if (
                 "restrictions" in config_entry
                 and setting in config_entry["restrictions"]
@@ -122,6 +122,9 @@ def classify_cases(
                 # Per-config override: reconstruct the allowed values from [start, stop, step]
                 start, stop, step = config_entry["restrictions"][setting]
                 freq_values.append(list(range(start, stop, step)))
+            elif "frequencies" in cases_data["__grid__"]:
+                pairs = cases_data["__grid__"]["frequencies"]
+                freq_values.append(sorted({pair[idx] for pair in pairs}))
             elif setting in cases_data["__grid__"]:
                 freq_values.append(cases_data["__grid__"][setting])
             else:

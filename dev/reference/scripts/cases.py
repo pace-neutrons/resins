@@ -105,28 +105,6 @@ def _frequency_limit_points(values: list[int]) -> list[float]:
     return [above, off_grid]
 
 
-def _frequency_combinations(
-    frequency_lists: list[list[int]],
-) -> list[tuple[float, ...]]:
-    """Frequency tuples such that every allowed value of each chopper occurs at least once.
-
-    One chopper: every value. Several choppers: a cyclic pairing instead of the full product.
-    """
-    if len(frequency_lists) == 1:
-        return [(float(f),) for f in frequency_lists[0]]
-
-    n = max(len(values) for values in frequency_lists)
-    combinations = []
-    for i in range(n):
-        combinations.append(
-            tuple(
-                float(values[(i + k) % len(values)])
-                for k, values in enumerate(frequency_lists)
-            )
-        )
-    return combinations
-
-
 def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
     """Expand one instrument-model entry from ``cases.yaml`` into cases per configuration.
 
@@ -140,7 +118,19 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
     configs = entry.get("configurations", {})
 
     grid_eis = grid["e_init"]
-    freq_lists = [grid[setting] for setting in freq_settings]
+
+    if "frequencies" in grid:
+        base_combinations = [
+            tuple(float(f) for f in pair) for pair in grid["frequencies"]
+        ]
+        base_freq_values = [
+            sorted({pair[idx] for pair in grid["frequencies"]})
+            for idx in range(len(freq_settings))
+        ]
+    else:
+        setting = freq_settings[0]
+        base_combinations = [(float(f),) for f in grid[setting]]
+        base_freq_values = [grid[setting]]
 
     nominal_ei = float(defaults["e_init"])
 
@@ -156,15 +146,25 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
         config_ei_range = config.get("ei_range", ei_range)
 
         # Frequency restrictions: config override or instrument base
-        config_freq_lists = []
-        for idx, setting in enumerate(freq_settings):
-            if "restrictions" in config and setting in config["restrictions"]:
-                start, stop, step = config["restrictions"][setting]
-                config_freq_lists.append(list(range(start, stop, step)))
-            else:
-                config_freq_lists.append(freq_lists[idx])
+        if "frequencies" in config.get("grid", {}):
+            config_combinations = [
+                tuple(float(f) for f in pair)
+                for pair in config["grid"]["frequencies"]
+            ]
+            config_freq_values = [
+                sorted({pair[idx] for pair in config["grid"]["frequencies"]})
+                for idx in range(len(freq_settings))
+            ]
+        else:
+            config_combinations = base_combinations
+            config_freq_values = []
+            for idx, setting in enumerate(freq_settings):
+                if "restrictions" in config and setting in config["restrictions"]:
+                    start, stop, step = config["restrictions"][setting]
+                    config_freq_values.append(list(range(start, stop, step)))
+                else:
+                    config_freq_values.append(base_freq_values[idx])
 
-        config_combinations = _frequency_combinations(config_freq_lists)
         # If the config has frequency overrides, recompute default frequencies for limit cases
         config_nominal_freqs = tuple(
             float(defaults[setting]) for setting in freq_settings
@@ -202,7 +202,7 @@ def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
 
         # Limit frequencies: each chopper in turn, others at nominal
         for i, name in enumerate(freq_settings):
-            freq_values_list = config_freq_lists[i]
+            freq_values_list = config_freq_values[i]
             for frequency in _frequency_limit_points(freq_values_list):
                 frequencies = list(config_nominal_freqs)
                 frequencies[i] = frequency
