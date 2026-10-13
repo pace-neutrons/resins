@@ -120,7 +120,7 @@ class ConfigurationSpec:
     ei_limits: tuple[float, float]
     default_ei: float
     default_frequencies: tuple[int, ...]
-    edges: list[tuple[tuple[int, ...], list[float]]]
+    edge_points: list[tuple[float, tuple[int, ...]]]
     frequency_settings: list[str]
 
     def expand(self) -> list[SampledCase]:
@@ -137,9 +137,8 @@ class ConfigurationSpec:
                 add(energy, frequencies)
 
         # 2. Edge points
-        for frequencies, edge_energies in self.edges:
-            for energy in edge_energies:
-                add(energy, frequencies)
+        for energy, freqs in self.edge_points:
+            add(energy, freqs)
 
         # 3. Energy limits
         for energy in _ei_limit_points(*self.ei_limits):
@@ -227,15 +226,8 @@ class InstrumentSpec:
                 else self.ei_limits
             )
             # Override exists for MARI G-chopper which doesn't work at the
-            # general default Eᵢ
+            # general default Ei
             default_ei = float(cfg.get("defaults", {}).get("e_init", self.default_ei))
-            edges = [
-                (
-                    tuple(int(edge[s]) for s in self.frequency_settings),
-                    [float(e) for e in edge["e_init"]],
-                )
-                for edge in cfg.get("edges", [])
-            ]
             specs[name] = ConfigurationSpec(
                 name=name,
                 energies=energies,
@@ -244,10 +236,34 @@ class InstrumentSpec:
                 ei_limits=ei_limits,
                 default_ei=default_ei,
                 default_frequencies=self.default_frequencies,
-                edges=edges,
+                edge_points=self._parse_edge_points(cfg.get("edges", [])),
                 frequency_settings=self.frequency_settings,
             )
         return specs
+
+    def _parse_edge_points(
+        self, raw_edges: list[dict]
+    ) -> list[tuple[float, tuple[int, ...]]]:
+        """Flatten YAML edge declarations into concrete (energy, frequencies) test points.
+
+        Parameters
+        ----------
+        raw_edges
+            List of edge mappings from ``cases.yaml``. Each mapping specifies chopper
+            frequency values and a list of incident energies straddling a cutoff:
+            ``[{'chopper_frequency': 120, 'e_init': [45.988, 46.08]}, ...]``.
+
+        Returns
+        -------
+        list[tuple[float, tuple[int, ...]]]
+            Flat list of ``(energy, (f0, ...))`` points ready for sampling:
+            ``[(45.988, (120,)), (46.08, (120,)), ...]``.
+        """
+        points = []
+        for edge in raw_edges:
+            freqs = tuple(int(edge[k]) for k in self.frequency_settings)
+            points.extend([(float(energy), freqs) for energy in edge["e_init"]])
+        return points
 
 
 def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
@@ -290,9 +306,7 @@ def check_restrictions(
     for allowed, setting, frequency in zip(
         frequency_values, frequency_settings, frequencies
     ):
-        if allowed is None:
-            continue
-        if frequency not in allowed:
+        if allowed is not None and frequency not in allowed:
             return Outcome.REJECTED_FREQUENCY, setting
 
     return None
