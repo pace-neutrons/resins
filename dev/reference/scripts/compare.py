@@ -40,13 +40,13 @@ def max_deviation(first: np.ndarray, second: np.ndarray) -> tuple[float, float]:
 
     Entries NaN in only one array are counted by the caller as ``nan_mismatches``.
     """
-    both = ~np.isnan(first) & ~np.isnan(second)
-    if not both.any():
+    both_valid = ~(np.isnan(first) | np.isnan(second))
+    if not both_valid.any():
         return 0.0, 0.0
-    diff = np.abs(first[both] - second[both])
-    scale = np.maximum(np.abs(first[both]), np.abs(second[both]))
-    with np.errstate(invalid="ignore", divide="ignore"):
-        rel = np.where(scale > 0, diff / scale, 0.0)
+    a, b = first[both_valid], second[both_valid]
+    diff = np.abs(a - b)
+    scale = np.maximum(np.abs(a), np.abs(b))
+    rel = np.divide(diff, scale, out=np.zeros_like(diff), where=scale > 0)
     return float(rel.max()), float(diff.max())
 
 
