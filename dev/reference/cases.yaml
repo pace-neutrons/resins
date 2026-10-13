@@ -39,7 +39,7 @@ ARCS_PyChop_fit_v1:
     - 480
     - 540
     - 600
-  ei_range:
+  ei_limits:
   - 20
   - 1500
   defaults:
@@ -298,7 +298,7 @@ ARCS_PyChop_fit_v2:
     - 480
     - 540
     - 600
-  ei_range:
+  ei_limits:
   - 20
   - 1500
   defaults:
@@ -552,7 +552,7 @@ CNCS_PyChop_fit_v1:
     - [180, 240]
     - [240, 300]
     - [300, 60]
-  ei_range:
+  ei_limits:
   - 0.5
   - 80
   defaults:
@@ -583,7 +583,7 @@ HYSPEC_PyChop_fit_v1:
     - 300
     - 360
     - 420
-  ei_range:
+  ei_limits:
   - 3.6
   - 61.0
   defaults:
@@ -633,7 +633,7 @@ LET_PyChop_fit_v1:
     - [280, 290]
     - [290, 300]
     - [300, 10]
-  ei_range:
+  ei_limits:
   - 0.0
   - 30.0
   defaults:
@@ -669,7 +669,7 @@ MAPS_PyChop_fit_v1:
     - 500
     - 550
     - 600
-  ei_range:
+  ei_limits:
   - 0
   - 2000
   defaults:
@@ -790,7 +790,7 @@ MARI_PyChop_fit_v1:
     - 500
     - 550
     - 600
-  ei_range:
+  ei_limits:
   - 0
   - 2000
   defaults:
@@ -1027,7 +1027,7 @@ MARI_PyChop_fit_v1:
         - 21.74
         - 62.73
         - 181.0
-      ei_range:
+      ei_limits:
       - 0
       - 181
     R:
@@ -1120,7 +1120,7 @@ MERLIN_PyChop_fit_v1:
     - 500
     - 550
     - 600
-  ei_range:
+  ei_limits:
   - 7
   - 2000
   defaults:
@@ -1147,7 +1147,7 @@ MERLIN_PyChop_fit_v1:
         - 21.74
         - 62.73
         - 181.0
-      ei_range:
+      ei_limits:
       - 0
       - 181
     S:
@@ -1200,7 +1200,7 @@ SEQUOIA_PyChop_fit_v1:
     - 480
     - 540
     - 600
-  ei_range:
+  ei_limits:
   - 4
   - 6000
   defaults:
@@ -1478,7 +1478,7 @@ SEQUOIA_PyChop_fit_v2:
     - 480
     - 540
     - 600
-  ei_range:
+  ei_limits:
   - 4
   - 6000
   defaults:

@@ -77,13 +77,13 @@ def load_cases() -> dict:
     return yaml.safe_load(cases_path.read_text())
 
 
-def _ei_limit_points(ei_range: list[float]) -> list[float]:
-    """Energies just inside and just outside both ends of the allowed range.
+def _ei_limit_points(ei_limits: tuple[float, float]) -> list[float]:
+    """Energies just inside and just outside both ends of the allowed limits.
 
     Mirrors the old ``sampling.ei_limit_points``: the lower end is skipped on the inside
     if it is zero (PyChop is undefined there); its outside point is a small negative energy.
     """
-    lower, upper = ei_range
+    lower, upper = ei_limits
     points = []
     if lower > 0:
         points += [lower, lower * SCALE_UP, lower * SCALE_DOWN]
@@ -107,15 +107,26 @@ def _frequency_limit_points(values: list[int]) -> list[float]:
 
 @dataclass(frozen=True)
 class ConfigurationSpec:
-    """Fully resolved parameter specification for one instrument configuration."""
+    """Fully resolved parameter specification for one instrument configuration.
+
+    Parameters
+    ----------
+    default_ei
+        Default incident energy in meV.
+    default_frequencies
+        Default frequency for each chopper (1-tuple for single-chopper
+        instruments, 2-tuple for multi-chopper instruments like LET/CNCS).
+    ei_limits
+        (min, max) allowed incident energy bounds in meV.
+    """
 
     name: str
     energies: list[float]
     frequency_combinations: list[tuple[float, ...]]
     frequency_limits: list[list[int]]
-    ei_range: tuple[float, float]
-    nominal_ei: float
-    nominal_frequencies: tuple[float, ...]
+    ei_limits: tuple[float, float]
+    default_ei: float
+    default_frequencies: tuple[float, ...]
     edges: list[tuple[tuple[float, ...], list[float]]]
     frequency_settings: list[str]
 
@@ -138,15 +149,15 @@ class ConfigurationSpec:
                 add(energy, frequencies)
 
         # 3. Energy limits
-        for energy in _ei_limit_points(list(self.ei_range)):
-            add(energy, self.nominal_frequencies)
+        for energy in _ei_limit_points(self.ei_limits):
+            add(energy, self.default_frequencies)
 
         # 4. Frequency limits
         for index, freq_values in enumerate(self.frequency_limits):
             for frequency in _frequency_limit_points(freq_values):
-                perturbed = list(self.nominal_frequencies)
+                perturbed = list(self.default_frequencies)
                 perturbed[index] = frequency
-                add(self.nominal_ei, tuple(perturbed))
+                add(self.default_ei, tuple(perturbed))
 
         return list(cases.values())
 
@@ -156,7 +167,9 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
     grid = entry["grid"]
     freq_settings = entry["frequency_settings"]
     defaults = entry["defaults"]
-    ei_range = entry["ei_range"]
+    ei_limits = tuple(
+        float(e) for e in entry.get("ei_limits", entry.get("ei_range", ()))
+    )
 
     if "frequencies" in grid:
         base_combinations = [
@@ -171,8 +184,8 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
         base_combinations = [(float(f),) for f in grid[setting]]
         base_freq_values = [grid[setting]]
 
-    nominal_ei = float(defaults["e_init"])
-    nominal_frequencies = tuple(
+    default_ei = float(defaults["e_init"])
+    default_frequencies = tuple(
         float(defaults[setting]) for setting in freq_settings
     )
 
@@ -183,8 +196,9 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
             float(e)
             for e in config.get("grid", {}).get("e_init", grid["e_init"])
         ]
-        config_ei_range = tuple(
-            float(e) for e in config.get("ei_range", ei_range)
+        config_ei_limits = tuple(
+            float(e)
+            for e in config.get("ei_limits", config.get("ei_range", ei_limits))
         )
 
         if "frequencies" in config.get("grid", {}):
@@ -209,9 +223,9 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
                 else:
                     config_freq_values.append(base_freq_values[idx])
 
-        config_nominal_ei = nominal_ei
-        if not (config_ei_range[0] <= config_nominal_ei <= config_ei_range[1]):
-            config_nominal_ei = float(config_grid[len(config_grid) // 2])
+        cfg_default_ei = default_ei
+        if not (config_ei_limits[0] <= cfg_default_ei <= config_ei_limits[1]):
+            cfg_default_ei = float(config_grid[len(config_grid) // 2])
 
         edges = [
             (
@@ -227,9 +241,9 @@ def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
                 energies=config_grid,
                 frequency_combinations=config_combinations,
                 frequency_limits=config_freq_values,
-                ei_range=config_ei_range,
-                nominal_ei=config_nominal_ei,
-                nominal_frequencies=nominal_frequencies,
+                ei_limits=config_ei_limits,
+                default_ei=cfg_default_ei,
+                default_frequencies=default_frequencies,
                 edges=edges,
                 frequency_settings=freq_settings,
             )
@@ -255,16 +269,16 @@ def configuration_names(entry: dict) -> list[str]:
 
 
 def check_restrictions(
-    ei_range: list[float],
+    ei_limits: tuple[float, float],
     frequency_values: list[list[int] | None],
     e_init: float,
     frequencies: list[float],
-) -> tuple[str, str] | None:
+) -> tuple[Outcome, str] | None:
     """Apply restriction rules, returning ``(outcome, setting)`` on rejection.
 
     ``e_init`` is checked first, then each frequency against its list of allowed values.
     """
-    if not (ei_range[0] <= e_init <= ei_range[1]):
+    if not (ei_limits[0] <= e_init <= ei_limits[1]):
         return Outcome.REJECTED_EI, "e_init"
 
     for allowed, frequency in zip(frequency_values, frequencies):

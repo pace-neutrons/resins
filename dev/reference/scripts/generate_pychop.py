@@ -110,7 +110,13 @@ def classify_cases(
     for name, case_list in sampled.items():
         evaluator = evaluators[name]
         config_entry = cases_data.get(name, {})
-        ei_range = config_entry.get("ei_range", cases_data["__ei_range__"])
+        ei_limits = tuple(
+            float(e)
+            for e in config_entry.get(
+                "ei_limits",
+                config_entry.get("ei_range", cases_data["__ei_limits__"]),
+            )
+        )
 
         # Build frequency allowed-values lists for restriction checking
         freq_values = []
@@ -132,7 +138,7 @@ def classify_cases(
 
         for case in case_list:
             rejected = cases.check_restrictions(
-                ei_range, freq_values, case.e_init, list(case.frequencies)
+                ei_limits, freq_values, case.e_init, list(case.frequencies)
             )
             if rejected is not None:
                 outcome, setting = rejected
@@ -226,8 +232,9 @@ def generate_entry(entry: dict, config: dict, all_cases: dict, out_dir: Path) ->
         sampled[name] = expanded[name]
 
     # Build a dict for restriction checking (with access to grid and per-config overrides)
+    raw_ei_limits = cases_entry.get("ei_limits", cases_entry.get("ei_range"))
     cases_data = {
-        "__ei_range__": cases_entry["ei_range"],
+        "__ei_limits__": tuple(float(e) for e in raw_ei_limits),
         "__grid__": cases_entry["grid"],
     }
     for name in cases.configuration_names(cases_entry):

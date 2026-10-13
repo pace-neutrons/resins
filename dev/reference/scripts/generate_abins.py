@@ -123,8 +123,11 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
             sampled[name] = expanded[name]
 
         # Build cases_data for restriction checking
+        raw_ei_limits = cases_entry.get(
+            "ei_limits", cases_entry.get("ei_range")
+        )
         cases_data = {
-            "__ei_range__": cases_entry["ei_range"],
+            "__ei_limits__": tuple(float(e) for e in raw_ei_limits),
             "__grid__": cases_entry["grid"],
         }
         for name in config_names:
