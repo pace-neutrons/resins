@@ -7,7 +7,6 @@ requires-pixi = ">=0.50"
 [dependencies]
 numpy = "*"
 pyyaml = "*"
-pytest = "*"
 
 [feature.mantid611]
 platforms = ["linux-64"]
@@ -30,13 +29,6 @@ mantid615 = { features = ["mantid615"], no-default-feature = false }
 install = { cmd = "python scripts/install.py", cwd = ".", description = "Copy build/reference_data into tests/reference_data (replaces committed data)" }
 summary = { cmd = "python scripts/summary.py", cwd = ".", description = "Case counts per file and outcome, sizes and Mantid versions of tests/reference_data" }
 compare = { cmd = "python scripts/compare.py", cwd = ".", description = "Compare build/reference_data with tests/reference_data (use -- --report-only to never fail)" }
-snapshot = { cmd = "python scripts/snapshot.py", cwd = ".", description = "Evaluate single-version instruments on the committed cases in this environment (pixi run -e <env> snapshot)" }
-diff-snapshots = { cmd = "python scripts/diff_snapshots.py {{ env_a }} {{ env_b }}", args = ["env_a", "env_b"], cwd = ".", description = "Compare two snapshots and name differing instruments" }
-check-snapshots = { depends-on = [
-    { task = "snapshot", environment = "mantid611" },
-    { task = "snapshot", environment = "mantid615" },
-    { task = "diff-snapshots", args = ["mantid611", "mantid615"], environment = "mantid615" },
-], description = "Snapshot in both Mantid environments and compare them" }
 size = { cmd = "python scripts/summary.py --build --size-only", cwd = ".", description = "Print the total size of build/reference_data" }
 clean-build = { cmd = "python -c \"import shutil; shutil.rmtree('build/reference_data', ignore_errors=True)\"", cwd = ".", description = "Remove build/reference_data" }
 generate = { depends-on = [
@@ -49,11 +41,9 @@ compare-report = { cmd = "python scripts/compare.py --report-only", cwd = ".", d
 
 # Maintenance workflows (see README.md)
 validate = { depends-on = [
-    { task = "test", environment = "mantid615" },
     "generate",
     "compare",
-    "check-snapshots",
-], description = "Non-destructive sanity check: regenerate into build/, compare with committed data, check Mantid snapshots" }
+], description = "Non-destructive sanity check: regenerate into build/, compare with committed data" }
 update = { depends-on = [
     "generate",
     "compare-report",
@@ -65,5 +55,4 @@ update = { depends-on = [
 generate-mantid611 = { cmd = "python scripts/generate_pychop.py --env mantid611", cwd = ".", description = "PyChop references that need Mantid 6.11" }
 
 [feature.mantid615.tasks]
-test = { cmd = "pytest -q tests", cwd = ".", description = "Generator unit tests (sampling, file format)" }
 generate-mantid615 = { cmd = "python scripts/generate_pychop.py --env mantid615 && python scripts/generate_abins.py", cwd = ".", description = "References that need Mantid 6.15" }

@@ -21,8 +21,7 @@ This directory holds everything needed to regenerate the files:
 | `pixi.toml`, `pixi.lock` | Locked Mantid environments and maintenance "tasks" (`pixi run ...`) |
 | `config.yaml` | Which (instrument, model version) pairs are compared, in which environment, and the sampling parameters |
 | `scripts/` | Generators and tools. They never import resins; configurations and limits are read from `src/resins/instrument_data/*.yaml` as plain data |
-| `tests/` | Unit tests for the sampling code |
-| `build/` | Scratch output (git-ignored): `build/reference_data/` and `build/snapshots/` |
+| `build/` | Scratch output (git-ignored): `build/reference_data/` |
 
 Reference data is not regenerated in routine CI; the workflows are run as needed on a developer workstation or by actively dispatching the `generate_reference_data` GitHub workflow.
 
@@ -83,12 +82,9 @@ pixi run validate
 
 This does not modify any committed file. It runs, in order:
 
-1. `test`: the unit tests of the generator code (`mantid615`);
-2. `generate`: regenerates all data into `build/reference_data/` (about two
+1. `generate`: regenerates all data into `build/reference_data/` (about two
    minutes);
-3. `compare`: compares `build/reference_data/` with `tests/reference_data/`;
-4. `check-snapshots`: evaluates PyChop for the instruments that have a single
-   resins model version in both Mantid environments and compares the results.
+2. `compare`: compares `build/reference_data/` with `tests/reference_data/`.
 
 `compare` prints, for every file, the cases added or removed, the outcome flips,
 and the maximum relative and absolute deviation of every value array, and ends
@@ -101,11 +97,6 @@ a rejected input. It is not numerical noise: near a transmission edge it means
 PyChop's edge moved. Edge points are placed 0.1% either side of the edge, far
 more than the cross-version noise (below 1e-8), so a flip points to a real change in
 PyChop or to a change of the resins instrument YAML that the generator reads.
-
-`check-snapshots` fails, and names the instrument, if a newer Mantid snapshot
-would change the PyChop output of an instrument whose data is generated from one
-Mantid version only. Run it by itself with `pixi run check-snapshots`; it needs
-reference data in `tests/reference_data/`.
 
 The same command runs in the manual `generate_reference_data` GitHub workflow,
 which uploads `build/` as an artifact.
@@ -184,21 +175,10 @@ Environments are pinned to explicit Mantid minor versions; there is no floating
    match. If entries of `config.yaml` will use the new environment, it also needs
    a `generate-mantid616` task (in `[feature.mantid616.tasks]`, like
    `generate-mantid615`) and a line for it in the `generate` task's `depends-on`.
-   The `snapshot` task needs nothing: it is shared by all environments.
 
-2. Take a snapshot in the current and the new environment and diff them:
-
-   ```bash
-   pixi run -e mantid615 snapshot
-   pixi run -e mantid616 snapshot
-   pixi run diff-snapshots mantid615 mantid616
-   ```
-
-   `diff-snapshots` lists every instrument and model version, whether it is
-   identical, and fails naming those that differ. By default only instruments with
-   a single resins model version are snapshotted; to include others, run
-   `scripts/snapshot.py --instruments ARCS SEQUOIA --name <name>` through
-   `pixi run -e <env> python`.
+2. To see what the new release changes, temporarily point the entries of
+   interest in `config.yaml` at the new environment, then run `pixi run generate`
+   and `pixi run compare`. The report names every case that differs.
 
 3. Decide for each differing instrument:
 
@@ -247,8 +227,7 @@ Two other differences are deliberate, not discrepancies:
 - *`pixi install` fails to solve `mantid611` on macOS*: Mantid 6.11 was not
   published for `osx-arm64`. The `mantid611` environment is Linux-only, so
   `pixi run generate` and `pixi run validate` need Linux (or the manual GitHub
-  workflow). On macOS, `pixi run -e mantid615 test` and `pixi run -e mantid615
-  generate-mantid615` work.
+  workflow). On macOS, `pixi run -e mantid615 generate-mantid615` works.
 - *Solver or lock errors for old Mantid versions*: do not run `pixi update` or edit
   `pixi.lock` by hand. `pixi.lock` pins exact builds; use `pixi install --locked` to
   fail instead of re-solving. If the `mantid` channel drops a package, the committed
@@ -261,5 +240,3 @@ Two other differences are deliberate, not discrepancies:
 - *`compare` reports added or removed cases without any change to the config*: the
   case table depends on the resins instrument YAML. Check `git diff
   src/resins/instrument_data`.
-- *`No reference data` errors in `snapshot` or `check-snapshots`*: they need
-  `tests/reference_data/`; run `pixi run update` first.

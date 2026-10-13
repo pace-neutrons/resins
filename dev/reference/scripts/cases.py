@@ -26,7 +26,8 @@ import yaml
 
 # Relative offset for points just inside / outside the Ei and frequency limits.
 LIMIT_DELTA = 1e-3
-
+SCALE_UP = 1.0 + LIMIT_DELTA
+SCALE_DOWN = 1.0 - LIMIT_DELTA
 
 class Outcome(str, Enum):
     """Expected outcome for a reference case.
@@ -84,10 +85,10 @@ def _ei_limit_points(ei_range: list[float]) -> list[float]:
     lower, upper = ei_range
     points = []
     if lower > 0:
-        points += [lower, lower * (1.0 + LIMIT_DELTA), lower * (1.0 - LIMIT_DELTA)]
+        points += [lower, lower * SCALE_UP, lower * SCALE_DOWN]
     else:
         points += [-LIMIT_DELTA * upper if upper else -LIMIT_DELTA]
-    points += [upper, upper * (1.0 - LIMIT_DELTA), upper * (1.0 + LIMIT_DELTA)]
+    points += [upper, upper * SCALE_DOWN, upper * SCALE_UP]
     return [round(p, 6) for p in points]
 
 
@@ -96,7 +97,7 @@ def _frequency_limit_points(restriction: list[int]) -> list[float]:
     start, stop, step = restriction
     values = range(start, stop, step)
     highest = values[-1]
-    above = round(highest * (1.0 + LIMIT_DELTA), 4)
+    above = round(highest * SCALE_UP, 4)
     off_grid = float(start + step // 2 if step > 1 else start + 0.5)
     if off_grid in values:  # pragma: no cover - only with exotic ranges
         off_grid += 0.5
@@ -106,7 +107,7 @@ def _frequency_limit_points(restriction: list[int]) -> list[float]:
 def _frequency_limit_points_from_values(values: list[int]) -> list[float]:
     """Frequencies just outside the allowed set, given the explicit list of allowed values."""
     highest = values[-1]
-    above = round(highest * (1.0 + LIMIT_DELTA), 4)
+    above = round(highest * SCALE_UP, 4)
     step = values[1] - values[0] if len(values) > 1 else 1
     start = values[0]
     off_grid = float(start + step // 2 if step > 1 else start + 0.5)
