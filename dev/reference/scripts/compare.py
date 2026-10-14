@@ -8,7 +8,8 @@ For each file, reports:
 
 Exits non-zero if anything exceeds the tolerance.
 
-Cases are matched on all case-table columns except ``outcome`` and ``reason``.
+Cases are identified by their input parameters (e_init, chopper frequencies,
+configuration), excluding the outcome and reason result columns.
 """
 
 from __future__ import annotations
@@ -25,18 +26,33 @@ from summary import data_files, print_size
 RTOL = 1e-7
 ATOL = 1e-12  # absolute tolerance floor for values that are exactly zero or tiny
 
-NOT_KEY_COLUMNS = {"outcome", "reason"}
+NOT_KEY_COLUMNS = frozenset({"outcome", "reason"})
 
 
-def case_keys(table: np.ndarray, exclude=NOT_KEY_COLUMNS) -> list[tuple]:
-    names = [name for name in table.dtype.names if name not in exclude]
-    return [
-        tuple(
-            None if (isinstance(val, float) and np.isnan(val)) else val
-            for val in (row[name].item() for name in names)
-        )
-        for row in table
-    ]
+def case_keys(
+    table: np.ndarray, exclude: frozenset[str] = NOT_KEY_COLUMNS
+) -> list[tuple[object, ...]]:
+    """Extract a hashable key tuple for each row in the structured cases table.
+
+    The key consists of all independent parameter columns (such as
+    ``configuration``, ``e_init``, ``f0``, ``f1``), excluding dependent outcome
+    and diagnostic columns (``outcome`` and ``reason``).
+
+    Parameters
+    ----------
+    table
+        1D NumPy structured cases array from a reference data file.
+    exclude
+        Column names to exclude from the case identity key.
+
+    Returns
+    -------
+    list[tuple[object, ...]]
+        List of parameter tuples identifying each case, for example:
+        ``[('ARCS-100-1.5-AST', 20.0, 300, 0), ...]``.
+    """
+    key_columns = [name for name in table.dtype.names if name not in exclude]
+    return table[key_columns].tolist()
 
 
 def max_deviation(first: np.ndarray, second: np.ndarray) -> tuple[float, float]:
@@ -58,18 +74,29 @@ def compare_aligned(
     name: str,
     new: np.ndarray,
     old: np.ndarray,
-    new_keys: list,
-    old_keys: list,
+    new_keys: list[tuple[object, ...]],
+    old_keys: list[tuple[object, ...]],
     rtol: float,
     report: list[str],
 ) -> bool:
-    """Compare two arrays row-wise after matching rows on their keys."""
-    old_index = {k: i for i, k in enumerate(old_keys)}
-    pairs = [(i, old_index[k]) for i, k in enumerate(new_keys) if k in old_index]
-    if not pairs:
-        return True
-    new_rows = new[[p[0] for p in pairs]]
-    old_rows = old[[p[1] for p in pairs]]
+    """Compare two value arrays row-wise after aligning on case parameter keys.
+
+    Case keys are parameter tuples produced by :func:`case_keys`, for example
+    ``('ARCS-100-1.5-AST', 20.0, 300, 0)``. Each row in ``new`` corresponds
+    to the key at the same index in ``new_keys``; likewise for ``old`` and ``old_keys``.
+    Only cases present in both are compared.
+    """
+    if new_keys == old_keys:
+        new_rows, old_rows = new, old
+    else:
+        new_index = {key: i for i, key in enumerate(new_keys)}
+        old_indices = [i for i, key in enumerate(old_keys) if key in new_index]
+        if not old_indices:
+            report.append(f"    {name:32s} ** NO COMMON CASES TO COMPARE **")
+            return False
+        new_indices = [new_index[old_keys[i]] for i in old_indices]
+        new_rows, old_rows = new[new_indices], old[old_indices]
+
     nan_mismatch = int(np.sum(np.isnan(new_rows) != np.isnan(old_rows)))
     rel, absolute = max_deviation(new_rows, old_rows)
     ok = nan_mismatch == 0 and (rel <= rtol or absolute <= ATOL)
