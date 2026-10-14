@@ -97,11 +97,11 @@ def compare_aligned(
         new_indices = [new_index[old_keys[i]] for i in old_indices]
         new_rows, old_rows = new[new_indices], old[old_indices]
 
-    nan_mismatch = int(np.sum(np.isnan(new_rows) != np.isnan(old_rows)))
+    nan_mismatches = int(np.sum(np.isnan(new_rows) != np.isnan(old_rows)))
     rel, absolute = max_deviation(new_rows, old_rows)
-    ok = nan_mismatch == 0 and (rel <= rtol or absolute <= ATOL)
+    ok = not nan_mismatches and (rel <= rtol or absolute <= ATOL)
     report.append(
-        f"    {name:32s} max rel dev {rel:.2e}  max abs dev {absolute:.2e}  NaN mismatches {nan_mismatch}"
+        f"    {name:32s} max rel dev {rel:.2e}  max abs dev {absolute:.2e}  NaN mismatches {nan_mismatches}"
         f"{'' if ok else '  ** EXCEEDS TOLERANCE **'}"
     )
     return ok
