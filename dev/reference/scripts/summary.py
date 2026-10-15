@@ -58,12 +58,10 @@ def main() -> None:
             sys.exit(1)
         return
 
-    header = (
-        f"{'file':42s} {'cases':>6s} "
-        + " ".join(f"{outcome:>18s}" for outcome in Outcome)
-        + "   size   mantid"
+    row_template = (
+        "{:<42} {:>6} " + " ".join(["{:>18}"] * len(Outcome)) + " {:>6} {:>8}"
     )
-    print(header)
+    print(row_template.format("file", "cases", *Outcome, "size", "mantid"))
     for path in data_files(root):
         arrays, metadata = load_npz(path)
         cases_arr = arrays["cases"]
@@ -72,10 +70,14 @@ def main() -> None:
             if "outcome" in cases_arr.dtype.names
             else Counter()
         )
-        row = " ".join(f"{counts[outcome]:18d}" for outcome in Outcome)
         print(
-            f"{path.relative_to(root)!s:42s} {len(cases_arr):6d} {row}  "
-            f"{path.stat().st_size / 1e3:5.0f}k  {metadata.get('mantid_version', '?')}"
+            row_template.format(
+                str(path.relative_to(root)),
+                len(cases_arr),
+                *[counts[outcome] for outcome in Outcome],
+                f"{path.stat().st_size / 1e3:.0f}k",
+                metadata.get("mantid_version", "?"),
+            )
         )
     print()
     if not print_size(root, budget):
