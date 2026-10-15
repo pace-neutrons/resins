@@ -18,6 +18,7 @@ Outcome codes are assigned by the generator from PyChop and the restrictions, no
 
 from __future__ import annotations
 
+import itertools
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
@@ -132,9 +133,10 @@ class ConfigurationSpec:
             cases.setdefault(key, SampledCase(self.name, energy, frequencies))
 
         # 1. Regular grid
-        for frequencies in self.frequency_combinations:
-            for energy in self.energies:
-                add(energy, frequencies)
+        for freqs, energy in itertools.product(
+            self.frequency_combinations, self.energies
+        ):
+            add(energy, freqs)
 
         # 2. Edge points
         for energy, freqs in self.edge_points:

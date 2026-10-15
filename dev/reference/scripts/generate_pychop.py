@@ -222,7 +222,7 @@ def generate_entry(entry: dict, config: dict, all_cases: dict, out_dir: Path) ->
     save_npz(path, arrays, metadata)
 
     counts = Counter(Outcome.from_index(c) for c in arrays["cases"]["outcome"])
-    summary = ", ".join(f"{outcome}={counts.get(outcome, 0)}" for outcome in Outcome)
+    summary = ", ".join(f"{outcome}={counts[outcome]}" for outcome in Outcome)
     print(
         f"{path.name}: {len(rows)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB"
     )

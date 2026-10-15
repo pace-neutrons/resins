@@ -25,6 +25,7 @@ from summary import data_files, print_size
 
 RTOL = 1e-7
 ATOL = 1e-12  # absolute tolerance floor for values that are exactly zero or tiny
+MAX_REPORTED_CASES = 5
 
 NOT_KEY_COLUMNS = frozenset({"outcome", "reason"})
 
@@ -107,60 +108,107 @@ def compare_aligned(
     return ok
 
 
-def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, list[str]]:
-    new, new_meta = load_npz(new_path)
-    old, old_meta = load_npz(old_path)
-    report: list[str] = []
-    ok = True
-
-    new_keys, old_keys = case_keys(new["cases"]), case_keys(old["cases"])
+def _report_added_removed(
+    new_keys: list[tuple[object, ...]],
+    old_keys: list[tuple[object, ...]],
+    report: list[str],
+) -> bool:
+    """Report added and removed cases. Returns True if case sets match."""
     added = set(new_keys) - set(old_keys)
     removed = set(old_keys) - set(new_keys)
-    if added or removed:
-        ok = False
-        report.append(f"    cases added: {len(added)}, removed: {len(removed)}")
-        for key in sorted(added, key=str)[:5]:
-            report.append(f"      + {key}")
-        for key in sorted(removed, key=str)[:5]:
-            report.append(f"      - {key}")
+    if not (added or removed):
+        return True
 
+    report.append(f"    cases added: {len(added)}, removed: {len(removed)}")
+    for key in sorted(added, key=str)[:MAX_REPORTED_CASES]:
+        report.append(f"      + {key}")
+    if len(added) > MAX_REPORTED_CASES:
+        report.append("      ...")
+
+    for key in sorted(removed, key=str)[:MAX_REPORTED_CASES]:
+        report.append(f"      - {key}")
+    if len(removed) > MAX_REPORTED_CASES:
+        report.append("      ...")
+
+    return False
+
+
+def _report_outcome_flips(
+    new_cases: np.ndarray,
+    old_cases: np.ndarray,
+    new_keys: list[tuple[object, ...]],
+    old_keys: list[tuple[object, ...]],
+    report: list[str],
+) -> bool:
+    """Report outcome changes for shared cases. Returns True if all outcomes match."""
     old_index = {k: i for i, k in enumerate(old_keys)}
     flips = [
         (
             k,
-            Outcome.from_index(old["cases"]["outcome"][old_index[k]]),
-            Outcome.from_index(new["cases"]["outcome"][i]),
+            Outcome.from_index(old_cases["outcome"][old_index[k]]),
+            Outcome.from_index(new_cases["outcome"][new_i]),
         )
-        for i, k in enumerate(new_keys)
+        for new_i, k in enumerate(new_keys)
         if k in old_index
-        and old["cases"]["outcome"][old_index[k]] != new["cases"]["outcome"][i]
+        and old_cases["outcome"][old_index[k]] != new_cases["outcome"][new_i]
     ]
-    if flips:
-        ok = False
-        report.append(f"    outcome flips: {len(flips)}")
-        for key, was, now in flips[:5]:
-            report.append(f"      {key}: {was} -> {now}")
+    if not flips:
+        return True
 
-    for name in new:
-        if name == "cases" or name not in old:
-            continue
-        if new[name].shape[1:] != old[name].shape[1:]:
-            ok = False
-            report.append(
-                f"    {name}: shape changed {old[name].shape} -> {new[name].shape}"
-            )
-            continue
-        if new[name].dtype.kind != "f":
-            continue
-        ok &= compare_aligned(
-            name, new[name], old[name], new_keys, old_keys, rtol, report
-        )
+    report.append(f"    outcome flips: {len(flips)}")
+    for key, was, now in flips[:MAX_REPORTED_CASES]:
+        report.append(f"      {key}: {was} -> {now}")
+    if len(flips) > MAX_REPORTED_CASES:
+        report.append("      ...")
 
+    return False
+
+
+def _report_metadata_changes(
+    new_meta: dict, old_meta: dict, report: list[str]
+) -> None:
+    """Report changes in key metadata fields (informational)."""
     for field in ("mantid_version", "model_versions", "n_resolution_points"):
         if new_meta.get(field) != old_meta.get(field):
             report.append(
                 f"    metadata {field}: {old_meta.get(field)} -> {new_meta.get(field)}"
             )
+
+
+def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, list[str]]:
+    """Compare one pair of .npz reference files, returning (ok, report_lines)."""
+    new, new_meta = load_npz(new_path)
+    old, old_meta = load_npz(old_path)
+    new_keys, old_keys = case_keys(new["cases"]), case_keys(old["cases"])
+
+    report: list[str] = []
+    ok = True
+
+    ok &= _report_added_removed(new_keys, old_keys, report)
+    ok &= _report_outcome_flips(new["cases"], old["cases"], new_keys, old_keys, report)
+
+    added_arrays = set(new) - set(old)
+    removed_arrays = set(old) - set(new)
+    if added_arrays or removed_arrays:
+        ok = False
+        for name in sorted(added_arrays):
+            report.append(f"    array added: {name}")
+        for name in sorted(removed_arrays):
+            report.append(f"    array removed: {name}")
+
+    for name in sorted(set(new) & set(old)):
+        if name != "cases" and new[name].dtype.kind == "f":
+            if new[name].shape[1:] != old[name].shape[1:]:
+                ok = False
+                report.append(
+                    f"    {name}: shape changed {old[name].shape} -> {new[name].shape}"
+                )
+            else:
+                ok &= compare_aligned(
+                    name, new[name], old[name], new_keys, old_keys, rtol, report
+                )
+
+    _report_metadata_changes(new_meta, old_meta, report)
     return ok, report
 
 

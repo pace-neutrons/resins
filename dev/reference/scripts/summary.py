@@ -70,9 +70,9 @@ def main() -> None:
         counts = (
             Counter(Outcome.from_index(code) for code in cases_arr["outcome"])
             if "outcome" in cases_arr.dtype.names
-            else {}
+            else Counter()
         )
-        row = " ".join(f"{counts.get(outcome, 0):18d}" for outcome in Outcome)
+        row = " ".join(f"{counts[outcome]:18d}" for outcome in Outcome)
         print(
             f"{path.relative_to(root)!s:42s} {len(cases_arr):6d} {row}  "
             f"{path.stat().st_size / 1e3:5.0f}k  {metadata.get('mantid_version', '?')}"

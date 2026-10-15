@@ -97,12 +97,11 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
 
         # Load and parse cases from cases.yaml
         key = f"{entry['instrument']}_{entry['model_version']}"
-        cases_entry = all_cases.get(key)
-        if cases_entry is None:
+        if not key in all_cases:
             print(f"WARNING: no cases.yaml entry for {key}", file=sys.stderr)
             continue
 
-        instrument_spec = cases.InstrumentSpec.from_dict(cases_entry)
+        instrument_spec = cases.InstrumentSpec.from_dict(all_cases[key])
         all_specs = instrument_spec.parse_configurations()
 
         # Abins knows only some of the choppers PyChop does (e.g. no MAPS "B").
@@ -246,7 +245,7 @@ def write(path: Path, arrays: dict, metadata: dict) -> Path:
     save_npz(path, arrays, metadata)
     cases_arr = arrays["cases"]
     counts = Counter(Outcome.from_index(c) for c in cases_arr["outcome"])
-    summary = ", ".join(f"{outcome}={counts.get(outcome, 0)}" for outcome in Outcome)
+    summary = ", ".join(f"{outcome}={counts[outcome]}" for outcome in Outcome)
     print(
         f"abins/{path.name}: {len(cases_arr)} cases ({summary}); {path.stat().st_size / 1e3:.0f} kB"
     )
