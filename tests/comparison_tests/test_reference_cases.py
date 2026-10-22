@@ -35,7 +35,7 @@ def test_reference_files_are_present():
 @pytest.mark.parametrize("stem", ALL_STEMS)
 def test_case_ids_are_unique(stem):
     ref = load(stem)
-    ids = [case_id(ref, i) for i in range(len(ref.cases))]
+    ids = [case_id(ref, i) for i, _ in enumerate(ref.cases)]
     assert len(set(ids)) == len(ids)
 
 
@@ -60,12 +60,11 @@ def test_case_id_is_readable():
 @pytest.mark.parametrize("discrepancy", KNOWN_DISCREPANCIES, ids=lambda d: d.file)
 def test_marks_attach_only_to_matching_cases(discrepancy):
     ref = load(discrepancy.file)
+    (scope,) = discrepancy.scopes
     marked = {
-        i
-        for i in range(len(ref.cases))
-        if known_discrepancy_marks(ref, i, next(iter(discrepancy.scopes)))
+        i for i, _ in enumerate(ref.cases) if known_discrepancy_marks(ref, i, scope)
     }
-    expected = {i for i in range(len(ref.cases)) if discrepancy.applies(ref, i)}
+    expected = {i for i, _ in enumerate(ref.cases) if discrepancy.applies(ref, i)}
     assert marked == expected
     assert marked  # the discrepancy affects at least one case
 
@@ -73,11 +72,10 @@ def test_marks_attach_only_to_matching_cases(discrepancy):
     for stem in ALL_STEMS:
         if stem != discrepancy.file:
             other = load(stem)
-            for scope in discrepancy.scopes:
-                assert not any(
-                    known_discrepancy_marks(other, i, scope)
-                    for i in range(len(other.cases))
-                )
+            assert not any(
+                known_discrepancy_marks(other, i, scope)
+                for i, _ in enumerate(other.cases)
+            )
 
 
 def test_arcs_discrepancy_covers_only_that_configuration():
@@ -116,5 +114,7 @@ def test_case_params_filter_by_outcome():
     stem = "pychop/MARI_PyChop_fit_v1"
     ref = load(stem)
     for outcome in (VALUE, NO_TRANSMISSION, REJECTED_EI, REJECTED_FREQUENCY):
-        params = case_params(reference_files=stem, scope="resolution", outcomes=(outcome,))
+        params = case_params(
+            reference_files=stem, scope="resolution", outcomes=(outcome,)
+        )
         assert len(params) == int((ref.cases["outcome"] == outcome).sum())
