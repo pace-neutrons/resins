@@ -15,7 +15,7 @@ import pytest
 
 from resins.instrument import Instrument
 
-from ._reference import (
+from .reference import (
     NO_TRANSMISSION,
     REJECTED_EI,
     REJECTED_FREQUENCY,

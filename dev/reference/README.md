@@ -196,7 +196,7 @@ Environments are pinned to explicit Mantid minor versions; there is no floating
 
 Disagreements between resins and the reference that are understood but not yet
 resolved are listed in `KNOWN_DISCREPANCIES` in
-`tests/comparison_tests/_reference.py`. The affected cases are strict expected
+`tests/comparison_tests/reference.py`. The affected cases are strict expected
 failures: if one starts passing, the suite fails until the entry is removed.
 
 | Reference | Affected cases | Reason | Follow-up |

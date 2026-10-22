@@ -1,10 +1,10 @@
-"""Checks of the case parametrization helpers in ``_reference.py``."""
+"""Checks of the case parametrization helpers in ``reference.py``."""
 
 from __future__ import annotations
 
 import pytest
 
-from ._reference import (
+from .reference import (
     EVALUATED,
     KNOWN_DISCREPANCIES,
     NO_TRANSMISSION,

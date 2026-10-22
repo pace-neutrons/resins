@@ -14,7 +14,7 @@ from numpy.testing import assert_allclose
 from resins.instrument import Instrument
 from resins.models.pychop import NoTransmissionError
 
-from ._reference import (
+from .reference import (
     EVALUATED,
     NO_TRANSMISSION,
     VALUE,

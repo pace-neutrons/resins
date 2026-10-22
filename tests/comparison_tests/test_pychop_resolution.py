@@ -15,7 +15,7 @@ from resins.instrument import Instrument
 from resins.models.model_base import InvalidInputError
 from resins.models.pychop import NoTransmissionError
 
-from ._reference import (
+from .reference import (
     NO_TRANSMISSION,
     REJECTED_EI,
     REJECTED_FREQUENCY,

@@ -15,8 +15,8 @@ check, refresh or extend it.
 | `test_pychop_resolution.py` | PyChop resolution, no-transmission and rejected-input outcomes through the public API |
 | `test_abins_models.py` | Abins PyChop wrapper (MAPS, MARI, MERLIN), PANTHER, TOSCA and Lagrange |
 | `test_reference_coverage.py` | Reference data covers every model version and configuration, and follows the sampling rules |
-| `test_reference_cases.py` | The parametrization helpers in `_reference.py` |
+| `test_reference_cases.py` | The parametrization helpers in `reference.py` |
 
 Known disagreements with the reference are strict expected failures, listed in
-`_reference.py` (`KNOWN_DISCREPANCIES`). Set the environment variable
+`reference.py` (`KNOWN_DISCREPANCIES`). Set the environment variable
 `RESINS_IGNORE_KNOWN_DISCREPANCIES=1` to run those cases without the markers.

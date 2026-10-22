@@ -28,7 +28,7 @@ coverage test fails if an instrument, model version or configuration is added to
 resins without reference data.
 
 Known disagreements with the reference are listed in
-``tests/comparison_tests/_reference.py`` and are strict expected failures, so
+``tests/comparison_tests/reference.py`` and are strict expected failures, so
 fixing one makes the suite fail until its entry is removed.
 
 Regenerating the reference data
