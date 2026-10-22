@@ -200,10 +200,7 @@ def known_discrepancy_marks(
 # Test ids and params
 # ----------------------------------------------------------------------------------------------
 
-
-def _format_number(value: float) -> str:
-    return f"{value:.6g}"
-
+_format_number = "{:.6g}".format
 
 def case_id(ref: ReferenceFile, i: int) -> str:
     """Readable id: instrument, model version, configuration and parameter values."""
