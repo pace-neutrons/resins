@@ -15,15 +15,15 @@ from ._reference import (
     case_params,
     known_discrepancy_marks,
     load,
-    pychop_stems,
+    pychop_reference_files,
     stems,
 )
 
-ALL_STEMS = pychop_stems() + stems("abins")
+ALL_STEMS = pychop_reference_files() + stems("abins")
 
 
 def test_reference_files_are_present():
-    assert len(pychop_stems()) == 10
+    assert len(pychop_reference_files()) == 10
     assert stems("abins") == [
         "abins/lagrange",
         "abins/panther",
@@ -116,5 +116,5 @@ def test_case_params_filter_by_outcome():
     stem = "pychop/MARI_PyChop_fit_v1"
     ref = load(stem)
     for outcome in (VALUE, NO_TRANSMISSION, REJECTED_EI, REJECTED_FREQUENCY):
-        params = case_params([stem], "resolution", (outcome,))
+        params = case_params(reference_files=stem, scope="resolution", outcomes=(outcome,))
         assert len(params) == int((ref.cases["outcome"] == outcome).sum())

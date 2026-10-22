@@ -27,7 +27,14 @@ def sigma_at(model, energies: np.ndarray) -> np.ndarray:
     return model.get_characteristics(energies[:, None])["sigma"]
 
 
-@pytest.mark.parametrize("param", case_params(["abins/pychop"], "abins", EVALUATED))
+@pytest.mark.parametrize(
+    "param",
+    case_params(
+        reference_files="abins/pychop",
+        scope="abins",
+        outcomes=EVALUATED,
+    ),
+)
 def test_pychop_against_abins(param):
     ref, i = resolve(param)
     case = ref.cases[i]
@@ -51,7 +58,14 @@ def test_pychop_against_abins(param):
     assert_allclose(sigma_at(model, energies), ref["sigma"][i], rtol=1e-5)
 
 
-@pytest.mark.parametrize("param", case_params(["abins/panther"], "abins", (VALUE,)))
+@pytest.mark.parametrize(
+    "param",
+    case_params(
+        reference_files="abins/panther",
+        scope="abins",
+        outcomes=(VALUE,),
+    ),
+)
 def test_panther_against_abins(param):
     ref, i = resolve(param)
     e_init = float(ref.cases[i]["e_init"])
@@ -63,7 +77,14 @@ def test_panther_against_abins(param):
     assert_allclose(sigma_at(model, energies), ref["sigma"][i])
 
 
-@pytest.mark.parametrize("param", case_params(["abins/tosca"], "abins", (VALUE,)))
+@pytest.mark.parametrize(
+    "param",
+    case_params(
+        reference_files="abins/tosca",
+        scope="abins",
+        outcomes=(VALUE,),
+    ),
+)
 def test_tosca_against_abins(param):
     ref, i = resolve(param)
     model = Instrument.from_default("TOSCA").get_resolution_function("AbINS")
@@ -72,7 +93,14 @@ def test_tosca_against_abins(param):
     assert_allclose(sigma_at(model, energy), ref["sigma"][i])
 
 
-@pytest.mark.parametrize("param", case_params(["abins/lagrange"], "abins", (VALUE,)))
+@pytest.mark.parametrize(
+    "param",
+    case_params(
+        reference_files="abins/lagrange",
+        scope="abins",
+        outcomes=(VALUE,),
+    ),
+)
 def test_lagrange_against_abins(param):
     ref, i = resolve(param)
     case = ref.cases[i]

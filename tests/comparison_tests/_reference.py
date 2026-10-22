@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path
@@ -78,7 +78,7 @@ def stems(directory: str) -> list[str]:
     )
 
 
-def pychop_stems() -> list[str]:
+def pychop_reference_files() -> list[str]:
     return stems("pychop")
 
 
@@ -225,30 +225,37 @@ def case_id(ref: ReferenceFile, i: int) -> str:
 
 
 def case_params(
-    stem_list: list[str],
+    reference_files: str | Sequence[str],
     scope: str,
     outcomes: tuple[int, ...] | None = None,
 ) -> list:
-    """``pytest.param((stem, index))`` for each case, with known-discrepancy marks.
+    """``pytest.param((file, index))`` for each case, with known-discrepancy marks.
 
     Parameters
     ----------
-    stem_list
-        Reference file stems to take cases from.
+    reference_files
+        Reference file name(s) or path(s) relative to ``reference_data``, without
+        the ``.npz`` extension (e.g. ``"pychop/MARI_PyChop_fit_v1"`` or
+        ``["abins/pychop", "abins/panther"]``).
     scope
-        Kind of test, used to select known discrepancies.
+        Kind of test, used to select known discrepancies (``"resolution"`` or ``"abins"``).
     outcomes
         Outcome codes to include; all by default.
     """
+    if isinstance(reference_files, str):
+        file_list = [reference_files]
+    else:
+        file_list = list(reference_files)
+
     params = []
-    for stem in stem_list:
-        ref = load(stem)
+    for file in file_list:
+        ref = load(file)
         for i, case in enumerate(ref.cases):
             if outcomes is not None and case["outcome"] not in outcomes:
                 continue
             params.append(
                 pytest.param(
-                    (stem, i),
+                    (file, i),
                     id=case_id(ref, i),
                     marks=known_discrepancy_marks(ref, i, scope),
                 )

@@ -21,7 +21,7 @@ from ._reference import (
     REJECTED_FREQUENCY,
     VALUE,
     case_params,
-    pychop_stems,
+    pychop_reference_files,
     resolve,
 )
 
@@ -40,7 +40,14 @@ def get_model(ref, i: int):
     )
 
 
-@pytest.mark.parametrize("param", case_params(pychop_stems(), "resolution", (VALUE,)))
+@pytest.mark.parametrize(
+    "param",
+    case_params(
+        reference_files=pychop_reference_files(),
+        scope="resolution",
+        outcomes=(VALUE,),
+    ),
+)
 def test_resolution(param):
     ref, i = resolve(param)
     case = ref.cases[i]
@@ -65,7 +72,12 @@ def test_resolution(param):
 
 
 @pytest.mark.parametrize(
-    "param", case_params(pychop_stems(), "resolution", (NO_TRANSMISSION,))
+    "param",
+    case_params(
+        reference_files=pychop_reference_files(),
+        scope="resolution",
+        outcomes=(NO_TRANSMISSION,),
+    ),
 )
 def test_no_transmission(param):
     ref, i = resolve(param)
@@ -75,7 +87,11 @@ def test_no_transmission(param):
 
 @pytest.mark.parametrize(
     "param",
-    case_params(pychop_stems(), "resolution", (REJECTED_EI, REJECTED_FREQUENCY)),
+    case_params(
+        reference_files=pychop_reference_files(),
+        scope="resolution",
+        outcomes=(REJECTED_EI, REJECTED_FREQUENCY),
+    ),
 )
 def test_rejected_input(param):
     ref, i = resolve(param)

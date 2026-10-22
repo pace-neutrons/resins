@@ -21,7 +21,7 @@ from ._reference import (
     REJECTED_FREQUENCY,
     VALUE,
     load,
-    pychop_stems,
+    pychop_reference_files,
 )
 
 # Configurations that Abins' own instrument classes do not support, so are not compared.
@@ -58,7 +58,7 @@ def evaluated_by_configuration(ref) -> dict[str, np.ndarray]:
 
 def test_every_pychop_model_has_reference_data():
     in_resins = resins_pychop_models()
-    in_data = {(load(s).instrument, load(s).model_version) for s in pychop_stems()}
+    in_data = {(load(s).instrument, load(s).model_version) for s in pychop_reference_files()}
 
     assert not in_resins - in_data, (
         f"PyChop models without reference data: {sorted(in_resins - in_data)}"
@@ -69,11 +69,11 @@ def test_every_pychop_model_has_reference_data():
 
 
 def test_one_file_per_instrument_and_model_version():
-    keys = [(load(s).instrument, load(s).model_version) for s in pychop_stems()]
+    keys = [(load(s).instrument, load(s).model_version) for s in pychop_reference_files()]
     assert len(set(keys)) == len(keys)
 
 
-@pytest.mark.parametrize("stem", pychop_stems())
+@pytest.mark.parametrize("stem", pychop_reference_files())
 def test_every_configuration_has_value_cases(stem):
     ref = load(stem)
     cases = ref.cases
@@ -125,7 +125,7 @@ def test_abins_single_configuration_models_have_cases(name):
     assert len(load(f"abins/{name}").cases) > 0
 
 
-@pytest.mark.parametrize("stem", pychop_stems())
+@pytest.mark.parametrize("stem", pychop_reference_files())
 def test_incident_energy_dependence_is_sampled(stem):
     ref = load(stem)
     for configuration, cases in evaluated_by_configuration(ref).items():
@@ -133,7 +133,7 @@ def test_incident_energy_dependence_is_sampled(stem):
         assert len(np.unique(values["e_init"])) >= 4, configuration
 
 
-@pytest.mark.parametrize("stem", pychop_stems())
+@pytest.mark.parametrize("stem", pychop_reference_files())
 def test_every_allowed_frequency_is_sampled(stem):
     ref = load(stem)
     instrument = Instrument.from_default(ref.instrument)
@@ -149,7 +149,7 @@ def test_every_allowed_frequency_is_sampled(stem):
             )
 
 
-@pytest.mark.parametrize("stem", pychop_stems())
+@pytest.mark.parametrize("stem", pychop_reference_files())
 def test_transmission_edges_are_sampled_on_both_sides(stem):
     ref = load(stem)
     for configuration, cases in evaluated_by_configuration(ref).items():
@@ -172,7 +172,7 @@ def test_transmission_edges_are_sampled_on_both_sides(stem):
                     )
 
 
-@pytest.mark.parametrize("stem", pychop_stems())
+@pytest.mark.parametrize("stem", pychop_reference_files())
 def test_limits_are_sampled_on_both_sides(stem):
     ref = load(stem)
     instrument = Instrument.from_default(ref.instrument)
