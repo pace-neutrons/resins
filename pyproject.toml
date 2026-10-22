@@ -95,3 +95,8 @@ ignore = [
 ]
 
 [tool.versioningit]
+# Fallback for environments without usable Git metadata (e.g. an unpacked sdist,
+# or a Git worktree whose gitdir is not reachable).  Without this, versioningit
+# raises NotSdistError when it cannot read the VCS state and there is no
+# PKG-INFO to fall back to.
+default-version = "0.0.0.dev0"
