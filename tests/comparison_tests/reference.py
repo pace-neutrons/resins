@@ -52,14 +52,14 @@ class ReferenceFile:
         """Setting names of the chopper frequencies, in column order (PyChop files)."""
         return self.metadata["frequency_settings"]
 
-    def frequencies(self, i: int) -> list[int]:
-        """The chopper frequencies of case ``i``: ``f0``, ``f1`` where used (0 marks unused)."""
-        case = self.cases[i]
-        names = [n for n in ("f0", "f1") if n in case.dtype.names]
-        return [int(case[n]) for n in names if case[n]]
+    def frequencies(self, case_index: int) -> list[int]:
+        """The chopper frequencies of case ``case_index``: ``f0``, ``f1`` where used (0 marks unused)."""
+        case = self.cases[case_index]
+        names = [name for name in ("f0", "f1") if name in case.dtype.names]
+        return [int(case[name]) for name in names if case[name]]
 
-    def frequency_kwargs(self, i: int) -> dict[str, int]:
-        return dict(zip(self.frequency_settings, self.frequencies(i)))
+    def frequency_kwargs(self, case_index: int) -> dict[str, int]:
+        return dict(zip(self.frequency_settings, self.frequencies(case_index)))
 
 
 @cache
@@ -136,9 +136,9 @@ _ARCS_SMI_700_NO_TRANSMISSION_POINTS = frozenset(
 )
 
 
-def _arcs_700_1_5_smi(ref: ReferenceFile, i: int) -> bool:
+def _arcs_700_1_5_smi(ref: ReferenceFile, case_index: int) -> bool:
     """Value cases of ARCS-700-1.5-SMI, and the no-transmission cases that resins transmits."""
-    case = ref.cases[i]
+    case = ref.cases[case_index]
     if str(case["configuration"]) != "ARCS-700-1.5-SMI":
         return False
     if case["outcome"] == VALUE:
@@ -150,8 +150,8 @@ def _arcs_700_1_5_smi(ref: ReferenceFile, i: int) -> bool:
     )
 
 
-def _lagrange_cu220_window(ref: ReferenceFile, i: int) -> bool:
-    case = ref.cases[i]
+def _lagrange_cu220_window(ref: ReferenceFile, case_index: int) -> bool:
+    case = ref.cases[case_index]
     return (
         str(case["configuration"]) == "Cu(220)"
         and 25.0 <= case["energy_transfer"] < 34.5
@@ -178,9 +178,9 @@ KNOWN_DISCREPANCIES = (
 
 
 def known_discrepancy_marks(
-    ref: ReferenceFile, i: int, scope: str
+    ref: ReferenceFile, case_index: int, scope: str
 ) -> list[pytest.MarkDecorator]:
-    """Strict xfail marks for case ``i`` of ``ref`` in tests of kind ``scope``.
+    """Strict xfail marks for case ``case_index`` of ``ref`` in tests of kind ``scope``.
 
     Setting the environment variable ``RESINS_IGNORE_KNOWN_DISCREPANCIES`` removes all marks, to
     see which cases really fail.
@@ -192,7 +192,7 @@ def known_discrepancy_marks(
         for discrepancy in KNOWN_DISCREPANCIES
         if discrepancy.file == ref.stem
         and scope in discrepancy.scopes
-        and discrepancy.applies(ref, i)
+        and discrepancy.applies(ref, case_index)
     ]
 
 
@@ -202,9 +202,10 @@ def known_discrepancy_marks(
 
 _format_number = "{:.6g}".format
 
-def case_id(ref: ReferenceFile, i: int) -> str:
+
+def case_id(ref: ReferenceFile, case_index: int) -> str:
     """Readable id: instrument, model version, configuration and parameter values."""
-    case = ref.cases[i]
+    case = ref.cases[case_index]
     names = case.dtype.names
     if "instrument" in names:
         parts = [str(case["instrument"])]
@@ -218,7 +219,7 @@ def case_id(ref: ReferenceFile, i: int) -> str:
         parts.append(f"ei={_format_number(case['e_init'])}")
     if "energy_transfer" in names:
         parts.append(f"e={_format_number(case['energy_transfer'])}")
-    frequencies = ref.frequencies(i)
+    frequencies = ref.frequencies(case_index)
     if frequencies:
         parts.append("f=" + ",".join(_format_number(freq) for freq in frequencies))
     return "-".join(parts)
@@ -250,19 +251,19 @@ def case_params(
     params = []
     for file in file_list:
         ref = load(file)
-        for i, case in enumerate(ref.cases):
+        for case_index, case in enumerate(ref.cases):
             if outcomes is not None and case["outcome"] not in outcomes:
                 continue
             params.append(
                 pytest.param(
-                    (file, i),
-                    id=case_id(ref, i),
-                    marks=known_discrepancy_marks(ref, i, scope),
+                    (file, case_index),
+                    id=case_id(ref, case_index),
+                    marks=known_discrepancy_marks(ref, case_index, scope),
                 )
             )
     return params
 
 
 def resolve(param: tuple[str, int]) -> tuple[ReferenceFile, int]:
-    stem, i = param
-    return load(stem), i
+    file, case_index = param
+    return load(file), case_index

@@ -35,26 +35,26 @@ def test_reference_files_are_present():
 @pytest.mark.parametrize("stem", ALL_STEMS)
 def test_case_ids_are_unique(stem):
     ref = load(stem)
-    ids = [case_id(ref, i) for i, _ in enumerate(ref.cases)]
+    ids = [case_id(ref, case_index) for case_index, _ in enumerate(ref.cases)]
     assert len(set(ids)) == len(ids)
 
 
 @pytest.mark.parametrize("stem", ALL_STEMS)
 def test_cases_are_unique(stem):
     ref = load(stem)
-    names = [n for n in ref.cases.dtype.names if n not in ("outcome", "reason")]
-    keys = [tuple(case[n].item() for n in names) for case in ref.cases]
+    names = [name for name in ref.cases.dtype.names if name not in ("outcome", "reason")]
+    keys = [tuple(case[name].item() for name in names) for case in ref.cases]
     assert len(set(keys)) == len(keys)
 
 
 def test_case_id_is_readable():
     ref = load("pychop/ARCS_PyChop_fit_v2")
-    i = next(
-        i
-        for i, case in enumerate(ref.cases)
+    case_index = next(
+        idx
+        for idx, case in enumerate(ref.cases)
         if case["configuration"] == "ARCS-100-1.5-AST" and case["e_init"] == 200.0
     )
-    assert case_id(ref, i).startswith("ARCS-PyChop_fit_v2-ARCS-100-1.5-AST-ei=200-f=")
+    assert case_id(ref, case_index).startswith("ARCS-PyChop_fit_v2-ARCS-100-1.5-AST-ei=200-f=")
 
 
 @pytest.mark.parametrize("discrepancy", KNOWN_DISCREPANCIES, ids=lambda d: d.file)
@@ -62,9 +62,15 @@ def test_marks_attach_only_to_matching_cases(discrepancy):
     ref = load(discrepancy.file)
     (scope,) = discrepancy.scopes
     marked = {
-        i for i, _ in enumerate(ref.cases) if known_discrepancy_marks(ref, i, scope)
+        case_index
+        for case_index, _ in enumerate(ref.cases)
+        if known_discrepancy_marks(ref, case_index, scope)
     }
-    expected = {i for i, _ in enumerate(ref.cases) if discrepancy.applies(ref, i)}
+    expected = {
+        case_index
+        for case_index, _ in enumerate(ref.cases)
+        if discrepancy.applies(ref, case_index)
+    }
     assert marked == expected
     assert marked  # the discrepancy affects at least one case
 
@@ -73,15 +79,15 @@ def test_marks_attach_only_to_matching_cases(discrepancy):
         if stem != discrepancy.file:
             other = load(stem)
             assert not any(
-                known_discrepancy_marks(other, i, scope)
-                for i, _ in enumerate(other.cases)
+                known_discrepancy_marks(other, case_index, scope)
+                for case_index, _ in enumerate(other.cases)
             )
 
 
 def test_arcs_discrepancy_covers_only_that_configuration():
     ref = load("pychop/ARCS_PyChop_fit_v2")
-    for i, case in enumerate(ref.cases):
-        marked = bool(known_discrepancy_marks(ref, i, "resolution"))
+    for case_index, case in enumerate(ref.cases):
+        marked = bool(known_discrepancy_marks(ref, case_index, "resolution"))
         if marked:
             assert case["configuration"] == "ARCS-700-1.5-SMI"
             assert case["outcome"] in EVALUATED
@@ -91,19 +97,19 @@ def test_arcs_discrepancy_covers_only_that_configuration():
 
 def test_marks_depend_on_scope():
     ref = load("pychop/ARCS_PyChop_fit_v2")
-    i = next(
-        i
-        for i, case in enumerate(ref.cases)
+    case_index = next(
+        idx
+        for idx, case in enumerate(ref.cases)
         if case["configuration"] == "ARCS-700-1.5-SMI" and case["outcome"] == VALUE
     )
-    assert known_discrepancy_marks(ref, i, "resolution")
-    assert not known_discrepancy_marks(ref, i, "abins")
+    assert known_discrepancy_marks(ref, case_index, "resolution")
+    assert not known_discrepancy_marks(ref, case_index, "abins")
 
 
 def test_lagrange_discrepancy_window():
     ref = load("abins/lagrange")
-    for i, case in enumerate(ref.cases):
-        marked = bool(known_discrepancy_marks(ref, i, "abins"))
+    for case_index, case in enumerate(ref.cases):
+        marked = bool(known_discrepancy_marks(ref, case_index, "abins"))
         expected = (
             case["configuration"] == "Cu(220)" and 25 <= case["energy_transfer"] < 34.5
         )

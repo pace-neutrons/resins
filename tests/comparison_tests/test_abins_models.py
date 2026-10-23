@@ -36,8 +36,8 @@ def sigma_at(model, energies: np.ndarray) -> np.ndarray:
     ),
 )
 def test_pychop_against_abins(param):
-    ref, i = resolve(param)
-    case = ref.cases[i]
+    ref, case_index = resolve(param)
+    case = ref.cases[case_index]
     instrument = Instrument.from_default(str(case["instrument"]))
     model_version = ref.metadata["model_versions"][str(case["instrument"])]
     kwargs = {
@@ -55,7 +55,7 @@ def test_pychop_against_abins(param):
     model = instrument.get_resolution_function(model_version, **kwargs)
     energies = np.linspace(0, case["e_init"], ref.metadata["n_points"])
 
-    assert_allclose(sigma_at(model, energies), ref["sigma"][i], rtol=1e-5)
+    assert_allclose(sigma_at(model, energies), ref["sigma"][case_index], rtol=1e-5)
 
 
 @pytest.mark.parametrize(
@@ -67,14 +67,14 @@ def test_pychop_against_abins(param):
     ),
 )
 def test_panther_against_abins(param):
-    ref, i = resolve(param)
-    e_init = float(ref.cases[i]["e_init"])
+    ref, case_index = resolve(param)
+    e_init = float(ref.cases[case_index]["e_init"])
     model = Instrument.from_default("PANTHER").get_resolution_function(
         "AbINS", e_init=e_init
     )
     energies = np.linspace(0, e_init, ref.metadata["n_points"])
 
-    assert_allclose(sigma_at(model, energies), ref["sigma"][i])
+    assert_allclose(sigma_at(model, energies), ref["sigma"][case_index])
 
 
 @pytest.mark.parametrize(
@@ -86,11 +86,11 @@ def test_panther_against_abins(param):
     ),
 )
 def test_tosca_against_abins(param):
-    ref, i = resolve(param)
+    ref, case_index = resolve(param)
     model = Instrument.from_default("TOSCA").get_resolution_function("AbINS")
-    energy = np.array([ref.cases[i]["energy_transfer"]])
+    energy = np.array([ref.cases[case_index]["energy_transfer"]])
 
-    assert_allclose(sigma_at(model, energy), ref["sigma"][i])
+    assert_allclose(sigma_at(model, energy), ref["sigma"][case_index])
 
 
 @pytest.mark.parametrize(
@@ -102,11 +102,11 @@ def test_tosca_against_abins(param):
     ),
 )
 def test_lagrange_against_abins(param):
-    ref, i = resolve(param)
-    case = ref.cases[i]
+    ref, case_index = resolve(param)
+    case = ref.cases[case_index]
     model = Instrument.from_default("Lagrange").get_resolution_function(
         "AbINS", monochromator=str(case["configuration"])
     )
     energy = np.array([case["energy_transfer"]])
 
-    assert_allclose(sigma_at(model, energy), ref["sigma"][i], rtol=1e-5)
+    assert_allclose(sigma_at(model, energy), ref["sigma"][case_index], rtol=1e-5)

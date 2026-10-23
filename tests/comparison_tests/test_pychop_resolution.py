@@ -28,15 +28,15 @@ from .reference import (
 SIGMA2FWHM = 2 * np.sqrt(2 * np.log(2))
 
 
-def get_model(ref, i: int):
-    """Build the resins model for case ``i`` of ``ref`` through the public API."""
-    case = ref.cases[i]
+def get_model(ref, case_index: int):
+    """Build the resins model for case ``case_index`` of ``ref`` through the public API."""
+    case = ref.cases[case_index]
     instrument = Instrument.from_default(ref.instrument)
     return instrument.get_resolution_function(
         ref.model_version,
         chopper_package=str(case["configuration"]),
         e_init=float(case["e_init"]),
-        **ref.frequency_kwargs(i),
+        **ref.frequency_kwargs(case_index),
     )
 
 
@@ -49,18 +49,18 @@ def get_model(ref, i: int):
     ),
 )
 def test_resolution(param):
-    ref, i = resolve(param)
-    case = ref.cases[i]
-    model = get_model(ref, i)
+    ref, case_index = resolve(param)
+    case = ref.cases[case_index]
+    model = get_model(ref, case_index)
 
     instrument = Instrument.from_default(ref.instrument)
     data = instrument.get_model_data(
         ref.model_version, chopper_package=str(case["configuration"])
     )
     energy_transfers, resolution = type(model)._precompute_resolution(
-        data, float(case["e_init"]), ref.frequencies(i)
+        data, float(case["e_init"]), ref.frequencies(case_index)
     )
-    expected = ref["resolution"][i]
+    expected = ref["resolution"][case_index]
 
     assert len(energy_transfers) == len(expected)
     assert_allclose(resolution, expected / SIGMA2FWHM, rtol=1e-7)
@@ -80,9 +80,9 @@ def test_resolution(param):
     ),
 )
 def test_no_transmission(param):
-    ref, i = resolve(param)
+    ref, case_index = resolve(param)
     with pytest.raises(NoTransmissionError):
-        get_model(ref, i)
+        get_model(ref, case_index)
 
 
 @pytest.mark.parametrize(
@@ -94,9 +94,9 @@ def test_no_transmission(param):
     ),
 )
 def test_rejected_input(param):
-    ref, i = resolve(param)
+    ref, case_index = resolve(param)
     # The reason column is "<side>:<setting>"; the setting is named in the error message.
-    setting = str(ref.cases[i]["reason"]).split(":", 1)[1]
+    setting = str(ref.cases[case_index]["reason"]).split(":", 1)[1]
 
     with pytest.raises(InvalidInputError, match=f'"{setting}" setting'):
-        get_model(ref, i)
+        get_model(ref, case_index)
