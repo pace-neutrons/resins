@@ -1,8 +1,7 @@
-"""Check that the reference data covers every compared model version and configuration.
+"""Check that the reference data covers compared PyChop and Abins models and configurations.
 
-This guards against adding an instrument, model version or configuration to resins without
-regenerating the reference data (see ``dev/reference/README.md``), and checks that the data
-meets the sampling rules it was generated with.
+This guards against adding a compared model version or configuration to resins without
+regenerating reference data, and audits that the reference cases meet the sampling rules.
 """
 
 from __future__ import annotations
@@ -20,6 +19,7 @@ from .reference import (
     REJECTED_EI,
     REJECTED_FREQUENCY,
     VALUE,
+    ReferenceFile,
     load,
     pychop_reference_files,
 )
@@ -27,9 +27,9 @@ from .reference import (
 # Configurations that Abins' own instrument classes do not support, so are not compared.
 ABINS_UNSUPPORTED = {"MAPS": {"B"}, "MARI": {"B", "C"}}
 
-# Largest relative gap between neighbouring cases with different transmission, i.e. the points
-# just either side of an edge (offset 1e-3 each, and rounding to five digits).
-MAX_EDGE_GAP = 2.3e-3
+# Largest relative gap between neighbouring cases straddling a transmission edge.
+# Theoretical gap is (1.001 / 0.999 - 1) = 2.002e-3; add some headroom for rounding.
+MAX_EDGE_GAP = 2.1e-3
 
 
 def resins_pychop_models() -> set[tuple[str, str]]:
@@ -48,7 +48,7 @@ def chopper_packages(instrument: str, model: str) -> list[str]:
     return inst.possible_options_for_model_and_configuration(model, "chopper_package")
 
 
-def evaluated_by_configuration(ref) -> dict[str, np.ndarray]:
+def evaluated_by_configuration(ref: ReferenceFile) -> dict[str, np.ndarray]:
     cases = ref.cases
     return {
         name: cases[cases["configuration"] == name]
@@ -78,7 +78,7 @@ def test_every_configuration_has_value_cases(stem):
     ref = load(stem)
     cases = ref.cases
     expected = set(chopper_packages(ref.instrument, ref.model_version))
-    in_file = {str(c) for c in np.unique(cases["configuration"])}
+    in_file = {str(c) for c in cases["configuration"]}
 
     missing, extra = sorted(expected - in_file), sorted(in_file - expected)
     assert not missing, f"configurations without reference cases: {missing}"
@@ -98,7 +98,7 @@ def test_abins_pychop_covers_supported_configurations():
         expected = set(chopper_packages(instrument, model)) - ABINS_UNSUPPORTED.get(
             instrument, set()
         )
-        in_file = {str(c) for c in np.unique(selected["configuration"])}
+        in_file = {str(c) for c in selected["configuration"]}
         assert in_file == expected, (
             f"{instrument}: Abins configurations differ from resins"
         )
@@ -117,7 +117,7 @@ def test_abins_lagrange_covers_every_monochromator():
             "Lagrange"
         ).possible_options_for_model_and_configuration("AbINS", "monochromator")
     )
-    assert {str(c) for c in np.unique(ref.cases["configuration"])} == expected
+    assert {str(c) for c in ref.cases["configuration"]} == expected
 
 
 @pytest.mark.parametrize("name", ["panther", "tosca"])
