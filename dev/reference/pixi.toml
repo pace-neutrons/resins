@@ -1,0 +1,55 @@
+[workspace]
+name = "resins-reference"
+channels = ["conda-forge", "mantid", "nodefaults"]
+platforms = ["linux-64", "osx-arm64"]
+requires-pixi = ">=0.50"
+
+[dependencies]
+numpy = "*"
+pyyaml = "*"
+
+[feature.mantid611]
+platforms = ["linux-64"]
+
+[feature.mantid611.dependencies]
+python = "3.10.*"
+mantid = "6.11.*"
+
+[feature.mantid615.dependencies]
+python = "3.11.*"
+mantid = "6.15.*"
+
+[environments]
+mantid611 = { features = ["mantid611"], no-default-feature = false }
+mantid615 = { features = ["mantid615"], no-default-feature = false }
+
+# --- Tasks ---------------------------------------------------------------------------------
+# Tasks available in every environment (run from any, e.g. `pixi run compare`).
+[tasks]
+install = { cmd = "python scripts/install.py", cwd = ".", description = "Copy build/reference_data into tests/reference_data (replaces committed data)" }
+summary = { cmd = "python scripts/summary.py", cwd = ".", description = "Case counts per file and outcome, sizes and Mantid versions of tests/reference_data" }
+compare = { cmd = "python scripts/compare.py", cwd = ".", description = "Compare build/reference_data with tests/reference_data (use -- --report-only to never fail)" }
+size = { cmd = "python scripts/summary.py --build --size-only", cwd = ".", description = "Print the total size of build/reference_data" }
+clean-build = { cmd = "python -c \"import shutil; shutil.rmtree('build/reference_data', ignore_errors=True)\"", cwd = ".", description = "Remove build/reference_data" }
+generate = { depends-on = [
+    "clean-build",
+    { task = "generate-mantid611", environment = "mantid611" },
+    { task = "generate-mantid615", environment = "mantid615" },
+    "size",
+], description = "Regenerate all reference data into build/reference_data/" }
+# Maintenance workflows (see README.md)
+validate = { depends-on = [
+    "generate",
+    "compare",
+], description = "Non-destructive sanity check: regenerate into build/, compare with committed data" }
+update = { depends-on = [
+    "generate",
+    "install",
+    "summary",
+], description = "Regenerate and replace the committed reference data, then summarise the change" }
+
+[feature.mantid611.tasks]
+generate-mantid611 = { cmd = "python scripts/generate_pychop.py --env mantid611", cwd = ".", description = "PyChop references that need Mantid 6.11" }
+
+[feature.mantid615.tasks]
+generate-mantid615 = { cmd = "python scripts/generate_pychop.py --env mantid615 && python scripts/generate_abins.py", cwd = ".", description = "References that need Mantid 6.15" }

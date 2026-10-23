@@ -1,8 +1,8 @@
 import argparse
-from itertools import product
 import logging
-from pathlib import Path
 import warnings
+from itertools import product
+from pathlib import Path
 
 import yaml
 
@@ -215,7 +215,7 @@ def validate_configurations_dict(configurations_dict: dict, header: str) -> None
         # No configurations, nothing to validate. This is allowed.
         return
 
-    for name, config in configurations_dict.items():
+    for config in configurations_dict.values():
         header = f'{header}: configuration "{config}": '
 
         if not isinstance(config, dict):

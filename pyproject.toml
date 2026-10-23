@@ -42,15 +42,21 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "Pint >= 0.24.3",
     "jaxtyping >= 0.2.34"
 ]
 
 [dependency-groups]
+test = [
+    "pytest >= 8.3.2",
+    "pytest-mock >= 3.14.0",
+    "pytest-xdist >= 3.5.0",
+]
 doc = [
     "inline_reference ~= 1.0",
     "numpydoc >= 1.8.0",
     "packaging",
+    # sphinx_parsed_codeblock imports escape_html, removed in Pygments 2.21
+    "pygments < 2.21",
     "sphinx >= 8.1.3",
     "sphinx_parsed_codeblock ~= 1.0",
     "sphinx_rtd_theme >= 3.0.2",
@@ -68,6 +74,11 @@ where =  ["src"]
 [tool.setuptools.package-data]
 resins = ["instrument_data/*.yaml"]
 
+[tool.pytest.ini_options]
+# dev/ holds developer scripts (their tests need the dev extra) and dev/reference/ has its own
+# environment; the routine suite is tests/.
+testpaths = ["tests"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"
@@ -84,3 +95,8 @@ ignore = [
 ]
 
 [tool.versioningit]
+# Fallback for environments without usable Git metadata (e.g. an unpacked sdist,
+# or a Git worktree whose gitdir is not reachable).  Without this, versioningit
+# raises NotSdistError when it cannot read the VCS state and there is no
+# PKG-INFO to fall back to.
+default-version = "0.0.0.dev0"
