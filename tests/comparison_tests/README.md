@@ -13,8 +13,7 @@ check, refresh or extend it.
 |---|---|
 | `test_pychop_resolution.py` | PyChop resolution, no-transmission and rejected-input outcomes through the public API |
 | `test_abins_models.py` | Abins PyChop wrapper (MAPS, MARI, MERLIN), PANTHER, TOSCA and Lagrange |
-| `test_reference_cases.py` | The parametrization helpers in `reference.py` |
 
 Known disagreements with the reference are strict expected failures, listed in
-`reference.py` (`KNOWN_DISCREPANCIES`). Set the environment variable
-`RESINS_IGNORE_KNOWN_DISCREPANCIES=1` to run those cases without the markers.
+`reference.py` (`KNOWN_DISCREPANCIES`). Run `pytest --runxfail` to run those
+cases without the markers and view the underlying assertion failures.

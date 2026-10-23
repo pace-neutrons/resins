@@ -203,7 +203,7 @@ failures: if one starts passing, the suite fails until the entry is removed.
 | `abins/lagrange` | Cu(220), 25 meV <= E < 34.5 meV | `AbINS_v1` has a cutoff where Abins has a 0.8 meV floor | Removed by change `resins-lagrange-abins-v2` |
 
 If regenerating with different sampling moves the 12 no-transmission points,
-re-derive them: run `RESINS_IGNORE_KNOWN_DISCREPANCIES=1 pytest -n auto
+re-derive them: run `pytest --runxfail -n auto
 tests/comparison_tests/test_pychop_resolution.py -k "ARCS-700-1.5-SMI"` and list
 the failing `test_no_transmission` cases.
 
@@ -215,7 +215,7 @@ Two other differences are deliberate, not discrepancies:
   80 meV in resins). `generate` prints the number of such cases per file. The
   incident energy limits of each case come from the resins restrictions.
 - Abins supports only some choppers (no MAPS `B`, no MARI `B` or `C`), so these are
-  not in `abins/pychop`. The coverage test lists them in `ABINS_UNSUPPORTED`.
+  not in `abins/pychop`.
 
 ## 8. Troubleshooting
 

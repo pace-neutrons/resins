@@ -8,7 +8,6 @@ so that the same cases are collected on every machine.
 from __future__ import annotations
 
 import json
-import os
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from functools import cache
@@ -19,7 +18,6 @@ import pytest
 
 REFERENCE_DIR = Path(__file__).resolve().parents[1] / "reference_data"
 
-OUTCOMES = ("value", "no_transmission", "rejected_ei", "rejected_frequency")
 VALUE, NO_TRANSMISSION, REJECTED_EI, REJECTED_FREQUENCY = range(4)
 EVALUATED = (VALUE, NO_TRANSMISSION)
 
@@ -71,15 +69,15 @@ def load(stem: str) -> ReferenceFile:
     return ReferenceFile(stem, arrays, metadata)
 
 
-def stems(directory: str) -> list[str]:
-    """All reference file stems in a sub-directory, sorted."""
+def reference_files_in(directory: str) -> list[str]:
+    """All reference files in a sub-directory, sorted."""
     return sorted(
         f"{directory}/{path.stem}" for path in (REFERENCE_DIR / directory).glob("*.npz")
     )
 
 
 def pychop_reference_files() -> list[str]:
-    return stems("pychop")
+    return reference_files_in("pychop")
 
 
 # ----------------------------------------------------------------------------------------------
@@ -180,13 +178,7 @@ KNOWN_DISCREPANCIES = (
 def known_discrepancy_marks(
     ref: ReferenceFile, case_index: int, scope: str
 ) -> list[pytest.MarkDecorator]:
-    """Strict xfail marks for case ``case_index`` of ``ref`` in tests of kind ``scope``.
-
-    Setting the environment variable ``RESINS_IGNORE_KNOWN_DISCREPANCIES`` removes all marks, to
-    see which cases really fail.
-    """
-    if os.environ.get("RESINS_IGNORE_KNOWN_DISCREPANCIES"):
-        return []
+    """Strict xfail marks for case ``case_index`` of ``ref`` in tests of kind ``scope``."""
     return [
         pytest.mark.xfail(strict=True, reason=discrepancy.reason)
         for discrepancy in KNOWN_DISCREPANCIES
