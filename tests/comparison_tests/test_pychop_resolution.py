@@ -20,6 +20,7 @@ from .reference import (
     REJECTED_EI,
     REJECTED_FREQUENCY,
     VALUE,
+    ReferenceFile,
     case_params,
     pychop_reference_files,
     resolve,
@@ -28,7 +29,7 @@ from .reference import (
 SIGMA2FWHM = 2 * np.sqrt(2 * np.log(2))
 
 
-def get_model(ref, case_index: int):
+def get_model(ref: ReferenceFile, case_index: int):
     """Build the resins model for case ``case_index`` of ``ref`` through the public API."""
     case = ref.cases[case_index]
     instrument = Instrument.from_default(ref.instrument)
@@ -48,7 +49,7 @@ def get_model(ref, case_index: int):
         outcomes=(VALUE,),
     ),
 )
-def test_resolution(param):
+def test_resolution(param: tuple[str, int]) -> None:
     ref, case_index = resolve(param)
     case = ref.cases[case_index]
     model = get_model(ref, case_index)
@@ -79,7 +80,7 @@ def test_resolution(param):
         outcomes=(NO_TRANSMISSION,),
     ),
 )
-def test_no_transmission(param):
+def test_no_transmission(param: tuple[str, int]) -> None:
     ref, case_index = resolve(param)
     with pytest.raises(NoTransmissionError):
         get_model(ref, case_index)
@@ -93,7 +94,7 @@ def test_no_transmission(param):
         outcomes=(REJECTED_EI, REJECTED_FREQUENCY),
     ),
 )
-def test_rejected_input(param):
+def test_rejected_input(param: tuple[str, int]) -> None:
     ref, case_index = resolve(param)
     # The reason column is "<side>:<setting>"; the setting is named in the error message.
     setting = str(ref.cases[case_index]["reason"]).split(":", 1)[1]
