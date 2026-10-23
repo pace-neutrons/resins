@@ -42,6 +42,7 @@ def test_case_ids_are_unique(stem):
 @pytest.mark.parametrize("stem", ALL_STEMS)
 def test_cases_are_unique(stem):
     ref = load(stem)
+    assert ref.cases.dtype.names is not None
     names = [name for name in ref.cases.dtype.names if name not in ("outcome", "reason")]
     keys = [tuple(case[name].item() for name in names) for case in ref.cases]
     assert len(set(keys)) == len(keys)
