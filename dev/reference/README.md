@@ -125,8 +125,7 @@ Then:
 **A new configuration (e.g. a chopper package) of an instrument that is
 already compared**: add it to the resins YAML, make sure PyChop knows it (or give
 the PyChop name in `configuration_map` of the instrument's `config.yaml` entry),
-and run `pixi run update`. Without this step `test_reference_coverage.py` fails
-and names the missing configuration.
+and run `pixi run update`.
 
 **A new PyChop instrument or model version**: add an entry to `pychop:` in
 `config.yaml`:
@@ -143,8 +142,7 @@ and names the missing configuration.
 Choose the environment by checking which Mantid version holds the PyChop data
 that the resins model was built from. A model version that needs a Mantid
 version no environment has needs a new environment first (section 6). Then run
-`pixi run update`, and extend `test_reference_coverage.py` only if the model needs
-special handling.
+`pixi run update`.
 
 **A new Abins comparison**: extend `scripts/generate_abins.py` and
 `tests/comparison_tests/test_abins_models.py`; the `abins:` section of

@@ -11,10 +11,8 @@ check, refresh or extend it.
 
 | Test file | Compares |
 |---|---|
-| `test_pychop_components.py` | Each PyChop component (moderator, chopper, detector, sample, geometry, chop times) |
 | `test_pychop_resolution.py` | PyChop resolution, no-transmission and rejected-input outcomes through the public API |
 | `test_abins_models.py` | Abins PyChop wrapper (MAPS, MARI, MERLIN), PANTHER, TOSCA and Lagrange |
-| `test_reference_coverage.py` | Reference data covers every model version and configuration, and follows the sampling rules |
 | `test_reference_cases.py` | The parametrization helpers in `reference.py` |
 
 Known disagreements with the reference are strict expected failures, listed in
