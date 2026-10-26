@@ -81,7 +81,9 @@ def abins_pychop_sigma(
     return to_meV(abins.calculate_sigma(to_wavenumber(energies)))
 
 
-def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
+def generate_pychop(
+    config: dict, all_cases: dict[str, cases.InstrumentDict], out_dir: Path
+) -> Path:
     n_points = config["sampling"]["n_abins_points"]
     n_resolution_points = config["sampling"]["n_resolution_points"]
     pychop_entries = {

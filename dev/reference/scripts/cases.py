@@ -23,6 +23,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Any, TypedDict
 
 import yaml
 
@@ -67,7 +68,27 @@ class SampledCase:
     frequencies: tuple[int, ...]
 
 
-def load_cases() -> dict:
+class ConfigurationDict(TypedDict, total=False):
+    """Configuration dictionary from ``cases.yaml``."""
+
+    edges: list[dict[str, Any]]
+    grid: dict[str, Any]
+    defaults: dict[str, Any]
+    ei_limits: list[float]
+
+
+class InstrumentDict(TypedDict):
+    """Instrument-level dictionary from ``cases.yaml``."""
+
+    grid: dict[str, Any]
+    ei_limits: list[float]
+    defaults: dict[str, float | int]
+    frequency_settings: list[str]
+    allowed_frequencies: dict[str, list[int]]
+    configurations: dict[str, ConfigurationDict]
+
+
+def load_cases() -> dict[str, InstrumentDict]:
     """Load and return the ``cases.yaml`` content."""
     cases_path = Path(__file__).resolve().parents[1] / "cases.yaml"
     return yaml.safe_load(cases_path.read_text())
@@ -86,7 +107,7 @@ def _ei_limit_points(lower: float, upper: float) -> list[float]:
     ]
 
 
-def _frequency_limit_points(values: list[int]) -> list[int]:
+def _frequency_limit_points(values: set[int]) -> list[int]:
     """Integer frequencies just outside the allowed set: above the maximum and off the grid."""
     above = max(values) + 1
     off_grid = min(values) + 1
@@ -104,16 +125,18 @@ class ConfigurationSpec:
     default_ei
         Default incident energy in meV.
     default_frequencies
-        Default frequency for each chopper (1-tuple for single-chopper
-        instruments, 2-tuple for multi-chopper instruments like LET/CNCS).
+        Default frequency for each chopper (one entry per setting in ``frequency_settings``).
     ei_limits
         (min, max) allowed incident energy bounds in meV.
+    allowed_frequencies
+        Allowed discrete frequencies for each chopper setting (one set per setting in
+        ``frequency_settings``).
     """
 
     name: str
     energies: list[float]
     frequency_combinations: list[tuple[int, ...]]
-    frequency_limits: list[list[int]]
+    allowed_frequencies: list[set[int]]
     ei_limits: tuple[float, float]
     default_ei: float
     default_frequencies: tuple[int, ...]
@@ -143,8 +166,8 @@ class ConfigurationSpec:
             add(energy, self.default_frequencies)
 
         # 4. Frequency limits
-        for index, freq_values in enumerate(self.frequency_limits):
-            for frequency in _frequency_limit_points(freq_values):
+        for index, allowed in enumerate(self.allowed_frequencies):
+            for frequency in _frequency_limit_points(allowed):
                 perturbed = list(self.default_frequencies)
                 perturbed[index] = frequency
                 add(self.default_ei, tuple(perturbed))
@@ -163,10 +186,8 @@ class ConfigurationSpec:
             return Outcome.REJECTED_EI, "e_init"
 
         for allowed, setting, frequency in zip(
-                self.frequency_limits, self.frequency_settings, frequencies, strict=True,
+            self.allowed_frequencies, self.frequency_settings, frequencies, strict=True,
         ):
-            if allowed is None:
-                continue
             if frequency not in allowed:
                 return Outcome.REJECTED_FREQUENCY, setting
 
@@ -183,24 +204,21 @@ class InstrumentSpec:
     default_frequencies: tuple[int, ...]
     grid_energies: list[float]
     frequency_combinations: list[tuple[int, ...]]
-    frequency_limits: list[list[int]]
+    allowed_frequencies: list[set[int]]
     configurations: dict[str, dict]
 
     @classmethod
-    def from_dict(cls, data: dict) -> InstrumentSpec:
+    def from_dict(cls, data: InstrumentDict) -> InstrumentSpec:
         settings = data["frequency_settings"]
         grid = data["grid"]
         defaults = data["defaults"]
+        raw_allowed = data["allowed_frequencies"]
+        allowed = [set(raw_allowed[s]) for s in settings]
 
         if "frequencies" in grid:
             combinations = [tuple(int(f) for f in p) for p in grid["frequencies"]]
-            limits = [
-                sorted({p[i] for p in grid["frequencies"]})
-                for i in range(len(settings))
-            ]
         else:
             combinations = [(int(f),) for f in grid[settings[0]]]
-            limits = [grid[settings[0]]]
 
         return cls(
             frequency_settings=settings,
@@ -209,7 +227,7 @@ class InstrumentSpec:
             default_frequencies=tuple(int(defaults[s]) for s in settings),
             grid_energies=[float(e) for e in grid["e_init"]],
             frequency_combinations=combinations,
-            frequency_limits=limits,
+            allowed_frequencies=allowed,
             configurations=data["configurations"],
         )
 
@@ -234,7 +252,7 @@ class InstrumentSpec:
                 name=name,
                 energies=energies,
                 frequency_combinations=self.frequency_combinations,
-                frequency_limits=self.frequency_limits,
+                allowed_frequencies=self.allowed_frequencies,
                 ei_limits=ei_limits,
                 default_ei=default_ei,
                 default_frequencies=self.default_frequencies,
@@ -242,6 +260,7 @@ class InstrumentSpec:
                 frequency_settings=self.frequency_settings,
             )
         return specs
+
 
     def _parse_edge_points(
         self, raw_edges: list[dict]

@@ -47,6 +47,8 @@ ARCS_PyChop_fit_v1:
     chopper_frequency: 300
   frequency_settings:
   - chopper_frequency
+  allowed_frequencies:
+    chopper_frequency: [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]
   configurations:
     ARCS-100-1.5-AST:
       edges:
@@ -306,6 +308,8 @@ ARCS_PyChop_fit_v2:
     chopper_frequency: 300
   frequency_settings:
   - chopper_frequency
+  allowed_frequencies:
+    chopper_frequency: [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]
   configurations:
     ARCS-100-1.5-AST:
       edges:
@@ -562,6 +566,9 @@ CNCS_PyChop_fit_v1:
   frequency_settings:
   - resolution_disk_frequency
   - fermi_frequency
+  allowed_frequencies:
+    resolution_disk_frequency: [60, 120, 180, 240, 300]
+    fermi_frequency: [60, 120, 180, 240, 300]
   configurations:
     High Flux: {}
     High Resolution: {}
@@ -591,6 +598,8 @@ HYSPEC_PyChop_fit_v1:
     chopper_frequency: 180
   frequency_settings:
   - chopper_frequency
+  allowed_frequencies:
+    chopper_frequency: [60, 120, 180, 240, 300, 360, 420]
   configurations:
     OnlyOne: {}
 LET_PyChop_fit_v1:
@@ -643,6 +652,9 @@ LET_PyChop_fit_v1:
   frequency_settings:
   - resolution_frequency
   - pulse_remover_frequency
+  allowed_frequencies:
+    resolution_frequency: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300]
+    pulse_remover_frequency: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300]
   configurations:
     High Flux: {}
     High Resolution: {}
@@ -677,6 +689,8 @@ MAPS_PyChop_fit_v1:
     chopper_frequency: 400
   frequency_settings:
   - chopper_frequency
+  allowed_frequencies:
+    chopper_frequency: [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600]
   configurations:
     A:
       edges:
@@ -798,6 +812,8 @@ MARI_PyChop_fit_v1:
     chopper_frequency: 400
   frequency_settings:
   - chopper_frequency
+  allowed_frequencies:
+    chopper_frequency: [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600]
   configurations:
     A:
       edges:
@@ -1130,6 +1146,8 @@ MERLIN_PyChop_fit_v1:
     chopper_frequency: 400
   frequency_settings:
   - chopper_frequency
+  allowed_frequencies:
+    chopper_frequency: [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600]
   configurations:
     G:
       edges:
@@ -1216,6 +1234,8 @@ SEQUOIA_PyChop_fit_v1:
     chopper_frequency: 420
   frequency_settings:
   - chopper_frequency
+  allowed_frequencies:
+    chopper_frequency: [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]
   configurations:
     ARCS-100-1.5-AST:
       edges:
@@ -1515,6 +1535,8 @@ SEQUOIA_PyChop_fit_v2:
     chopper_frequency: 420
   frequency_settings:
   - chopper_frequency
+  allowed_frequencies:
+    chopper_frequency: [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]
   configurations:
     ARCS-100-1.5-AST:
       edges:

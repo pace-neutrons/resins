@@ -177,7 +177,12 @@ def build_arrays(
     return {"cases": cases_arr, "resolution": resolution}
 
 
-def generate_entry(entry: dict, config: dict, all_cases: dict, out_dir: Path) -> Path:
+def generate_entry(
+    entry: dict,
+    config: dict,
+    all_cases: dict[str, cases.InstrumentDict],
+    out_dir: Path,
+) -> Path:
     n_points = config["sampling"]["n_resolution_points"]
     freq_settings = entry["frequency_settings"]
     config_map = entry.get("configuration_map", {})
