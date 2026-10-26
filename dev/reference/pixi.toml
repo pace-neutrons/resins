@@ -9,14 +9,12 @@ numpy = "*"
 pyyaml = "*"
 
 [feature.mantid611]
-platforms = ["linux-64"]
+platforms = ["linux-64", "win-64"]
 
 [feature.mantid611.dependencies]
-python = "3.10.*"
 mantid = "6.11.*"
 
 [feature.mantid615.dependencies]
-python = "3.11.*"
 mantid = "6.15.*"
 
 [environments]

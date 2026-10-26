@@ -169,8 +169,8 @@ KNOWN_DISCREPANCIES = (
         scopes=frozenset({"abins"}),
         applies=_lagrange_cu220_window,
         reason="AbINS_v1 Cu(220) differs from Abins from 25 meV up to the point where the "
-        "polynomial reaches the 0.8 meV floor (about 34.5 meV); fixed by AbINS_v2 "
-        "(change resins-lagrange-abins-v2)",
+        "polynomial reaches the 0.8 meV floor (about 34.5 meV); to be resolved by "
+        "implementing AbINS_v2 to match Mantid 6.15+",
     ),
 )
 

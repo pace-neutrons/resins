@@ -156,37 +156,33 @@ Environments are pinned to explicit Mantid minor versions; there is no floating
 
    ```toml
    [feature.mantid616.dependencies]
-   python = "3.12.*"
    mantid = "6.16.*"
 
    [environments]
    mantid616 = { features = ["mantid616"], no-default-feature = false }
    ```
 
-   and `pixi install -e mantid616`. The `mantid` conda package fixes the Python
-   and numpy versions; check them with `pixi search mantid`, and set `python` to
-   match. If entries of `config.yaml` will use the new environment, it also needs
-   a `generate-mantid616` task (in `[feature.mantid616.tasks]`, like
-   `generate-mantid615`) and a line for it in the `generate` task's `depends-on`.
+   and `pixi install -e mantid616` (Pixi automatically resolves the required
+   Python version from Mantid's package metadata). If entries of `config.yaml`
+   will use the new environment, it also needs a `generate-mantid616` task (in
+   `[feature.mantid616.tasks]`, like `generate-mantid615`) and a line for it in the
+   `generate` task's `depends-on`.
 
 2. To see what the new release changes, temporarily point the entries of
    interest in `config.yaml` at the new environment, then run `pixi run generate`
    and `pixi run compare`. The report names every case that differs.
 
-3. Decide for each differing instrument:
+3. If upstream calculations changed:
+   ResINS models are versioned so that historical calculations remain reproducible;
+   existing model versions must never be silently mutated. Instead:
+   - Add a new model version to the resins YAML (for example `PyChop_fit_v2` of ARCS);
+   - Keep the old model version pinned to its historical environment in `config.yaml`;
+   - Add an entry in `config.yaml` for the new model version using the new environment;
+   - Run `pixi run update` to generate and install the new reference data.
 
-   - *the older resins model is simply out of date*: repoint its entry in
-     `config.yaml` to the new environment and regenerate. The resins YAML
-     parameters must then be updated to match, which is a separate change to the
-     library;
-   - *both the old and the new behaviour deserve a model version*: add a new resins
-     model version to the YAML (like `PyChop_fit_v2` of ARCS), keep the old entry
-     on its environment, and add a new entry for the new version (section 5).
-
-4. Run `pixi run update` and follow section 4.
-
-5. When no entry refers to the old environment any more, remove it from
-   `pixi.toml` and run `pixi lock`.
+4. If an older model version is eventually deprecated and removed from the resins
+   library, its entry can be removed from `config.yaml` and its environment dropped
+   from `pixi.toml` and `pixi.lock`.
 
 ## 7. Known discrepancies
 
@@ -198,7 +194,7 @@ failures: if one starts passing, the suite fails until the entry is removed.
 | Reference | Affected cases | Reason | Follow-up |
 |---|---|---|---|
 | `pychop/ARCS_PyChop_fit_v2` | `ARCS-700-1.5-SMI`, value cases, and 12 no-transmission cases just beyond Mantid's transmission edge | Mantid has `pslit: 1.` mm, resins 1.5 mm | Raise with Mantid/SNS; update the resins YAML or the reference, then drop the entry |
-| `abins/lagrange` | Cu(220), 25 meV <= E < 34.5 meV | `AbINS_v1` has a cutoff where Abins has a 0.8 meV floor | Removed by change `resins-lagrange-abins-v2` |
+| `abins/lagrange` | Cu(220), 25 meV <= E < 34.5 meV | `AbINS_v1` has a cutoff where Abins has a 0.8 meV floor | Implement `AbINS_v2` to match Mantid 6.15+ |
 
 If regenerating with different sampling moves the 12 no-transmission points,
 re-derive them: run `pytest --runxfail -n auto
