@@ -53,10 +53,6 @@ class Outcome(str, Enum):
     def from_index(cls, index: int) -> Outcome:
         return _INDEX_TO_OUTCOME[index]
 
-    @classmethod
-    def from_code(cls, code: int) -> Outcome:
-        return cls.from_index(code)
-
 
 _INDEX_TO_OUTCOME = tuple(Outcome)
 _OUTCOME_TO_INDEX = {outcome: i for i, outcome in enumerate(_INDEX_TO_OUTCOME)}
@@ -272,47 +268,3 @@ class InstrumentSpec:
         return points
 
 
-def _parse_configuration_specs(entry: dict) -> list[ConfigurationSpec]:
-    """Resolve base grids and configuration overrides into ConfigurationSpec instances."""
-    return list(InstrumentSpec.from_dict(entry).parse_configurations().values())
-
-
-def expand_entry(entry: dict) -> dict[str, list[SampledCase]]:
-    """Expand one instrument-model entry from ``cases.yaml`` into cases per configuration.
-
-    Returns a dict mapping configuration name to a list of :class:`SampledCase`, without
-    duplicates, in a deterministic order.
-    """
-    return {
-        name: spec.expand()
-        for name, spec in InstrumentSpec.from_dict(entry).parse_configurations().items()
-    }
-
-
-def configuration_names(entry: dict) -> list[str]:
-    """All configuration names declared for an entry."""
-    return sorted(entry.get("configurations", {}))
-
-
-def check_restrictions(
-    ei_limits: tuple[float, float],
-    frequency_values: list[list[int] | None],
-    frequency_settings: list[str],
-    e_init: float,
-    frequencies: list[int],
-) -> tuple[Outcome, str] | None:
-    """Apply restriction rules, returning ``(outcome, setting)`` on rejection.
-
-    ``e_init`` is checked first, then each frequency against its list of allowed values.
-    ``setting`` is the name of the offending resins setting.
-    """
-    if not (ei_limits[0] <= e_init <= ei_limits[1]):
-        return Outcome.REJECTED_EI, "e_init"
-
-    for allowed, setting, frequency in zip(
-        frequency_values, frequency_settings, frequencies
-    ):
-        if allowed is not None and frequency not in allowed:
-            return Outcome.REJECTED_FREQUENCY, setting
-
-    return None
