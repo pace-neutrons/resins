@@ -97,7 +97,7 @@ def generate_pychop(config: dict, all_cases: dict, out_dir: Path) -> Path:
 
         # Load and parse cases from cases.yaml
         key = f"{entry['instrument']}_{entry['model_version']}"
-        if not key in all_cases:
+        if key not in all_cases:
             print(f"WARNING: no cases.yaml entry for {key}", file=sys.stderr)
             continue
 
