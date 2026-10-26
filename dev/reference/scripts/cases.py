@@ -92,8 +92,8 @@ def _ei_limit_points(lower: float, upper: float) -> list[float]:
 
 def _frequency_limit_points(values: list[int]) -> list[int]:
     """Integer frequencies just outside the allowed set: above the maximum and off the grid."""
-    above = values[-1] + 1
-    off_grid = values[0] + 1
+    above = max(values) + 1
+    off_grid = min(values) + 1
     if above in values or off_grid in values:
         raise ValueError(f"Frequency steps of 1 leave no off-grid probe in {values}")
     return [above, off_grid]
@@ -158,12 +158,16 @@ class ConfigurationSpec:
     def check_restrictions(
         self, e_init: float, frequencies: Sequence[int]
     ) -> tuple[Outcome, str] | None:
-        """Apply restriction rules, returning ``(outcome, setting)`` on rejection."""
+        """Identify invalid e_init or frequencies.
+
+        Return ``(outcome, setting)`` if invalid or ``None`` if there are no issues.
+        """
+
         if not (self.ei_limits[0] <= e_init <= self.ei_limits[1]):
             return Outcome.REJECTED_EI, "e_init"
 
         for allowed, setting, frequency in zip(
-            self.frequency_limits, self.frequency_settings, frequencies
+                self.frequency_limits, self.frequency_settings, frequencies, strict=True,
         ):
             if allowed is None:
                 continue
