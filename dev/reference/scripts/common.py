@@ -10,10 +10,13 @@ import numpy as np
 import yaml
 from cases import Outcome
 
-REFERENCE_DIR = Path(__file__).resolve().parents[1]
+_curr_path = Path(__file__).resolve()
+
+REFERENCE_DIR = _curr_path.parents[1]
 BUILD_DIR = REFERENCE_DIR / "build"
 BUILD_DATA = BUILD_DIR / "reference_data"
-REPO_ROOT = Path(__file__).resolve().parents[3]
+
+REPO_ROOT = _curr_path.parents[3]
 COMMITTED_DATA = REPO_ROOT / "tests/reference_data"
 
 GENERATOR_VERSION = 1
