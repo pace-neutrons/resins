@@ -78,6 +78,9 @@ resins = ["instrument_data/*.yaml"]
 # dev/ holds developer scripts (their tests need the dev extra) and dev/reference/ has its own
 # environment; the routine suite is tests/.
 testpaths = ["tests"]
+# An empty parametrize set (e.g. a loader that finds no data files) fails collection
+# instead of silently skipping.
+empty_parameter_set_mark = "fail_at_collect"
 
 [tool.ruff]
 line-length = 88
