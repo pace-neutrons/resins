@@ -66,10 +66,8 @@ pixi run -e mantid611 python -c "import mantid, pychop; print(mantid.__version__
 pixi run -e mantid615 python -c "import mantid, pychop; print(mantid.__version__)"   # 6.15.0
 ```
 
-Supported platforms are `linux-64` and `osx-arm64`. The `mantid611`
-environment exists only on `linux-64`, because Mantid 6.11 was not published
-for `osx-arm64`. The two files that need it (ARCS and SEQUOIA
-`PyChop_fit_v1`) can therefore only be regenerated on Linux.
+Mantid 6.11 is not available for ARM macOS (`osx-arm64`), so the two files
+requiring it (ARCS and SEQUOIA `PyChop_fit_v1`) cannot be regenerated there.
 
 List the available commands with `pixi task list`, or `pixi task list -e mantid615`
 for the environment-specific ones.
@@ -219,10 +217,10 @@ Two other differences are deliberate, not discrepancies:
 
 ## 8. Troubleshooting
 
-- *`pixi install` fails to solve `mantid611` on macOS*: Mantid 6.11 was not
-  published for `osx-arm64`. The `mantid611` environment is Linux-only, so
-  `pixi run generate` and `pixi run validate` need Linux (or the manual GitHub
-  workflow). On macOS, `pixi run -e mantid615 generate-mantid615` works.
+- *`pixi install` fails to solve `mantid611` on ARM macOS*: Mantid 6.11 was not
+  published for `osx-arm64`. On Apple Silicon, regenerate those files using
+  the manual GitHub workflow or on Linux (or run
+  `pixi run -e mantid615 generate-mantid615` for the Mantid 6.15 models).
 - *Solver or lock errors for old Mantid versions*: do not run `pixi update` or edit
   `pixi.lock` by hand. `pixi.lock` pins exact builds; use `pixi install --locked` to
   fail instead of re-solving. If the `mantid` channel drops a package, the committed
