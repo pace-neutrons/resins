@@ -181,8 +181,8 @@ class ConfigurationSpec:
 
         Return ``(outcome, setting)`` if invalid or ``None`` if there are no issues.
         """
-
-        if not (self.ei_limits[0] <= e_init <= self.ei_limits[1]):
+        min_ei, max_ei = self.ei_limits
+        if not (min_ei <= e_init <= max_ei):
             return Outcome.REJECTED_EI, "e_init"
 
         for allowed, setting, frequency in zip(
@@ -215,6 +215,9 @@ class InstrumentSpec:
         raw_allowed = data["allowed_frequencies"]
         allowed = [set(raw_allowed[s]) for s in settings]
 
+        min_ei, max_ei = data["ei_limits"]
+
+        combinations: list[tuple[int, ...]]
         if "frequencies" in grid:
             combinations = [tuple(int(f) for f in p) for p in grid["frequencies"]]
         else:
@@ -222,7 +225,7 @@ class InstrumentSpec:
 
         return cls(
             frequency_settings=settings,
-            ei_limits=(float(data["ei_limits"][0]), float(data["ei_limits"][1])),
+            ei_limits=(float(min_ei), float(max_ei)),
             default_ei=float(defaults["e_init"]),
             default_frequencies=tuple(int(defaults[s]) for s in settings),
             grid_energies=[float(e) for e in grid["e_init"]],
@@ -240,11 +243,11 @@ class InstrumentSpec:
                 if "grid" in cfg and "e_init" in cfg["grid"]
                 else self.grid_energies
             )
-            ei_limits = (
-                (float(cfg["ei_limits"][0]), float(cfg["ei_limits"][1]))
-                if "ei_limits" in cfg
-                else self.ei_limits
-            )
+            if "ei_limits" in cfg:
+                cfg_min, cfg_max = cfg["ei_limits"]
+                ei_limits = (float(cfg_min), float(cfg_max))
+            else:
+                ei_limits = self.ei_limits
             # Override exists for MARI G-chopper which doesn't work at the
             # general default Ei
             default_ei = float(cfg.get("defaults", {}).get("e_init", self.default_ei))
