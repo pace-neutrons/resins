@@ -16,7 +16,10 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Hashable, Sequence
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Generic, TypeVar
 
 import numpy as np
 from cases import Outcome
@@ -30,10 +33,13 @@ MAX_REPORTED_CASES = 5
 
 NOT_KEY_COLUMNS = frozenset({"outcome", "reason"})
 
+CaseKey = tuple[Hashable, ...]
+T = TypeVar("T", bound=Hashable)
+
 
 def case_keys(
     table: NDArray[np.void], exclude: frozenset[str] = NOT_KEY_COLUMNS
-) -> list[tuple[object, ...]]:
+) -> list[CaseKey]:
     """Extract a hashable key tuple for each row in the structured cases table.
 
     The key consists of all independent parameter columns (such as
@@ -49,13 +55,48 @@ def case_keys(
 
     Returns
     -------
-    list[tuple[object, ...]]
+    list[CaseKey]
         List of parameter tuples identifying each case, for example:
         ``[('ARCS-100-1.5-AST', 20.0, 300, 0), ...]``.
     """
     assert table.dtype.names is not None
     key_columns = [name for name in table.dtype.names if name not in exclude]
     return table[key_columns].tolist()
+
+
+@dataclass(frozen=True)
+class KeyAlignment(Generic[T]):
+    """Precomputed partition and index alignment between new and old keys."""
+
+    added: set[T]
+    removed: set[T]
+    common: list[T]
+    new_indices: slice | list[int]
+    old_indices: slice | list[int]
+
+    @classmethod
+    def from_keys(cls, new_keys: Sequence[T], old_keys: Sequence[T]) -> KeyAlignment[T]:
+        """Align two lists of keys into common indices and added/removed sets."""
+        if list(new_keys) == list(old_keys):
+            return cls(
+                added=set(),
+                removed=set(),
+                common=list(new_keys),
+                new_indices=slice(None),
+                old_indices=slice(None),
+            )
+
+        new_index = {key: i for i, key in enumerate(new_keys)}
+        old_index = {key: i for i, key in enumerate(old_keys)}
+        common = [key for key in old_keys if key in new_index]
+
+        return cls(
+            added=set(new_keys) - set(old_keys),
+            removed=set(old_keys) - set(new_keys),
+            common=common,
+            new_indices=[new_index[k] for k in common],
+            old_indices=[old_index[k] for k in common],
+        )
 
 
 def max_deviation(first: np.ndarray, second: np.ndarray) -> tuple[float, float]:
@@ -77,28 +118,17 @@ def compare_aligned(
     name: str,
     new: np.ndarray,
     old: np.ndarray,
-    new_keys: list[tuple[object, ...]],
-    old_keys: list[tuple[object, ...]],
+    alignment: KeyAlignment,
     rtol: float,
     report: list[str],
 ) -> bool:
-    """Compare two value arrays row-wise after aligning on case parameter keys.
+    """Compare two value arrays row-wise using precomputed key alignment."""
+    if not alignment.common:
+        report.append(f"    {name:32s} ** NO COMMON CASES TO COMPARE **")
+        return False
 
-    Case keys are parameter tuples produced by :func:`case_keys`, for example
-    ``('ARCS-100-1.5-AST', 20.0, 300, 0)``. Each row in ``new`` corresponds
-    to the key at the same index in ``new_keys``; likewise for ``old`` and ``old_keys``.
-    Only cases present in both are compared.
-    """
-    if new_keys == old_keys:
-        new_rows, old_rows = new, old
-    else:
-        new_index = {key: i for i, key in enumerate(new_keys)}
-        old_indices = [i for i, key in enumerate(old_keys) if key in new_index]
-        if not old_indices:
-            report.append(f"    {name:32s} ** NO COMMON CASES TO COMPARE **")
-            return False
-        new_indices = [new_index[old_keys[i]] for i in old_indices]
-        new_rows, old_rows = new[new_indices], old[old_indices]
+    new_rows = new[alignment.new_indices]
+    old_rows = old[alignment.old_indices]
 
     nan_mismatches = int(np.sum(np.isnan(new_rows) != np.isnan(old_rows)))
     rel, absolute = max_deviation(new_rows, old_rows)
@@ -111,24 +141,23 @@ def compare_aligned(
 
 
 def _report_added_removed(
-    new_keys: list[tuple[object, ...]],
-    old_keys: list[tuple[object, ...]],
+    added: set,
+    removed: set,
+    kind: str,
     report: list[str],
 ) -> bool:
-    """Report added and removed cases. Returns True if case sets match."""
-    added = set(new_keys) - set(old_keys)
-    removed = set(old_keys) - set(new_keys)
+    """Report added and removed items. Returns True if sets match."""
     if not (added or removed):
         return True
 
-    report.append(f"    cases added: {len(added)}, removed: {len(removed)}")
-    for key in sorted(added, key=str)[:MAX_REPORTED_CASES]:
-        report.append(f"      + {key}")
+    report.append(f"    {kind} added: {len(added)}, removed: {len(removed)}")
+    for item in sorted(added, key=str)[:MAX_REPORTED_CASES]:
+        report.append(f"      + {item}")
     if len(added) > MAX_REPORTED_CASES:
         report.append("      ...")
 
-    for key in sorted(removed, key=str)[:MAX_REPORTED_CASES]:
-        report.append(f"      - {key}")
+    for item in sorted(removed, key=str)[:MAX_REPORTED_CASES]:
+        report.append(f"      - {item}")
     if len(removed) > MAX_REPORTED_CASES:
         report.append("      ...")
 
@@ -138,29 +167,27 @@ def _report_added_removed(
 def _report_outcome_flips(
     new_cases: np.ndarray,
     old_cases: np.ndarray,
-    new_keys: list[tuple[object, ...]],
-    old_keys: list[tuple[object, ...]],
+    alignment: KeyAlignment,
     report: list[str],
 ) -> bool:
     """Report outcome changes for shared cases. Returns True if all outcomes match."""
-    old_index = {k: i for i, k in enumerate(old_keys)}
-    flips = [
-        (
-            k,
-            Outcome.from_index(old_cases["outcome"][old_index[k]]),
-            Outcome.from_index(new_cases["outcome"][new_i]),
-        )
-        for new_i, k in enumerate(new_keys)
-        if k in old_index
-        and old_cases["outcome"][old_index[k]] != new_cases["outcome"][new_i]
-    ]
-    if not flips:
+    if not alignment.common:
         return True
 
-    report.append(f"    outcome flips: {len(flips)}")
-    for key, was, now in flips[:MAX_REPORTED_CASES]:
+    new_outcomes = new_cases["outcome"][alignment.new_indices]
+    old_outcomes = old_cases["outcome"][alignment.old_indices]
+    differ = new_outcomes != old_outcomes
+    if not np.any(differ):
+        return True
+
+    diff_indices = np.flatnonzero(differ)
+    report.append(f"    outcome flips: {len(diff_indices)}")
+    for i in diff_indices[:MAX_REPORTED_CASES]:
+        key = alignment.common[i]
+        was = Outcome.from_index(int(old_outcomes[i]))
+        now = Outcome.from_index(int(new_outcomes[i]))
         report.append(f"      {key}: {was} -> {now}")
-    if len(flips) > MAX_REPORTED_CASES:
+    if len(diff_indices) > MAX_REPORTED_CASES:
         report.append("      ...")
 
     return False
@@ -181,24 +208,23 @@ def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, lis
     """Compare one pair of .npz reference files, returning (ok, report_lines)."""
     new, new_meta = load_npz(new_path)
     old, old_meta = load_npz(old_path)
-    new_keys, old_keys = case_keys(new["cases"]), case_keys(old["cases"])
+    cases_alignment = KeyAlignment.from_keys(
+        case_keys(new["cases"]), case_keys(old["cases"])
+    )
+    arrays_alignment = KeyAlignment.from_keys(list(new), list(old))
 
     report: list[str] = []
     ok = True
 
-    ok &= _report_added_removed(new_keys, old_keys, report)
-    ok &= _report_outcome_flips(new["cases"], old["cases"], new_keys, old_keys, report)
+    ok &= _report_added_removed(
+        cases_alignment.added, cases_alignment.removed, "cases", report
+    )
+    ok &= _report_outcome_flips(new["cases"], old["cases"], cases_alignment, report)
+    ok &= _report_added_removed(
+        arrays_alignment.added, arrays_alignment.removed, "arrays", report
+    )
 
-    added_arrays = set(new) - set(old)
-    removed_arrays = set(old) - set(new)
-    if added_arrays or removed_arrays:
-        ok = False
-        for name in sorted(added_arrays):
-            report.append(f"    array added: {name}")
-        for name in sorted(removed_arrays):
-            report.append(f"    array removed: {name}")
-
-    for name in sorted(set(new) & set(old)):
+    for name in sorted(arrays_alignment.common):
         if name != "cases" and new[name].dtype.kind == "f":
             if new[name].shape[1:] != old[name].shape[1:]:
                 ok = False
@@ -207,7 +233,7 @@ def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, lis
                 )
             else:
                 ok &= compare_aligned(
-                    name, new[name], old[name], new_keys, old_keys, rtol, report
+                    name, new[name], old[name], cases_alignment, rtol, report
                 )
 
     _report_metadata_changes(new_meta, old_meta, report)
