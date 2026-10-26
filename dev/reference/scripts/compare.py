@@ -21,6 +21,7 @@ from pathlib import Path
 import numpy as np
 from cases import Outcome
 from common import BUILD_DATA, COMMITTED_DATA, load_config, load_npz
+from numpy.typing import NDArray
 from summary import data_files, print_size
 
 RTOL = 1e-7
@@ -31,7 +32,7 @@ NOT_KEY_COLUMNS = frozenset({"outcome", "reason"})
 
 
 def case_keys(
-    table: np.ndarray, exclude: frozenset[str] = NOT_KEY_COLUMNS
+    table: NDArray[np.void], exclude: frozenset[str] = NOT_KEY_COLUMNS
 ) -> list[tuple[object, ...]]:
     """Extract a hashable key tuple for each row in the structured cases table.
 
@@ -52,6 +53,7 @@ def case_keys(
         List of parameter tuples identifying each case, for example:
         ``[('ARCS-100-1.5-AST', 20.0, 300, 0), ...]``.
     """
+    assert table.dtype.names is not None
     key_columns = [name for name in table.dtype.names if name not in exclude]
     return table[key_columns].tolist()
 

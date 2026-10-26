@@ -205,7 +205,7 @@ class InstrumentSpec:
     grid_energies: list[float]
     frequency_combinations: list[tuple[int, ...]]
     allowed_frequencies: list[set[int]]
-    configurations: dict[str, dict]
+    configurations: dict[str, ConfigurationDict]
 
     @classmethod
     def from_dict(cls, data: InstrumentDict) -> InstrumentSpec:
@@ -222,7 +222,7 @@ class InstrumentSpec:
 
         return cls(
             frequency_settings=settings,
-            ei_limits=tuple(float(e) for e in data["ei_limits"]),
+            ei_limits=(float(data["ei_limits"][0]), float(data["ei_limits"][1])),
             default_ei=float(defaults["e_init"]),
             default_frequencies=tuple(int(defaults[s]) for s in settings),
             grid_energies=[float(e) for e in grid["e_init"]],
@@ -241,7 +241,7 @@ class InstrumentSpec:
                 else self.grid_energies
             )
             ei_limits = (
-                tuple(float(e) for e in cfg["ei_limits"])
+                (float(cfg["ei_limits"][0]), float(cfg["ei_limits"][1]))
                 if "ei_limits" in cfg
                 else self.ei_limits
             )
