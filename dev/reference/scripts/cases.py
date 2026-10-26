@@ -264,7 +264,7 @@ class InstrumentSpec:
         points = []
         for edge in raw_edges:
             freqs = tuple(int(edge[k]) for k in self.frequency_settings)
-            points.extend([(float(energy), freqs) for energy in edge["e_init"]])
+            points.extend((float(energy), freqs) for energy in edge["e_init"])
         return points
 
 
