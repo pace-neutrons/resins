@@ -31,7 +31,7 @@ from abins.instruments.pychop import PyChopInstrument
 from abins.instruments.toscainstrument import ToscaInstrument
 from cases import Outcome
 from common import BUILD_DATA, load_config, make_metadata, save_npz
-from generate_pychop import PyChopEvaluator, classify_cases
+from generate_pychop import CaseOutcome, PyChopEvaluator, assign_outcomes
 
 ABINS_PYCHOP_DTYPE = np.dtype(
     [
@@ -55,6 +55,11 @@ INDIRECT_DTYPE = np.dtype(
 
 VALUE = int(Outcome.VALUE)
 NO_TRANSMISSION = int(Outcome.NO_TRANSMISSION)
+
+# One Abins-PyChop row: (instrument, case, outcome, reason, sigma in meV).
+SigmaRow = tuple[str, cases.SampledCase, Outcome, str, np.ndarray]
+# One indirect-geometry row: (configuration, energy_transfer, outcome code, reason).
+IndirectRow = tuple[str, float, int, str]
 
 
 def to_meV(wavenumber):
@@ -91,7 +96,7 @@ def generate_pychop(
         for entry in config["pychop"]
     }
 
-    rows = []
+    sigma_rows: list[SigmaRow] = []
     notes: Counter = Counter()
     for item in config["abins"]["pychop"]:
         entry = pychop_entries[(item["instrument"], item["model_version"])]
@@ -123,7 +128,8 @@ def generate_pychop(
             for name in config_specs
         }
 
-        classified, entry_notes = classify_cases(entry, config_specs, evaluators)
+        case_outcomes: list[CaseOutcome]
+        case_outcomes, entry_notes = assign_outcomes(entry, config_specs, evaluators)
         notes.update(entry_notes)
 
         abins_instruments = {
@@ -132,7 +138,7 @@ def generate_pychop(
             )
             for name in config_specs
         }
-        for case, outcome, reason in classified:
+        for case, outcome, reason in case_outcomes:
             # Abins applies no restrictions of its own; only cases PyChop evaluates are compared.
             if outcome not in (Outcome.VALUE, Outcome.NO_TRANSMISSION):
                 continue
@@ -144,11 +150,11 @@ def generate_pychop(
                     case.frequencies[0],
                     n_points,
                 )
-            rows.append((entry["instrument"], case, outcome, reason, sigma))
+            sigma_rows.append((entry["instrument"], case, outcome, reason, sigma))
 
-    cases_arr = np.zeros(len(rows), dtype=ABINS_PYCHOP_DTYPE)
-    sigma = np.full((len(rows), n_points), np.nan)
-    for i, (instrument, case, outcome, reason, row_sigma) in enumerate(rows):
+    cases_arr = np.zeros(len(sigma_rows), dtype=ABINS_PYCHOP_DTYPE)
+    sigma = np.full((len(sigma_rows), n_points), np.nan)
+    for i, (instrument, case, outcome, reason, row_sigma) in enumerate(sigma_rows):
         cases_arr[i] = (
             instrument,
             case.configuration,
@@ -222,13 +228,13 @@ def generate_lagrange(config: dict, out_dir: Path) -> Path:
     energies = np.unique(
         np.concatenate([arange_from(spec["coarse"]), arange_from(spec["dense"])])
     )
-    rows = []
+    lagrange_rows: list[IndirectRow] = []
     sigma = []
     for monochromator in config["abins"]["lagrange_monochromators"]:
         instrument = LagrangeInstrument(setting=f"{monochromator} (Lagrange)")
         values = to_meV(instrument.get_sigma(to_wavenumber(energies)))
         for energy, value in zip(energies, values):
-            rows.append((monochromator, energy, VALUE, ""))
+            lagrange_rows.append((monochromator, energy, VALUE, ""))
             sigma.append(value)
 
     metadata = make_metadata(
@@ -238,7 +244,10 @@ def generate_lagrange(config: dict, out_dir: Path) -> Path:
     )
     return write(
         out_dir / "abins/lagrange.npz",
-        {"cases": np.array(rows, dtype=INDIRECT_DTYPE), "sigma": np.array(sigma)},
+        {
+            "cases": np.array(lagrange_rows, dtype=INDIRECT_DTYPE),
+            "sigma": np.array(sigma),
+        },
         metadata,
     )
 

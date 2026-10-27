@@ -33,6 +33,11 @@ from pychop.Instruments import Instrument
 
 MAX_FREQUENCIES = 2
 
+# One row per sampled case, before any resolution values are computed:
+# (case, outcome, reason), where reason names the restricting setting for
+# rejected cases and is empty otherwise.
+CaseOutcome = tuple[cases.SampledCase, Outcome, str]
+
 
 class PyChopEvaluator:
     """Thin wrapper over a PyChop Instrument for one chopper configuration.
@@ -93,17 +98,27 @@ class PyChopEvaluator:
         return True
 
 
-def classify_cases(
+def assign_outcomes(
     entry: dict,
     config_specs: dict[str, cases.ConfigurationSpec],
     evaluators: dict[str, PyChopEvaluator],
-) -> tuple[list[tuple], Counter]:
-    """Assign an outcome to every sampled case.
+) -> tuple[list[CaseOutcome], Counter]:
+    """Assign an outcome to every sampled case of one instrument entry.
 
-    Returns rows ``(case, outcome, reason)`` and a counter of PyChop/resins disagreements.
+    The resins restrictions are applied first, so cases they reject never reach
+    PyChop. Cases accepted by resins are passed to PyChop, whose metamodel
+    result decides between ``VALUE`` and ``NO_TRANSMISSION``.
+
+    Returns
+    -------
+    tuple[list[CaseOutcome], Counter]
+        One ``(case, outcome, reason)`` row per sampled case (reflecting the
+        full sampled grid, including rejected cases), and a counter of cases
+        where PyChop and resins disagree, keyed by a description of the
+        disagreement. The counter is stored as the ``notes`` metadata field.
     """
     freq_settings = entry["frequency_settings"]
-    rows = []
+    rows: list[CaseOutcome] = []
     notes: Counter = Counter()
 
     for name, spec in config_specs.items():
@@ -149,7 +164,7 @@ def classify_cases(
 def build_arrays(
     entry: dict,
     evaluators: dict[str, PyChopEvaluator],
-    rows: list[tuple],
+    rows: list[CaseOutcome],
     n_points: int,
 ) -> dict[str, np.ndarray]:
     n_cases = len(rows)
@@ -206,7 +221,7 @@ def generate_entry(
         for name in config_specs
     }
 
-    rows, notes = classify_cases(entry, config_specs, evaluators)
+    rows, notes = assign_outcomes(entry, config_specs, evaluators)
     arrays = build_arrays(entry, evaluators, rows, n_points)
 
     metadata = make_metadata(
