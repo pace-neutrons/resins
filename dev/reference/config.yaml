@@ -1,0 +1,129 @@
+# Configuration of the reference data generators.
+#
+# Which (instrument, resins model version) pairs are compared, which Mantid
+# environment (see pixi.toml) produces each reference file, and how cases are
+# sampled. Configurations and restrictions are read from
+# src/resins/instrument_data/*.yaml, so they are not repeated here.
+
+sampling:
+  # Coarse regular energy grid: n_ei geometric points between
+  # max(lower limit, ei_floor_ratio * upper limit) and the upper limit.
+  n_ei: 6
+  ei_floor_ratio: 0.005
+  # Transmission edge search: log-spaced scan, bisection to a relative
+  # precision of edge_bisect_rtol, then one point on each side of the edge at
+  # a relative offset of edge_delta.
+  edge_scan_points: 200
+  edge_bisect_rtol: 1.0e-7
+  edge_delta: 1.0e-3
+  # Relative offset used for points just inside / outside the Ei and
+  # frequency limits.
+  limit_delta: 1.0e-3
+  # Number of energy transfers (0 <= E < Ei) at which PyChop resolutions are
+  # stored, matching resins' coarse grid.
+  n_resolution_points: 40
+  # Number of energy transfers (0 <= E <= Ei) at which Abins sigma is stored.
+  n_abins_points: 41
+
+# Size budget for the whole of tests/reference_data (megabytes).
+max_total_size_mb: 5.0
+
+# PyChop references: one file per entry,
+# tests/reference_data/pychop/<instrument>_<model_version>.npz
+#
+#   environment         pixi environment (Mantid version) that generates it
+#   pychop_name         instrument name in Mantid's bundled pychop
+#   frequency_settings  resins setting names of the user-controlled chopper
+#                       frequencies, in the order passed to PyChop
+#   sampling            optional overrides of the sampling parameters
+#   configuration_map   resins configuration name -> PyChop chopper name,
+#                       only where the two differ
+pychop:
+  # ARCS and SEQUOIA PyChop_fit_v1 data match Mantid 6.11 only.
+  - instrument: ARCS
+    model_version: PyChop_fit_v1
+    environment: mantid611
+    pychop_name: ARCS
+    frequency_settings: [chopper_frequency]
+    configuration_map: {}
+  - instrument: SEQUOIA
+    model_version: PyChop_fit_v1
+    environment: mantid611
+    pychop_name: SEQUOIA
+    frequency_settings: [chopper_frequency]
+    configuration_map: {}
+  - instrument: ARCS
+    model_version: PyChop_fit_v2
+    environment: mantid615
+    pychop_name: ARCS
+    frequency_settings: [chopper_frequency]
+    configuration_map: {}
+  - instrument: SEQUOIA
+    model_version: PyChop_fit_v2
+    environment: mantid615
+    pychop_name: SEQUOIA
+    frequency_settings: [chopper_frequency]
+    configuration_map: {}
+  - instrument: MAPS
+    model_version: PyChop_fit_v1
+    environment: mantid615
+    pychop_name: MAPS
+    frequency_settings: [chopper_frequency]
+    configuration_map: {}
+  - instrument: MARI
+    model_version: PyChop_fit_v1
+    environment: mantid615
+    pychop_name: MARI
+    frequency_settings: [chopper_frequency]
+    configuration_map: {}
+  - instrument: MERLIN
+    model_version: PyChop_fit_v1
+    environment: mantid615
+    pychop_name: MERLIN
+    frequency_settings: [chopper_frequency]
+    configuration_map: {}
+  - instrument: HYSPEC
+    model_version: PyChop_fit_v1
+    environment: mantid615
+    pychop_name: HYSPEC
+    frequency_settings: [chopper_frequency]
+    configuration_map: {}
+  - instrument: CNCS
+    model_version: PyChop_fit_v1
+    environment: mantid615
+    pychop_name: CNCS
+    frequency_settings: [resolution_disk_frequency, fermi_frequency]
+    configuration_map: {}
+    # Disk-chopper instruments give no zero-transmission outcomes in PyChop, and
+    # each evaluation is slow, so the edge scan is coarse.
+    sampling: {edge_scan_points: 20}
+  - instrument: LET
+    model_version: PyChop_fit_v1
+    environment: mantid615
+    pychop_name: LET
+    frequency_settings: [resolution_frequency, pulse_remover_frequency]
+    configuration_map: {}
+    sampling: {edge_scan_points: 20}
+
+# Abins references: tests/reference_data/abins/<name>.npz. All are generated
+# in `environment` with the Abins package bundled with that Mantid.
+abins:
+  environment: mantid615
+  # Abins PyChopInstrument (polynomial fit to PyChop resolution). Cases are
+  # sampled exactly as for the PyChop entry with the same instrument and
+  # model_version; every configuration of that entry is used.
+  pychop:
+    - {instrument: MAPS, model_version: PyChop_fit_v1}
+    - {instrument: MARI, model_version: PyChop_fit_v1}
+    - {instrument: MERLIN, model_version: PyChop_fit_v1}
+  n_panther_points: 101
+  # Incident energies (meV) at which PANTHER sigma is evaluated.
+  panther_e_init: [0, 5, 10, 20, 50, 100, 150, 250, 400, 600, 900, 1200]
+  # Energy transfers (meV) for TOSCA and Lagrange: a coarse grid up to
+  # tosca_max / lagrange_max, plus a dense window for Lagrange (the Cu(220)
+  # low-energy cutoff lies inside it).
+  tosca_energy_transfer: {start: 0, stop: 1000, step: 20}
+  lagrange_energy_transfer:
+    coarse: {start: 5, stop: 1000, step: 25}
+    dense: {start: 20, stop: 40, step: 1}
+  lagrange_monochromators: [Cu(220), Cu(331), Si(311), Si(111)]

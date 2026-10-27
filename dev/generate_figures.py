@@ -18,7 +18,6 @@ import numpy as np
 
 from resins import Instrument
 
-
 figures = Path(__file__).parent.parent / 'docs/source/figures'
 
 def boxcar_demo() -> None:
