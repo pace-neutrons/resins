@@ -140,16 +140,19 @@ def generate_pychop(
         }
         for case, outcome, reason in case_outcomes:
             # Abins applies no restrictions of its own; only cases PyChop evaluates are compared.
-            if outcome not in (Outcome.VALUE, Outcome.NO_TRANSMISSION):
-                continue
-            sigma = np.full(n_points, np.nan)
-            if outcome == Outcome.VALUE:
-                sigma = abins_pychop_sigma(
-                    abins_instruments[case.configuration],
-                    case.e_init,
-                    case.frequencies[0],
-                    n_points,
-                )
+            match outcome:
+                case Outcome.NO_TRANSMISSION:
+                    sigma = np.full(n_points, np.nan)
+                case Outcome.VALUE:
+                    sigma = abins_pychop_sigma(
+                        abins_instruments[case.configuration],
+                        case.e_init,
+                        case.frequencies[0],
+                        n_points,
+                    )
+                case _:
+                    continue
+
             sigma_rows.append((entry["instrument"], case, outcome, reason, sigma))
 
     cases_arr = np.zeros(len(sigma_rows), dtype=ABINS_PYCHOP_DTYPE)
