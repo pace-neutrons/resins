@@ -11,7 +11,7 @@ import json
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from functools import cache
-from pathlib import Path
+from pathlib import Path, PurePath
 
 import numpy as np
 import pytest
@@ -26,7 +26,7 @@ EVALUATED = (VALUE, NO_TRANSMISSION)
 class ReferenceFile:
     """One loaded reference file."""
 
-    stem: str  # e.g. "pychop/MARI_PyChop_fit_v1"
+    path: PurePath  # e.g. PurePath("pychop/MARI_PyChop_fit_v1.npz"), relative to REFERENCE_DIR
     arrays: dict[str, np.ndarray] = field(repr=False)
     metadata: dict = field(repr=False)
 
@@ -64,22 +64,25 @@ class ReferenceFile:
 
 
 @cache
-def load(stem: str) -> ReferenceFile:
-    """Load ``reference_data/<stem>.npz`` (cached for the session)."""
-    with np.load(REFERENCE_DIR / f"{stem}.npz", allow_pickle=False) as data:
+def load(path: PurePath) -> ReferenceFile:
+    """Load ``reference_data/<path>`` (cached for the session)."""
+    if path.is_absolute():
+        raise ValueError(f"reference path must be relative to reference_data: {path}")
+    with np.load(REFERENCE_DIR / path, allow_pickle=False) as data:
         arrays = {k: data[k] for k in data.files if k != "metadata"}
         metadata = json.loads(str(data["metadata"]))
-    return ReferenceFile(stem, arrays, metadata)
+    return ReferenceFile(path, arrays, metadata)
 
 
-def reference_files_in(directory: str) -> list[str]:
-    """All reference files in a sub-directory, sorted."""
+def reference_files_in(directory: str) -> list[PurePath]:
+    """All reference files in a sub-directory, sorted, relative to ``REFERENCE_DIR``."""
     return sorted(
-        f"{directory}/{path.stem}" for path in (REFERENCE_DIR / directory).glob("*.npz")
+        path.relative_to(REFERENCE_DIR)
+        for path in (REFERENCE_DIR / directory).glob("*.npz")
     )
 
 
-def pychop_reference_files() -> list[str]:
+def pychop_reference_files() -> list[PurePath]:
     return reference_files_in("pychop")
 
 
@@ -98,7 +101,7 @@ class KnownDiscrepancy:
     Attributes
     ----------
     file
-        The reference file stem.
+        The reference file path, relative to ``REFERENCE_DIR``.
     scopes
         The kinds of test the discrepancy shows up in (``"resolution"``,
         ``"abins"``); other tests of the same cases are unaffected.
@@ -108,7 +111,7 @@ class KnownDiscrepancy:
         Why they differ.
     """
 
-    file: str
+    file: PurePath
     scopes: frozenset[str]
     applies: Callable[[ReferenceFile, int], bool]
     reason: str
@@ -161,14 +164,14 @@ def _lagrange_cu220_window(ref: ReferenceFile, case_index: int) -> bool:
 
 KNOWN_DISCREPANCIES = (
     KnownDiscrepancy(
-        file="pychop/ARCS_PyChop_fit_v2",
+        file=PurePath("pychop/ARCS_PyChop_fit_v2.npz"),
         scopes=frozenset({"resolution"}),
         applies=_arcs_700_1_5_smi,
         reason="Mantid has pslit: 1.0 mm for ARCS-700-1.5-SMI while resins has 1.5 mm "
         "(to be raised with Mantid/SNS)",
     ),
     KnownDiscrepancy(
-        file="abins/lagrange",
+        file=PurePath("abins/lagrange.npz"),
         scopes=frozenset({"abins"}),
         applies=_lagrange_cu220_window,
         reason="AbINS_v1 Cu(220) differs from Abins from 25 meV up to the point where the "
@@ -185,7 +188,7 @@ def known_discrepancy_marks(
     return [
         pytest.mark.xfail(strict=True, reason=discrepancy.reason)
         for discrepancy in KNOWN_DISCREPANCIES
-        if discrepancy.file == ref.stem
+        if discrepancy.file == ref.path
         and scope in discrepancy.scopes
         and discrepancy.applies(ref, case_index)
     ]
@@ -207,7 +210,7 @@ def case_id(ref: ReferenceFile, case_index: int) -> str:
     elif "instrument" in ref.metadata:
         parts = [f"{ref.instrument}-{ref.model_version}"]
     else:
-        parts = [Path(ref.stem).name]
+        parts = [ref.path.stem]
     if "configuration" in names and str(case["configuration"]):
         parts.append(str(case["configuration"]))
     if "e_init" in names:
@@ -221,7 +224,7 @@ def case_id(ref: ReferenceFile, case_index: int) -> str:
 
 
 def case_params(
-    reference_files: str | Sequence[str],
+    reference_files: PurePath | Sequence[PurePath],
     scope: str,
     outcomes: tuple[int, ...] | None = None,
 ) -> list:
@@ -230,15 +233,14 @@ def case_params(
     Parameters
     ----------
     reference_files
-        Reference file name(s) or path(s) relative to ``reference_data``, without
-        the ``.npz`` extension (e.g. ``"pychop/MARI_PyChop_fit_v1"`` or
-        ``["abins/pychop", "abins/panther"]``).
+        Reference file path(s) relative to ``reference_data``, including the
+        ``.npz`` extension (e.g. ``PurePath("pychop/MARI_PyChop_fit_v1.npz")``).
     scope
         Kind of test, used to select known discrepancies (``"resolution"`` or ``"abins"``).
     outcomes
         Outcome codes to include; all by default.
     """
-    if isinstance(reference_files, str):
+    if isinstance(reference_files, PurePath):
         file_list = [reference_files]
     else:
         file_list = list(reference_files)
@@ -259,6 +261,6 @@ def case_params(
     return params
 
 
-def resolve(param: tuple[str, int]) -> tuple[ReferenceFile, int]:
+def resolve(param: tuple[PurePath, int]) -> tuple[ReferenceFile, int]:
     file, case_index = param
     return load(file), case_index

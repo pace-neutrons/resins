@@ -7,6 +7,8 @@ within tolerance, a no-transmission error, or an input rejected as invalid.
 
 from __future__ import annotations
 
+from pathlib import PurePath
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -49,7 +51,7 @@ def get_model(ref: ReferenceFile, case_index: int):
         outcomes=(VALUE,),
     ),
 )
-def test_resolution(param: tuple[str, int]) -> None:
+def test_resolution(param: tuple[PurePath, int]) -> None:
     ref, case_index = resolve(param)
     case = ref.cases[case_index]
     model = get_model(ref, case_index)
@@ -80,7 +82,7 @@ def test_resolution(param: tuple[str, int]) -> None:
         outcomes=(NO_TRANSMISSION,),
     ),
 )
-def test_no_transmission(param: tuple[str, int]) -> None:
+def test_no_transmission(param: tuple[PurePath, int]) -> None:
     ref, case_index = resolve(param)
     with pytest.raises(NoTransmissionError):
         get_model(ref, case_index)
@@ -94,7 +96,7 @@ def test_no_transmission(param: tuple[str, int]) -> None:
         outcomes=(REJECTED_EI, REJECTED_FREQUENCY),
     ),
 )
-def test_rejected_input(param: tuple[str, int]) -> None:
+def test_rejected_input(param: tuple[PurePath, int]) -> None:
     ref, case_index = resolve(param)
     # The reason column is "<side>:<setting>"; the setting is named in the error message.
     setting = str(ref.cases[case_index]["reason"]).split(":", 1)[1]

@@ -7,6 +7,8 @@ asserts agreement.
 
 from __future__ import annotations
 
+from pathlib import PurePath
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -30,12 +32,12 @@ def sigma_at(model, energies: np.ndarray) -> np.ndarray:
 @pytest.mark.parametrize(
     "param",
     case_params(
-        reference_files="abins/pychop",
+        reference_files=PurePath("abins/pychop.npz"),
         scope="abins",
         outcomes=EVALUATED,
     ),
 )
-def test_pychop_against_abins(param: tuple[str, int]) -> None:
+def test_pychop_against_abins(param: tuple[PurePath, int]) -> None:
     ref, case_index = resolve(param)
     case = ref.cases[case_index]
     instrument = Instrument.from_default(str(case["instrument"]))
@@ -61,12 +63,12 @@ def test_pychop_against_abins(param: tuple[str, int]) -> None:
 @pytest.mark.parametrize(
     "param",
     case_params(
-        reference_files="abins/panther",
+        reference_files=PurePath("abins/panther.npz"),
         scope="abins",
         outcomes=(VALUE,),
     ),
 )
-def test_panther_against_abins(param: tuple[str, int]) -> None:
+def test_panther_against_abins(param: tuple[PurePath, int]) -> None:
     ref, case_index = resolve(param)
     e_init = float(ref.cases[case_index]["e_init"])
     model = Instrument.from_default("PANTHER").get_resolution_function(
@@ -80,12 +82,12 @@ def test_panther_against_abins(param: tuple[str, int]) -> None:
 @pytest.mark.parametrize(
     "param",
     case_params(
-        reference_files="abins/tosca",
+        reference_files=PurePath("abins/tosca.npz"),
         scope="abins",
         outcomes=(VALUE,),
     ),
 )
-def test_tosca_against_abins(param: tuple[str, int]) -> None:
+def test_tosca_against_abins(param: tuple[PurePath, int]) -> None:
     ref, case_index = resolve(param)
     model = Instrument.from_default("TOSCA").get_resolution_function("AbINS")
     energy = np.array([ref.cases[case_index]["energy_transfer"]])
@@ -96,12 +98,12 @@ def test_tosca_against_abins(param: tuple[str, int]) -> None:
 @pytest.mark.parametrize(
     "param",
     case_params(
-        reference_files="abins/lagrange",
+        reference_files=PurePath("abins/lagrange.npz"),
         scope="abins",
         outcomes=(VALUE,),
     ),
 )
-def test_lagrange_against_abins(param: tuple[str, int]) -> None:
+def test_lagrange_against_abins(param: tuple[PurePath, int]) -> None:
     ref, case_index = resolve(param)
     case = ref.cases[case_index]
     model = Instrument.from_default("Lagrange").get_resolution_function(
