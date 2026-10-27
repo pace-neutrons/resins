@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections.abc import Hashable, Sequence
+from collections.abc import Hashable, Sequence, Set
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Generic, TypeVar
@@ -107,9 +107,9 @@ def max_deviation(first: np.ndarray, second: np.ndarray) -> tuple[float, float]:
     both_valid = ~(np.isnan(first) | np.isnan(second))
     if not both_valid.any():
         return 0.0, 0.0
-    a, b = first[both_valid], second[both_valid]
-    diff = np.abs(a - b)
-    scale = np.maximum(np.abs(a), np.abs(b))
+    valid_first, valid_second = first[both_valid], second[both_valid]
+    diff = np.abs(valid_first - valid_second)
+    scale = np.maximum(np.abs(valid_first), np.abs(valid_second))
     rel = np.divide(diff, scale, out=np.zeros_like(diff), where=scale > 0)
     return float(rel.max()), float(diff.max())
 
@@ -141,8 +141,8 @@ def compare_aligned(
 
 
 def _report_added_removed(
-    added: set,
-    removed: set,
+    added: Set[Hashable],
+    removed: Set[Hashable],
     kind: str,
     report: list[str],
 ) -> bool:
@@ -208,10 +208,10 @@ def compare_file(new_path: Path, old_path: Path, rtol: float) -> tuple[bool, lis
     """Compare one pair of .npz reference files, returning (ok, report_lines)."""
     new, new_meta = load_npz(new_path)
     old, old_meta = load_npz(old_path)
-    cases_alignment = KeyAlignment.from_keys(
+    cases_alignment: KeyAlignment[CaseKey] = KeyAlignment.from_keys(
         case_keys(new["cases"]), case_keys(old["cases"])
     )
-    arrays_alignment = KeyAlignment.from_keys(list(new), list(old))
+    arrays_alignment: KeyAlignment[str] = KeyAlignment.from_keys(list(new), list(old))
 
     report: list[str] = []
     ok = True
