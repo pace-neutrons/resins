@@ -26,7 +26,7 @@ mantid615 = { features = ["mantid615"], no-default-feature = false }
 [tasks]
 install = { cmd = "python scripts/install.py", cwd = ".", description = "Copy build/reference_data into tests/reference_data (replaces committed data)" }
 summary = { cmd = "python scripts/summary.py", cwd = ".", description = "Case counts per file and outcome, sizes and Mantid versions of tests/reference_data" }
-compare = { cmd = "python scripts/compare.py", cwd = ".", description = "Compare build/reference_data with tests/reference_data (use -- --report-only to never fail)" }
+compare = { cmd = "python scripts/compare.py", cwd = ".", description = "Compare build/reference_data with tests/reference_data" }
 size = { cmd = "python scripts/summary.py --build --size-only", cwd = ".", description = "Print the total size of build/reference_data" }
 clean-build = { cmd = "python -c \"import shutil; shutil.rmtree('build/reference_data', ignore_errors=True)\"", cwd = ".", description = "Remove build/reference_data" }
 generate = { depends-on = [
