@@ -16,7 +16,8 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections.abc import Hashable, Mapping, Sequence, Set
+from collections.abc import Hashable, Mapping, Sequence
+from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Generic, TypeVar
@@ -143,8 +144,8 @@ def compare_aligned(
 
 
 def _report_added_removed(
-    added: Set[Hashable],
-    removed: Set[Hashable],
+    added: AbstractSet[Hashable],
+    removed: AbstractSet[Hashable],
     kind: str,
     report: list[str],
 ) -> bool:
