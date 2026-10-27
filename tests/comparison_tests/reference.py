@@ -53,8 +53,11 @@ class ReferenceFile:
     def frequencies(self, case_index: int) -> list[int]:
         """The chopper frequencies of case ``case_index``: ``f0``, ``f1`` where used (0 marks unused)."""
         case = self.cases[case_index]
-        names = [name for name in ("f0", "f1") if name in case.dtype.names]
-        return [int(case[name]) for name in names if case[name]]
+        return [
+            int(case[name])
+            for name in ("f0", "f1")
+            if name in case.dtype.names and case[name]
+        ]
 
     def frequency_kwargs(self, case_index: int) -> dict[str, int]:
         return dict(zip(self.frequency_settings, self.frequencies(case_index)))
