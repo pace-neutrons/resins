@@ -16,10 +16,10 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections.abc import Hashable, Sequence, Set
+from collections.abc import Hashable, Mapping, Sequence, Set
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 from cases import Outcome
@@ -99,7 +99,9 @@ class KeyAlignment(Generic[T]):
         )
 
 
-def max_deviation(first: np.ndarray, second: np.ndarray) -> tuple[float, float]:
+def max_deviation(
+    first: NDArray[np.floating], second: NDArray[np.floating]
+) -> tuple[float, float]:
     """Max relative deviation and max absolute deviation over entries finite in both.
 
     Entries NaN in only one array are counted by the caller as ``nan_mismatches``.
@@ -116,9 +118,9 @@ def max_deviation(first: np.ndarray, second: np.ndarray) -> tuple[float, float]:
 
 def compare_aligned(
     name: str,
-    new: np.ndarray,
-    old: np.ndarray,
-    alignment: KeyAlignment,
+    new: NDArray[np.floating],
+    old: NDArray[np.floating],
+    alignment: KeyAlignment[CaseKey],
     rtol: float,
     report: list[str],
 ) -> bool:
@@ -165,9 +167,9 @@ def _report_added_removed(
 
 
 def _report_outcome_flips(
-    new_cases: np.ndarray,
-    old_cases: np.ndarray,
-    alignment: KeyAlignment,
+    new_cases: NDArray[np.void],
+    old_cases: NDArray[np.void],
+    alignment: KeyAlignment[CaseKey],
     report: list[str],
 ) -> bool:
     """Report outcome changes for shared cases. Returns True if all outcomes match."""
@@ -194,7 +196,7 @@ def _report_outcome_flips(
 
 
 def _report_metadata_changes(
-    new_meta: dict, old_meta: dict, report: list[str]
+    new_meta: Mapping[str, Any], old_meta: Mapping[str, Any], report: list[str]
 ) -> None:
     """Report changes in key metadata fields (informational)."""
     for field in ("mantid_version", "model_versions", "n_resolution_points"):
