@@ -115,7 +115,7 @@ def assign_outcomes(
         One ``(case, outcome, reason)`` row per sampled case (reflecting the
         full sampled grid, including rejected cases), and a counter of cases
         where PyChop and resins disagree, keyed by a description of the
-        disagreement. The counter is stored as the ``notes`` metadata field.
+        disagreement.
     """
     freq_settings = entry["frequency_settings"]
     rows: list[CaseOutcome] = []
