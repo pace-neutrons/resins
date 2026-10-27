@@ -32,7 +32,7 @@ def sigma_at(model, energies: np.ndarray) -> np.ndarray:
 @pytest.mark.parametrize(
     "param",
     case_params(
-        reference_files=PurePath("abins/pychop.npz"),
+        reference_files=[PurePath("abins/pychop.npz")],
         scope="abins",
         outcomes=EVALUATED,
     ),
@@ -63,7 +63,7 @@ def test_pychop_against_abins(param: tuple[PurePath, int]) -> None:
 @pytest.mark.parametrize(
     "param",
     case_params(
-        reference_files=PurePath("abins/panther.npz"),
+        reference_files=[PurePath("abins/panther.npz")],
         scope="abins",
         outcomes=(VALUE,),
     ),
@@ -82,7 +82,7 @@ def test_panther_against_abins(param: tuple[PurePath, int]) -> None:
 @pytest.mark.parametrize(
     "param",
     case_params(
-        reference_files=PurePath("abins/tosca.npz"),
+        reference_files=[PurePath("abins/tosca.npz")],
         scope="abins",
         outcomes=(VALUE,),
     ),
@@ -98,7 +98,7 @@ def test_tosca_against_abins(param: tuple[PurePath, int]) -> None:
 @pytest.mark.parametrize(
     "param",
     case_params(
-        reference_files=PurePath("abins/lagrange.npz"),
+        reference_files=[PurePath("abins/lagrange.npz")],
         scope="abins",
         outcomes=(VALUE,),
     ),

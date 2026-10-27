@@ -224,7 +224,7 @@ def case_id(ref: ReferenceFile, case_index: int) -> str:
 
 
 def case_params(
-    reference_files: PurePath | Sequence[PurePath],
+    reference_files: Sequence[PurePath],
     scope: str,
     outcomes: tuple[int, ...] | None = None,
 ) -> list:
@@ -233,20 +233,15 @@ def case_params(
     Parameters
     ----------
     reference_files
-        Reference file path(s) relative to ``reference_data``, including the
-        ``.npz`` extension (e.g. ``PurePath("pychop/MARI_PyChop_fit_v1.npz")``).
+        Reference file paths relative to ``reference_data``, including the
+        ``.npz`` extension (e.g. ``[PurePath("pychop/MARI_PyChop_fit_v1.npz")]``).
     scope
         Kind of test, used to select known discrepancies (``"resolution"`` or ``"abins"``).
     outcomes
         Outcome codes to include; all by default.
     """
-    if isinstance(reference_files, PurePath):
-        file_list = [reference_files]
-    else:
-        file_list = list(reference_files)
-
     params = []
-    for file in file_list:
+    for file in reference_files:
         ref = load(file)
         for case_index, case in enumerate(ref.cases):
             if outcomes is not None and case["outcome"] not in outcomes:
