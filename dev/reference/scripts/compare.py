@@ -88,15 +88,21 @@ class KeyAlignment(Generic[T]):
             )
 
         new_index = {key: i for i, key in enumerate(new_keys)}
-        old_index = {key: i for i, key in enumerate(old_keys)}
-        common = new_index.keys() & old_keys
+        aligned = [
+            (new_index[key], old_i, key)
+            for old_i, key in enumerate(old_keys)
+            if key in new_index
+        ]
+        new_indices, old_indices, common = (
+            map(list, zip(*aligned)) if aligned else ([], [], [])
+        )
 
         return cls(
             added=set(new_keys) - set(old_keys),
             removed=set(old_keys) - set(new_keys),
             common=common,
-            new_indices=[new_index[k] for k in common],
-            old_indices=[old_index[k] for k in common],
+            new_indices=new_indices,
+            old_indices=old_indices,
         )
 
 

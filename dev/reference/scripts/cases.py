@@ -19,7 +19,7 @@ Outcome codes are assigned by the generator from PyChop and the restrictions, no
 from __future__ import annotations
 
 import itertools
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -243,8 +243,8 @@ class InstrumentSpec:
                 if "grid" in cfg and "e_init" in cfg["grid"]
                 else self.grid_energies
             )
-            ei_limits = cfg.get("ei_limits", self.ei_limits)
-            ei_limits = tuple(map(float, ei_limits))
+            min_ei, max_ei = cfg.get("ei_limits", self.ei_limits)
+            ei_limits = (float(min_ei), float(max_ei))
 
             # Override exists for MARI G-chopper which doesn't work at the
             # general default Ei
@@ -281,7 +281,7 @@ class InstrumentSpec:
             Flat list of ``(energy, (f0, ...))`` points ready for sampling:
             ``[(45.988, (120,)), (46.08, (120,)), ...]``.
         """
-        points = []
+        points: list[tuple[float, tuple[int, ...]]] = []
         for edge in raw_edges:
             freqs = tuple(int(edge[k]) for k in self.frequency_settings)
             points.extend((float(energy), freqs) for energy in edge["e_init"])
