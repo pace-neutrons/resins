@@ -19,7 +19,7 @@ Outcome codes are assigned by the generator from PyChop and the restrictions, no
 from __future__ import annotations
 
 import itertools
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -243,11 +243,9 @@ class InstrumentSpec:
                 if "grid" in cfg and "e_init" in cfg["grid"]
                 else self.grid_energies
             )
-            if "ei_limits" in cfg:
-                cfg_min, cfg_max = cfg["ei_limits"]
-                ei_limits = (float(cfg_min), float(cfg_max))
-            else:
-                ei_limits = self.ei_limits
+            ei_limits = cfg.get("ei_limits", self.ei_limits)
+            ei_limits = tuple(map(float, ei_limits))
+
             # Override exists for MARI G-chopper which doesn't work at the
             # general default Ei
             default_ei = float(cfg.get("defaults", {}).get("e_init", self.default_ei))

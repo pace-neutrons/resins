@@ -89,7 +89,7 @@ class KeyAlignment(Generic[T]):
 
         new_index = {key: i for i, key in enumerate(new_keys)}
         old_index = {key: i for i, key in enumerate(old_keys)}
-        common = [key for key in old_keys if key in new_index]
+        common = new_index.keys() & old_keys
 
         return cls(
             added=set(new_keys) - set(old_keys),
