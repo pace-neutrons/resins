@@ -1267,6 +1267,9 @@ class PyChopModelCNCS(PyChopModelNonFermi):
     citation
     polynomial
     """
+    # Same as inherited: include anyway as a hint for docs generation
+    data_class = PyChopModelDataNonFermi
+
     def __init__(self,
                  model_data: PyChopModelDataNonFermi,
                  e_init: Optional[float] = None,
@@ -1346,6 +1349,9 @@ class PyChopModelLET(PyChopModelNonFermi):
     citation
     polynomial
     """
+    # Same as inherited: include anyway as a hint for docs generation
+    data_class = PyChopModelDataNonFermi
+
     def __init__(self,
                  model_data: PyChopModelDataNonFermi,
                  e_init: Optional[float] = None,

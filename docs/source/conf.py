@@ -71,3 +71,10 @@ numpydoc_xref_param_type = True
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
 default_role = "obj"
+
+
+# The abstract PyChopModelNonFermi does not define `polynomial` itself;
+# numpydoc gets confused by this and doesn't know how to find correct link.
+numpydoc_show_inherited_class_members = {
+    'resins.models.pychop.PyChopModelNonFermi': False,
+}

@@ -1,36 +1,38 @@
 name: Run tests
 
-on: [push,workflow_dispatch]
+on: [push, workflow_dispatch]
 
 jobs:
   test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: ubuntu-latest
+            python-version: "3.14"
+          - os: windows-latest
+            python-version: "3.14"
 
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # versioningit needs the tags
 
-    - name: Setup Miniconda
-      uses: conda-incubator/setup-miniconda@v3.2.0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v7
       with:
-        python-version: "3.11"
-        channels: conda-forge
-        miniforge-version: "latest"
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: pyproject.toml
 
-    - name: Install tox
-      shell: bash -el {0}
+    - name: Install resins and the test dependencies
       run: |
-        conda activate test
-        conda install tox
+        python -m pip install --upgrade "pip>=25.1"
+        python -m pip install . --group test
 
-    - name: Test with tox
-      shell: bash -el {0}
-      run: |
-        conda activate test
-        python -m tox
+    - name: Test
+      run: pytest -n auto

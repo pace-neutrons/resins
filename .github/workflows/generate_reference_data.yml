@@ -1,0 +1,30 @@
+name: Generate reference data
+
+# Manual only: regenerates the Mantid reference data and checks it against the committed data.
+# Runs the same command as a developer would locally (see dev/reference/README.md).
+on: workflow_dispatch
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Set up pixi
+      uses: prefix-dev/setup-pixi@v0.11.0
+      with:
+        manifest-path: dev/reference/pixi.toml
+        locked: true
+        cache: true
+
+    - name: Validate reference data
+      run: pixi run --manifest-path dev/reference/pixi.toml validate
+
+    - name: Upload regenerated data
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: reference-build
+        path: dev/reference/build/
+        if-no-files-found: ignore
