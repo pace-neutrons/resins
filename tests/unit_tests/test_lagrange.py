@@ -63,7 +63,7 @@ def test_default_and_alias_resolve_to_v2(version, monochromator):
     )
 
 
-# AbINS_v1 (deprecated): documents the existing behaviour
+# AbINS_v1 (superseded): documents the existing behaviour
 
 
 def test_v1_is_discontinuous_polynomial():

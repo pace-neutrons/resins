@@ -9,14 +9,14 @@ LAGRANGE is an indirect-geometry spectrometer at the Institut Laue Langevin. [#]
 matches the Abins implementation in Mantid 6.15 and later. For each monochromator the width is
 a polynomial of the energy transfer, with a minimum width for Cu(220) (``floored_polynomial``).
 
-.. deprecated:: Unreleased
+.. note::
 
-   ``AbINS_v1`` is deprecated in favour of ``AbINS_v2``. It never matched any released
-   Mantid/Abins implementation exactly. It applies the intended 25 meV low-energy cutoff for
-   Cu(220), which differs from both Abins ≤6.14 (the cutoff was compared with energies in cm\ :sup:`-1`,
-   so the flat segment switched at about 3.1 meV) and Abins ≥6.15 (the cutoff was replaced by a
-   floor). It is kept unchanged for reproducibility, and also raises an error for Cu(220) below
-   about 1.6 meV, where its polynomial is negative.
+   ``AbINS_v1`` is superseded by ``AbINS_v2`` and is kept only for reproducing earlier results. It
+   never matched any released Mantid/Abins implementation exactly. It applies the intended 25 meV
+   low-energy cutoff for Cu(220), which differs from both Abins ≤6.14 (the cutoff was compared with
+   energies in cm\ :sup:`-1`, so the flat segment switched at about 3.1 meV) and Abins ≥6.15 (the
+   cutoff was replaced by a floor). It also raises an error for Cu(220) below about 1.6 meV, where
+   its polynomial is negative.
 
 .. list-table:: History of the Cu(220) low-energy width
    :header-rows: 1
