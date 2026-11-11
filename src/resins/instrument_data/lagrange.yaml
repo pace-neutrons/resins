@@ -9,26 +9,27 @@ version:
             scattering_angle_range: [10, 90]
             angles_per_detector: 5
             energy_bin_width: 1.0  # Default bin width in wavenumber
-        # Configurations of the default model (AbINS_v2). `fit` is the Gaussian width sigma in meV,
-        # i.e. half of the 2*sigma ("resolution") polynomial of Abins `parameters.py`.
+        # Resins stores widths as sigma (meV), so a factor of 0.5 is applied to the 2*sigma
+        # parameters of Abins `parameters.py` (`fit`, minimum and low-energy resolution) here.
+        # Configurations of the default model (AbINS_v2):
         configurations: &lagrange_configurations_v2
             monochromator:
                 default_option: "Cu(220)"
                 Cu(220):
                     #ei_range: [26, 500]  # meV
-                    fit: [-1.79805e-2, 1.078e-2, 3.84935e-5, ]  # meV; sigma = (2 sigma fit)/2
-                    minimum_sigma: 0.4  # meV; Abins minimum_resolution_meV (0.8) / 2
+                    fit: [-1.79805e-2, 1.078e-2, 3.84935e-5, ]  # meV
+                    minimum_sigma: 0.4  # meV; Abins minimum_resolution_meV (0.8 as 2*sigma)
                 Cu(331):
                     #ei_range: [67, 500]  # meV
-                    fit: [3.29181059e-01, 2.57962693e-04, 5.59555475e-05, -4.302557985e-08]  # meV; sigma = (2 sigma fit)/2
+                    fit: [3.29181059e-01, 2.57962693e-04, 5.59555475e-05, -4.302557985e-08]  # meV
                     minimum_sigma: 0.0  # meV; no floor
                 Si(311):
                     #ei_range: [16.5, 60]  # meV
-                    fit: [0.4]  # meV; sigma = (2 sigma fit)/2
+                    fit: [0.4]  # meV
                     minimum_sigma: 0.0  # meV; no floor
                 Si(111):
                     #ei_range: [4.5, 20]  # meV
-                    fit: [0.4]  # meV; sigma = (2 sigma fit)/2
+                    fit: [0.4]  # meV
                     minimum_sigma: 0.0  # meV; no floor
         default_model: "AbINS"
         models:
@@ -51,18 +52,18 @@ version:
                         default_option: "Cu(220)"
                         Cu(220):
                             #ei_range: [26, 500]  # meV
-                            fit: [-3.5961e-2, 2.156e-2, 7.6987e-5, ]  # meV
+                            fit: [-1.79805e-2, 1.078e-2, 3.84935e-5, ]  # meV
                             low_energy_cutoff: 25  # meV
-                            low_energy_resolution: 0.8  # meV
+                            low_energy_resolution: 0.4  # meV
                         Cu(331):
                             #ei_range: [67, 500]  # meV
-                            fit: [6.58362118e-01, 5.15925386e-04, 1.11911095e-04, -8.60511597e-08]  # meV
+                            fit: [3.29181059e-01, 2.57962693e-04, 5.59555475e-05, -4.302557985e-08]  # meV
                         Si(311):
                             #ei_range: [16.5, 60]  # meV
-                            fit: [0.8]  # meV
+                            fit: [0.4]  # meV
                         Si(111):
                             #ei_range: [4.5, 20]  # meV
-                            fit: [0.8]  # meV
+                            fit: [0.4]  # meV
             AbINS_v2:
                 function: "floored_polynomial"
                 citation:
