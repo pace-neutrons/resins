@@ -194,7 +194,6 @@ failures: if one starts passing, the suite fails until the entry is removed.
 | Reference | Affected cases | Reason | Follow-up |
 |---|---|---|---|
 | `pychop/ARCS_PyChop_fit_v2` | `ARCS-700-1.5-SMI`, value cases, and 12 no-transmission cases just beyond Mantid's transmission edge | Mantid has `pslit: 1.` mm, resins 1.5 mm | Raise with Mantid/SNS; update the resins YAML or the reference, then drop the entry |
-| `abins/lagrange` | Cu(220), 25 meV <= E < 34.5 meV | `AbINS_v1` has a cutoff where Abins has a 0.8 meV floor | Implement `AbINS_v2` to match Mantid 6.15+ |
 
 If regenerating with different sampling moves the 12 no-transmission points,
 re-derive them: run `pytest --runxfail -n auto

@@ -154,14 +154,6 @@ def _arcs_700_1_5_smi(ref: ReferenceFile, case_index: int) -> bool:
     )
 
 
-def _lagrange_cu220_window(ref: ReferenceFile, case_index: int) -> bool:
-    case = ref.cases[case_index]
-    return (
-        str(case["configuration"]) == "Cu(220)"
-        and 25.0 <= case["energy_transfer"] < 34.5
-    )
-
-
 KNOWN_DISCREPANCIES = (
     KnownDiscrepancy(
         file=PurePath("pychop/ARCS_PyChop_fit_v2.npz"),
@@ -169,14 +161,6 @@ KNOWN_DISCREPANCIES = (
         applies=_arcs_700_1_5_smi,
         reason="Mantid has pslit: 1.0 mm for ARCS-700-1.5-SMI while resins has 1.5 mm "
         "(to be raised with Mantid/SNS)",
-    ),
-    KnownDiscrepancy(
-        file=PurePath("abins/lagrange.npz"),
-        scopes=frozenset({"abins"}),
-        applies=_lagrange_cu220_window,
-        reason="AbINS_v1 Cu(220) differs from Abins from 25 meV up to the point where the "
-        "polynomial reaches the 0.8 meV floor (about 34.5 meV); to be resolved by "
-        "implementing AbINS_v2 to match Mantid 6.15+",
     ),
 )
 
