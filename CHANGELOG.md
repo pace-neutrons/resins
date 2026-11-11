@@ -10,9 +10,9 @@
 
 - **Breaking:** changed the Lagrange default model and `AbINS` alias from `AbINS_v1` to `AbINS_v2`,
   changing Cu(220) widths below 34.5 meV.
-- `DiscontinuousPolynomialModel1D` (`discontinuous_polynomial`) now takes `fit` and the cutoff
-  resolutions directly as sigma, instead of halving them. The Lagrange `AbINS_v1` parameters are
-  halved accordingly, so its output is unchanged.
+- **Breaking:** changed `DiscontinuousPolynomialModel1D` (`discontinuous_polynomial`) to take `fit`
+  and cutoff resolutions directly as σ rather than 2σ, matching the other polynomial models.
+  (Lagrange `AbINS_v1` data was adjusted accordingly, so its results are unchanged.)
 
 ### Removed
 
