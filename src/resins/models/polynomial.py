@@ -337,4 +337,4 @@ class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin
         result[points < self.low_energy_cutoff] = self.low_energy_resolution
         result[points > self.high_energy_cutoff] = self.high_energy_resolution
 
-        return {'sigma': result * 0.5}
+        return {'sigma': result}
