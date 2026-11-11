@@ -229,9 +229,7 @@ def generate_tosca(config: dict, out_dir: Path) -> Path:
 def generate_lagrange(config: dict, out_dir: Path) -> Path:
     spec = config["abins"]["lagrange_energy_transfer"]
     energies = np.unique(
-        np.concatenate(
-            [arange_from(spec[name]) for name in ("coarse", "dense", "low")]
-        )
+        np.concatenate([arange_from(spec[name]) for name in ("coarse", "dense", "low")])
     )
     lagrange_rows: list[IndirectRow] = []
     sigma = []

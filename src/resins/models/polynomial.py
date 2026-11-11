@@ -175,7 +175,7 @@ class FlooredPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, Inst
         self.minimum_sigma = model_data.minimum_sigma
 
     def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
-                            ) -> dict[str, Float[np.ndarray, 'sigma']]:
+                            ) -> dict[str, Float[np.ndarray, ' sigma']]:
         """
         Computes the broadening width at each value of energy transfer (`points`).
 
@@ -196,11 +196,11 @@ class FlooredPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, Inst
         """
         try:
             points = points[:, 0]
-        except IndexError as e:
+        except IndexError as err:
             raise InvalidPointsError(
                 f'The provided array of points (shape={points.shape}) is not valid. The points '
                 f'array must be a Nx1 2D array where N is the number of energy transfers.'
-            ) from e
+            ) from err
         return {'sigma': np.maximum(self.polynomial(points), self.minimum_sigma)}
 
 

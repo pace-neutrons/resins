@@ -12,7 +12,6 @@ from pathlib import PurePath
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-
 from resins.instrument import Instrument
 from resins.models.pychop import NoTransmissionError
 

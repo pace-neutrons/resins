@@ -20,7 +20,11 @@ from .ideal import (
     GenericGaussian1DModel,
     GenericLorentzian1DModel,
 )
-from .polynomial import PolynomialModel1D, DiscontinuousPolynomialModel1D, FlooredPolynomialModel1D
+from .polynomial import (
+    DiscontinuousPolynomialModel1D,
+    FlooredPolynomialModel1D,
+    PolynomialModel1D,
+)
 from .panther_abins import PantherAbINSModel
 from .pychop import PyChopModelFermi, PyChopModelNonFermi, PyChopModelCNCS, PyChopModelLET
 from .tosca_book import ToscaBookModel
