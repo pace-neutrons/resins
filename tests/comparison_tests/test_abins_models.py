@@ -107,7 +107,7 @@ def test_lagrange_against_abins(param: tuple[PurePath, int]) -> None:
     ref, case_index = resolve(param)
     case = ref.cases[case_index]
     model = Instrument.from_default("Lagrange").get_resolution_function(
-        "AbINS", monochromator=str(case["configuration"])
+        "AbINS_v2", monochromator=str(case["configuration"])
     )
     energy = np.array([case["energy_transfer"]])
 

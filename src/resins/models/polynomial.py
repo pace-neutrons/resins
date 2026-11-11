@@ -109,6 +109,102 @@ class PolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
 
 
 @dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
+class FlooredPolynomialModelData(ModelData):
+    """
+    Data for the `FlooredPolynomialModel1D` :term:`model`.
+
+    Attributes
+    ----------
+    function
+        The name of the function, i.e. the alias for `FlooredPolynomialModel1D`.
+    citation
+        The citation for the model. Please use this to look up more details and cite the model.
+    restrictions
+        All constraints that the model places on the :term:`settings<setting>`. If the value is a
+        `list`, this signifies the `range` style (start, stop, step) tuple, and if it is a `set`, it
+        is a set of explicitly allowed values.
+    defaults
+        The default values for the :term:`settings<setting>`, used when a value is not provided when
+        creating the model.
+    fit
+        Polynomial coefficients, giving the width (sigma, in meV) as a function of energy transfer.
+    minimum_sigma
+        The smallest width (sigma, in meV) the model returns. Use ``0`` for no physical floor.
+        This has no default so that every configuration states its floor explicitly.
+    """
+    fit: list[float]
+    minimum_sigma: float
+
+
+class FlooredPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentModel):
+    """
+    Model using a 1D polynomial with a minimum width to model an :term:`instrument`.
+
+    Models the :term:`resolution` as a function of energy transfer (frequencies) only, with the
+    output :term:`model` being a Gaussian. The width (sigma) is the value of a single power-series
+    polynomial (see `numpy.polynomial.polynomial.Polynomial`) of the energy transfer, but never
+    smaller than `FlooredPolynomialModelData.minimum_sigma`. Unlike
+    `DiscontinuousPolynomialModel1D` this is continuous, and the polynomial may be negative (below
+    the floor) without error.
+
+    Parameters
+    ----------
+    model_data
+        The data associated with the model for a given version of a given instrument.
+
+    Attributes
+    ----------
+    input
+        The names of the columns in the ``omega_q`` array expected by all computation methods, i.e.
+        the names of the independent variables ([Q, w]) that the model models.
+    data_class
+        Reference to the `FlooredPolynomialModelData` type.
+    polynomial : numpy.polynomial.polynomial.Polynomial
+        The polynomial representing the resolution function.
+    minimum_sigma
+        The smallest width (sigma, in meV) the model returns.
+    citation
+    """
+    input = ('energy_transfer',)
+
+    data_class: ClassVar[type[FlooredPolynomialModelData]] = FlooredPolynomialModelData
+
+    def __init__(self, model_data: FlooredPolynomialModelData, **_):
+        super().__init__(model_data)
+        self.polynomial = Polynomial(model_data.fit)
+        self.minimum_sigma = model_data.minimum_sigma
+
+    def get_characteristics(self, points: Float[np.ndarray, 'energy_transfer dimension=1']
+                            ) -> dict[str, Float[np.ndarray, 'sigma']]:
+        """
+        Computes the broadening width at each value of energy transfer (`points`).
+
+        The model approximates the broadening using the Gaussian distribution, so the returned
+        widths are in the form of the standard deviation (sigma).
+
+        Parameters
+        ----------
+        points
+            The energy transfer in meV at which to compute the width in sigma of the kernel.
+            This *must* be a ``sample`` x 1 2D array where ``sample`` is the number of energy
+            transfers.
+
+        Returns
+        -------
+        characteristics
+            The characteristics of the broadening function, i.e. the Gaussian width as sigma in meV.
+        """
+        try:
+            points = points[:, 0]
+        except IndexError as e:
+            raise InvalidPointsError(
+                f'The provided array of points (shape={points.shape}) is not valid. The points '
+                f'array must be a Nx1 2D array where N is the number of energy transfers.'
+            ) from e
+        return {'sigma': np.maximum(self.polynomial(points), self.minimum_sigma)}
+
+
+@dataclass(init=True, repr=True, frozen=True, slots=True, kw_only=True)
 class DiscontinuousPolynomialModelData(ModelData):
     """
     Data for the `DiscontinuousPolynomialModel1D` :term:`model`.

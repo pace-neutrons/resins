@@ -1,5 +1,24 @@
 ## [Unreleased](https://github.com/pace-neutrons/resins/compare/0.1.0...HEAD)
 
+### Added
+
+- Added Lagrange model `AbINS_v2`, which matches Abins in Mantid 6.15 and later: for Cu(220) the
+  width is `max(polynomial, 0.8 meV)` (2σ) instead of a step at 25 meV. Other monochromators give
+  the same results as `AbINS_v1`.
+- Added the generic `floored_polynomial` model function (`FlooredPolynomialModel1D`): a polynomial
+  width with a required `minimum_sigma`.
+
+### Changed
+
+- **Breaking:** the Lagrange default model and the `AbINS` alias now select `AbINS_v2`. For Cu(220)
+  the widths differ from before between 25 and about 34.5 meV, and are now valid below about
+  1.6 meV, where `AbINS_v1` raised an `AssertionError`. Use `AbINS_v1` to reproduce earlier results.
+
+### Deprecated
+
+- Lagrange `AbINS_v1` is deprecated in favour of `AbINS_v2`. It never matched any released
+  Mantid/Abins implementation exactly. (Documented only; it is unchanged and gives no warning.)
+
 ### Removed
 
 - **Breaking:** removed the `INSTRUMENT_DATA_PATH` variable from `resins.instrument`. Instrument
