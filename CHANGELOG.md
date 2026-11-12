@@ -1,5 +1,19 @@
 ## [Unreleased](https://github.com/pace-neutrons/resins/compare/0.1.0...HEAD)
 
+### Added
+
+- Added Lagrange model `AbINS_v2` (via the new `floored_polynomial` model function), matching Abins
+  in Mantid 6.15+: Cu(220) uses a 0.8 meV (2σ) floor instead of a step at 25 meV, and is now valid
+  below 1.6 meV.
+
+### Changed
+
+- **Breaking:** changed the Lagrange default model and `AbINS` alias from `AbINS_v1` to `AbINS_v2`,
+  changing Cu(220) widths below 34.5 meV.
+- **Breaking:** changed `DiscontinuousPolynomialModel1D` (`discontinuous_polynomial`) to take `fit`
+  and cutoff resolutions directly as σ rather than 2σ, matching the other polynomial models.
+  (Lagrange `AbINS_v1` data was adjusted accordingly, so its results are unchanged.)
+
 ### Removed
 
 - **Breaking:** removed the `INSTRUMENT_DATA_PATH` variable from `resins.instrument`. Instrument

@@ -20,7 +20,11 @@ from .ideal import (
     GenericGaussian1DModel,
     GenericLorentzian1DModel,
 )
-from .polynomial import PolynomialModel1D, DiscontinuousPolynomialModel1D
+from .polynomial import (
+    DiscontinuousPolynomialModel1D,
+    FlooredPolynomialModel1D,
+    PolynomialModel1D,
+)
 from .panther_abins import PantherAbINSModel
 from .pychop import PyChopModelFermi, PyChopModelNonFermi, PyChopModelCNCS, PyChopModelLET
 from .tosca_book import ToscaBookModel
@@ -38,6 +42,7 @@ MODELS: dict[str, type[InstrumentModel]] = {
     'lorentzian': GenericLorentzian1DModel,
     'polynomial_1d': PolynomialModel1D,
     'discontinuous_polynomial': DiscontinuousPolynomialModel1D,
+    'floored_polynomial': FlooredPolynomialModel1D,
     'tosca_book': ToscaBookModel,
     'vision_paper': VisionPaperModel,
     'panther_abins_polynomial': PantherAbINSModel,

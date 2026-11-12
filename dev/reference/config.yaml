@@ -120,10 +120,12 @@ abins:
   # Incident energies (meV) at which PANTHER sigma is evaluated.
   panther_e_init: [0, 5, 10, 20, 50, 100, 150, 250, 400, 600, 900, 1200]
   # Energy transfers (meV) for TOSCA and Lagrange: a coarse grid up to
-  # tosca_max / lagrange_max, plus a dense window for Lagrange (the Cu(220)
-  # low-energy cutoff lies inside it).
+  # tosca_max / lagrange_max, plus for Lagrange a dense window (the Cu(220)
+  # low-energy cutoff and floor crossing lie inside it) and a low-energy range
+  # (where the Cu(220) polynomial is negative).
   tosca_energy_transfer: {start: 0, stop: 1000, step: 20}
   lagrange_energy_transfer:
     coarse: {start: 5, stop: 1000, step: 25}
     dense: {start: 20, stop: 40, step: 1}
+    low: {start: 0, stop: 2.5, step: 0.5}
   lagrange_monochromators: [Cu(220), Cu(331), Si(311), Si(111)]
