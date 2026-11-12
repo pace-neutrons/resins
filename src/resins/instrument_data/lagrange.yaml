@@ -15,14 +15,15 @@ version:
         # for both AbINS_v1 and AbINS_v2.
         models:
             AbINS: "AbINS_v2"
-            # Superseded by AbINS_v2 (kept for reproducibility; not recommended for new work).
-            # AbINS_v1 never matched any released Mantid/Abins implementation exactly. It applies
-            # the intended 25 meV low-energy cutoff for Cu(220), which differs from both:
-            #   - Abins <= 6.14, which compared the 25 meV cutoff with energies in cm-1 (unit
-            #     error), so its flat segment switched at about 3.1 meV;
-            #   - Abins >= 6.15 (mantidproject/mantid#40229), which replaced the cutoff with a
-            #     floor, max(polynomial, 0.8 meV), removing the discontinuity at 25 meV.
             AbINS_v1:
+                # Superseded by AbINS_v2
+                # AbINS_v1 does not match any released Mantid/Abins implementation exactly.
+                # It applies a 25 meV low-energy cutoff for Cu(220), whereas:
+                #
+                #   - Mantid <= 6.14 applies this method in the wrong units, so the flat segment
+                #     applies below about 3.1 meV;
+                #   - Mantid >= 6.15 (mantidproject/mantid#40229) replaces the energy cutoff with a
+                #     resolution floor, as implemented in AbINS_v2.
                 function: "discontinuous_polynomial"
                 citation: ["Mantid (2013): Manipulation and Analysis Toolkit for Instrument Data.; Mantid Project. http://dx.doi.org/10.5286/SOFTWARE/MANTID6.10"]
                 parameters:
