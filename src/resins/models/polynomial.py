@@ -130,7 +130,6 @@ class FlooredPolynomialModelData(ModelData):
         Polynomial coefficients, giving the width (sigma, in meV) as a function of energy transfer.
     minimum_sigma
         The smallest width (sigma, in meV) the model returns. Use ``0`` for no physical floor.
-        This has no default so that every configuration states its floor explicitly.
     """
     fit: list[float]
     minimum_sigma: float
@@ -140,12 +139,12 @@ class FlooredPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, Inst
     """
     Model using a 1D polynomial with a minimum width to model an :term:`instrument`.
 
-    Models the :term:`resolution` as a function of energy transfer (frequencies) only, with the
-    output :term:`model` being a Gaussian. The width (sigma) is the value of a single power-series
-    polynomial (see `numpy.polynomial.polynomial.Polynomial`) of the energy transfer, but never
-    smaller than `FlooredPolynomialModelData.minimum_sigma`. Unlike
-    `DiscontinuousPolynomialModel1D` this is continuous, and the polynomial may be negative (below
-    the floor) without error.
+    Models the :term:`resolution` as a function of energy transfer (frequencies) only,
+    with Gaussian shape. The width (sigma) is determined by a polynomial (see
+    `numpy.polynomial.polynomial.Polynomial`) of the energy transfer, except where that
+    value falls below `FlooredPolynomialModelData.minimum_sigma`. Unlike
+    `DiscontinuousPolynomialModel1D` this is continuous, and the polynomial may be
+    negative without error.
 
     Parameters
     ----------
