@@ -79,12 +79,12 @@ versioned model. The data must follow the
 :doc:`YAML file spec<../dev/yaml_spec>`, where the guidance on what belongs
 where can also be found, but the general points to keep in mind are as follows:
 
-* The ``function`` entry must have a value that corresponds to one of the
+* The ``form`` entry must have a value that corresponds to one of the
   existing models. See :py:const:`resins.models.MODELS` for a
-  dictionary that maps these ``function`` values to ResINS model objects. The
+  dictionary that maps these ``form`` values to ResINS model objects. The
   created model will use the corresponding object.
 
-  * To use a ``function`` not listed in ``MODELS``, new code will have to be
+  * To use a ``form`` not listed in ``MODELS``, new code will have to be
     written, see :ref:`howto-model-algorithm`.
 
 * The ``parameters`` dictionary must contain all the parameters that the
@@ -309,8 +309,7 @@ ResINS:
   code-base), the :py:const:`resins.models.MODELS` dictionary
   (found at ``resins/src/resins/models/__init__.py``)
   has to be modified by adding a new key-value pair, where the key is the
-  "name" of the function and the value is a reference to the above-created
-  model.
+  ``form`` name and the value is a reference to the above-created model.
 
   * The key can be anything as it is not exposed to the user - it is only
     present here and in the YAML data files, but it should be somewhat relevant.

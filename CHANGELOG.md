@@ -2,12 +2,15 @@
 
 ### Added
 
-- Added Lagrange model `AbINS_v2` (via the new `floored_polynomial` model function), matching Abins
+- Added Lagrange model `AbINS_v2` (via the new `floored_polynomial` model form), matching Abins
   in Mantid 6.15+: Cu(220) uses a 0.8 meV (2σ) floor instead of a step at 25 meV, and is now valid
   below 1.6 meV.
 
 ### Changed
 
+- **Breaking:** renamed the instrument YAML model key `function` to `form`, and the corresponding
+  `ModelData.function` attribute to `ModelData.form`, because the value names a model's mathematical
+  form rather than a Python function or a resolution function.
 - **Breaking:** reject unknown keyword arguments to `Instrument.get_resolution_function()` and
   `Instrument.get_model_data()`. An invalid configuration name or value now raises
   `InvalidConfigurationError`, and an unknown setting now raises `UnknownModelArgumentError`.

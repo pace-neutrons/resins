@@ -7,7 +7,7 @@ version:
         models:
             boxcar: "boxcar_v1"
             boxcar_v1:
-                function: "boxcar"
+                form: "boxcar"
                 citation: [""]
                 parameters:
                     defaults: {}
@@ -15,7 +15,7 @@ version:
                 configurations: {}
             triangle: "triangle_v1"
             triangle_v1:
-                function: "triangle"
+                form: "triangle"
                 citation: [ "" ]
                 parameters:
                     defaults: {}
@@ -23,7 +23,7 @@ version:
                 configurations: { }
             trapezoid: "trapezoid_v1"
             trapezoid_v1:
-                function: "trapezoid"
+                form: "trapezoid"
                 citation: [ "" ]
                 parameters:
                     defaults: {}
@@ -31,7 +31,7 @@ version:
                 configurations: { }
             gaussian: "gaussian_v1"
             gaussian_v1:
-                function: "gaussian"
+                form: "gaussian"
                 citation: [ "" ]
                 parameters:
                     defaults: {}
@@ -39,7 +39,7 @@ version:
                 configurations: { }
             lorentzian: "lorentzian_v1"
             lorentzian_v1:
-                function: "lorentzian"
+                form: "lorentzian"
                 citation: [ "" ]
                 parameters:
                     defaults: {}

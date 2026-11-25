@@ -77,8 +77,8 @@ class ModelData(ABC):
 
     Attributes
     ----------
-    function
-        The name of the function, i.e. the alias for the corresponding `InstrumentModel`.
+    form
+        The name of the :term:`model` form, i.e. the alias for the corresponding `InstrumentModel`.
     citation
         The citation for a particular model. Please use this to look up more details and cite the
         model.
@@ -90,7 +90,7 @@ class ModelData(ABC):
         The default values for the :term:`settings<setting>`, used when a value is not provided when
         creating the model.
     """
-    function: str
+    form: str
     citation: list[str]
     defaults: dict[str, int | float]
     restrictions: dict[str, list[int | float], set[int | float]]

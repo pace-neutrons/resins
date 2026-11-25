@@ -95,7 +95,7 @@ def generate_rst(data):
                        f'    a given version of the model.\n\n'
                 continue
 
-            cls = MODELS[model_data["function"]]
+            cls = MODELS[model_data["form"]]
             module = inspect.getmodule(cls)
             link = get_link(version_name, model_name)
 

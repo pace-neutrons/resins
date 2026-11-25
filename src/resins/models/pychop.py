@@ -58,8 +58,8 @@ class PyChopModelData(ModelData):
 
     Attributes
     ----------
-    function
-        The name of the function, i.e. the alias for `PantherAbINSModel`.
+    form
+        The name of the :term:`model` form, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
     restrictions
@@ -110,8 +110,8 @@ class PyChopModelDataFermi(PyChopModelData):
 
     Attributes
     ----------
-    function
-        The name of the function, i.e. the alias for `PantherAbINSModel`.
+    form
+        The name of the :term:`model` form, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
     restrictions
@@ -164,8 +164,8 @@ class PyChopModelDataNonFermi(PyChopModelData):
 
     Attributes
     ----------
-    function
-        The name of the function, i.e. the alias for `PantherAbINSModel`.
+    form
+        The name of the :term:`model` form, i.e. the alias for `PantherAbINSModel`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
     restrictions
