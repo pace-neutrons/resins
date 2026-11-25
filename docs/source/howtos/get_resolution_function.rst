@@ -46,7 +46,7 @@ and its call signature:
 >>> maps = Instrument.from_default('MAPS')
 >>> sig = maps.get_model_signature()
 >>> sig
-<Signature (model_name: Optional[str] = 'PyChop_fit', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resins.models.pychop.PyChopModelFermi>
+<Signature (model_name: Optional[str] = 'PyChop_fit', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4) -> resins.models.pychop.PyChopModelFermi>
 
 The returned :py:class:`inspect.Signature` object can be then be queried using
 the full capabilities afforded by this standard library implementation. For

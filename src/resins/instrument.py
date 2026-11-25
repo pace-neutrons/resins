@@ -79,12 +79,56 @@ class InvalidConfigurationError(Exception):
         The name of the model for which the `provided_name` was provided.
     instrument
         The instance of the `Instrument` object in which the `provided_name` was used.
+    option
+        The invalid :term:`option` that the user provided for the `provided_name` configuration.
+        If not provided, the `provided_name` itself is reported as an invalid configuration.
+    """
+    def __init__(self, provided_name: str, model_name: str, instrument: Instrument,
+                 option: Optional[str] = None):
+        if option is None:
+            message = f'"{provided_name}" is not a valid configuration for the {model_name} model ' \
+                      f'of the {instrument.version} version of the {instrument.name} ' \
+                      f'instrument. This instrument only supports the following configurations: ' \
+                      f'{instrument.possible_configurations_for_model(model_name)}.'
+        else:
+            message = f'"{option}" is not a valid option for the "{provided_name}" ' \
+                      f'configuration of the {model_name} model of the {instrument.version} ' \
+                      f'version of the {instrument.name} instrument. This configuration only ' \
+                      f'supports the following options: ' \
+                      f'{instrument.possible_options_for_model_and_configuration(model_name, provided_name)}.'
+
+        super().__init__(message)
+
+
+class UnknownModelArgumentError(TypeError):
+    """
+    An Exception representing an unknown keyword argument passed to
+    `Instrument.get_resolution_function`.
+
+    Raised when a keyword argument is neither a :term:`configuration<configuration>` of the model
+    nor a :term:`setting<setting>` accepted by that model. This is almost always a misspelled name.
+
+    This class does not support an arbitrary message; instead the message is constructed in here
+    from the provided information. It subclasses `TypeError`, so it is also caught by code that
+    handles unexpected keyword arguments.
+
+    Parameters
+    ----------
+    provided_name
+        The unknown keyword argument the user provided.
+    model_name
+        The name of the model for which the `provided_name` was provided.
+    instrument
+        The instance of the `Instrument` object in which the `provided_name` was used.
     """
     def __init__(self, provided_name: str, model_name: str, instrument: Instrument):
-        message = f'"{provided_name}" is not a valid configuration for the {model_name} model of ' \
-                  f'the {instrument.version} version of the {instrument.name} instrument. This ' \
-                  f'instrument only supports the following configurations: ' \
-                  f'{instrument.possible_configurations_for_model(model_name)}.'
+        signature = instrument.get_model_signature(model_name)
+        accepted = ', '.join(name for name in signature.parameters if name != 'model_name')
+
+        message = f'"{provided_name}" is not a configuration or setting of the {model_name} model ' \
+                  f'of the {instrument.version} version of the {instrument.name} instrument. ' \
+                  f'This may be a misspelling. This model accepts the following keyword ' \
+                  f'arguments: {accepted}.'
 
         super().__init__(message)
 
@@ -425,6 +469,9 @@ class Instrument:
         ------
         InvalidModelError
             If the provided `model_name` is not available for this version of this instrument.
+        InvalidConfigurationError
+            If any provided keyword argument is not a configuration of the model, or if the value
+            provided for a configuration is not one of its options.
         """
         if model_name is None:
             model_name = self.default_model
@@ -433,11 +480,17 @@ class Instrument:
 
         available_configurations = model['configurations']
 
+        unknown_configurations = set(kwargs) - set(available_configurations)
+        if unknown_configurations:
+            raise InvalidConfigurationError(next(iter(unknown_configurations)), model_name, self)
+
         configurations = []
         for configuration_name, options in available_configurations.items():
             kwarg = kwargs.pop(configuration_name, None)
             if kwarg is None:
                 kwarg = options['default_option']
+            elif kwarg not in self._get_options(options):
+                raise InvalidConfigurationError(configuration_name, model_name, self, option=kwarg)
 
             configurations.append(options[kwarg])
 
@@ -514,18 +567,19 @@ class Instrument:
         ------
         InvalidModelError
             If the provided `model_name` is not available for this version of this instrument.
+        InvalidConfigurationError
+            If any provided keyword argument is not a configuration of the model, or if the value
+            provided for a configuration is not one of its options.
+        TypeError
+            If any provided keyword argument is not a :term:`setting<setting>` of the model. This
+            is raised as `UnknownModelArgumentError`, a subclass of `TypeError`, which lists the
+            accepted keyword arguments.
         InvalidInputError
             If the model has restrictions on its inputs and these have been violated. The
             restrictions can be checked by using the `get_model_data` method and then viewing the
             ``restrictions`` attribute of the returned object.
         Exception
             Other model-specific exceptions may be raised.
-
-        Warnings
-        --------
-        If there are any mistakes in the model-specific parameters passed in as
-        keyword arguments, they will be silently ignored and the default values for the missing
-        parameters will be used.
 
         See Also
         --------
@@ -545,7 +599,17 @@ class Instrument:
         >>> print(tosca.get_resolution_function('vision'))
         VisionPaperModel(citation="https://doi.org/10.1016/j.nima.2009.03.204")
         """
-        model_data, model_name = self._get_model_data(model_name, **kwargs)
+        model, model_name = self._resolve_model(model_name if model_name is not None
+                                                else self.default_model)
+        configuration_names = set(model['configurations'])
+        configuration_kwargs = {name: kwargs.pop(name) for name in configuration_names
+                                if name in kwargs}
+        setting_names = set(self.get_model_signature(model_name).parameters)
+        for name in kwargs:
+            if name not in setting_names:
+                raise UnknownModelArgumentError(name, model_name, self)
+
+        model_data, model_name = self._get_model_data(model_name, **configuration_kwargs)
         model_class = MODELS[model_data.function]
 
         return model_class(model_data, **kwargs)

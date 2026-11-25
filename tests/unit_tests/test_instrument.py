@@ -38,7 +38,7 @@ class MockModel(InstrumentModel):
                  model_data: MockModelData,
                  arg1: int,
                  kwarg1: None = None,
-                 kwarg2: int = 0, **_):
+                 kwarg2: int = 0):
         super().__init__(model_data)
         self.data = model_data
         self.arg1 = arg1
@@ -288,7 +288,7 @@ def test_get_resolution_function(instrument, version1_mock_v3_data_nondefault, m
 
     arg1, kwarg2 = True, 42
     actual = instrument.get_resolution_function(
-        'mock_v3', config1='C', config2='Y', arg1=arg1, kwarg2=kwarg2, unused=False
+        'mock_v3', config1='C', config2='Y', arg1=arg1, kwarg2=kwarg2
     )
 
     assert isinstance(actual, MockModel)
@@ -296,6 +296,28 @@ def test_get_resolution_function(instrument, version1_mock_v3_data_nondefault, m
     assert actual.arg1 == arg1
     assert actual.kwarg1 is None
     assert actual.kwarg2 == kwarg2
+
+
+@pytest.mark.parametrize("kwargs,expected",
+                         [({'config3': 'A'}, i.UnknownModelArgumentError),
+                          ({'config1': 'Z'}, i.InvalidConfigurationError),
+                          ({'config1': 'default_option'}, i.InvalidConfigurationError),
+                          ({'arg2': 1}, i.UnknownModelArgumentError)],
+                         ids=['unknown_configuration', 'invalid_option',
+                              'reserved_option', 'unknown_setting'])
+def test_get_resolution_function_invalid_kwargs(instrument, mock_models, mocker,
+                                                kwargs, expected):
+    mocker.patch('resins.instrument.MODELS', mock_models)
+
+    with pytest.raises(expected):
+        instrument.get_resolution_function('mock_v3', arg1=1, **kwargs)
+
+
+def test_get_model_data_unknown_configuration(instrument, mock_models, mocker):
+    mocker.patch('resins.instrument.MODELS', mock_models)
+
+    with pytest.raises(i.InvalidConfigurationError):
+        instrument.get_model_data(model_name='mock_v3', config3='A')
 
 
 def test_get_resolution_function_invalid_function(instrument, mock_models, mocker):
