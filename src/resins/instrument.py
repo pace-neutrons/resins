@@ -56,9 +56,10 @@ class InvalidModelError(Exception):
         The instance of the `Instrument` object in which the `provided_name` was used.
     """
     def __init__(self, provided_name: str, instrument: Instrument):
-        message = f'"{provided_name}" is not a valid model for the {instrument.name} instrument ' \
-                  f'version {instrument.version}. This instrument only supports the following ' \
-                  f'models: {instrument.available_models}.'
+        message = (
+            f'"{provided_name}" is not a valid model for the {instrument.name} instrument '
+            f'version {instrument.version}. This instrument only supports the following '
+            f'models: {instrument.available_models}.')
 
         super().__init__(message)
 
@@ -86,16 +87,18 @@ class InvalidConfigurationError(Exception):
     def __init__(self, provided_name: str, model_name: str, instrument: Instrument,
                  option: Optional[str] = None):
         if option is None:
-            message = f'"{provided_name}" is not a valid configuration for the {model_name} model ' \
-                      f'of the {instrument.version} version of the {instrument.name} ' \
-                      f'instrument. This instrument only supports the following configurations: ' \
-                      f'{instrument.possible_configurations_for_model(model_name)}.'
+            message = (
+                f'"{provided_name}" is not a valid configuration for the {model_name} model '
+                f'of the {instrument.version} version of the {instrument.name} '
+                'instrument. This instrument only supports the following configurations: '
+                f'{instrument.possible_configurations_for_model(model_name)}.')
         else:
-            message = f'"{option}" is not a valid option for the "{provided_name}" ' \
-                      f'configuration of the {model_name} model of the {instrument.version} ' \
-                      f'version of the {instrument.name} instrument. This configuration only ' \
-                      f'supports the following options: ' \
-                      f'{instrument.possible_options_for_model_and_configuration(model_name, provided_name)}.'
+            message = (
+                f'"{option}" is not a valid option for the "{provided_name}" '
+                f'configuration of the {model_name} model of the {instrument.version} '
+                f'version of the {instrument.name} instrument. This configuration only '
+                f'supports the following options: '
+                f'{instrument.possible_options_for_model_and_configuration(model_name, provided_name)}.')
 
         super().__init__(message)
 
@@ -125,10 +128,11 @@ class UnknownModelArgumentError(TypeError):
         signature = instrument.get_model_signature(model_name)
         accepted = ', '.join(name for name in signature.parameters if name != 'model_name')
 
-        message = f'"{provided_name}" is not a configuration or setting of the {model_name} model ' \
-                  f'of the {instrument.version} version of the {instrument.name} instrument. ' \
-                  f'This may be a misspelling. This model accepts the following keyword ' \
-                  f'arguments: {accepted}.'
+        message = (
+            f'"{provided_name}" is not a configuration or setting of the {model_name} model '
+            f'of the {instrument.version} version of the {instrument.name} instrument. '
+            'This may be a misspelling. This model accepts the following keyword '
+            f'arguments: {accepted}.')
 
         super().__init__(message)
 
@@ -435,36 +439,6 @@ class Instrument:
         model_data
             The data associated with `model_name`.
 
-        See Also
-        --------
-        default_model : The default model for this instrument.
-        available_models : List of models available for this instrument
-        possible_configurations_for_model : List of configurations that can be chosen for this model
-        """
-        out, _ = self._get_model_data(model_name, **kwargs)
-        return out
-
-    def _get_model_data(self, model_name: Optional[str] = None, **kwargs) -> tuple[ModelData, str]:
-        """
-        The specific implementation for `get_model_data`.
-
-        Parameters
-        ----------
-        model_name
-            The name of the model whose parameters to retrieve. If not provided, the parameters of
-            the default_model will be retrieved.
-        kwargs
-            Keyword arguments can be passed in to choose an option for each configuration specific
-            to the `model_name`. If not provided, default values are used.
-
-        Returns
-        -------
-        model_data
-            The data associated with `model_name`.
-        model_name
-            The name of the returned model. This will be the same as `model_name` if it was
-            provided, otherwise it is the default model name.
-
         Raises
         ------
         InvalidModelError
@@ -472,33 +446,104 @@ class Instrument:
         InvalidConfigurationError
             If any provided keyword argument is not a configuration of the model, or if the value
             provided for a configuration is not one of its options.
+
+        See Also
+        --------
+        default_model : The default model for this instrument.
+        available_models : List of models available for this instrument
+        possible_configurations_for_model : List of configurations that can be chosen for this model
         """
-        if model_name is None:
-            model_name = self.default_model
+        model, model_name = self._resolve_model(model_name if model_name is not None
+                                                else self.default_model)
+        configuration_kwargs, remaining = self._partition_kwargs(model, kwargs)
+        if remaining:
+            raise InvalidConfigurationError(next(iter(remaining)), model_name, self)
 
-        model, model_name = self._resolve_model(model_name)
+        return self._build_model_data(model, configuration_kwargs)
 
-        available_configurations = model['configurations']
+    @staticmethod
+    def _partition_kwargs(model: dict, kwargs: dict) -> tuple[dict, dict]:
+        """
+        Splits keyword arguments into configuration arguments and the remaining arguments.
 
-        unknown_configurations = set(kwargs) - set(available_configurations)
-        if unknown_configurations:
-            raise InvalidConfigurationError(next(iter(unknown_configurations)), model_name, self)
+        Parameters
+        ----------
+        model
+            The raw data of the model for which the keyword arguments were provided.
+        kwargs
+            The keyword arguments to split.
 
+        Returns
+        -------
+        configurations
+            The subset of `kwargs` whose keys are configurations of `model`.
+        remaining
+            All the other keyword arguments, in their original order.
+        """
+        configurations = {
+            name: kwargs[name] for name in model['configurations'] if name in kwargs
+        }
+        remaining = {
+            name: value for name, value in kwargs.items()
+            if name not in model['configurations']
+        }
+        return configurations, remaining
+
+    def _reject_unknown_settings(self, model_name: str, remaining: dict) -> None:
+        """
+        Raises `UnknownModelArgumentError` for any argument that is not a setting of the model.
+
+        Parameters
+        ----------
+        model_name
+            The name of the model whose settings the `remaining` arguments are checked against.
+        remaining
+            The keyword arguments that are not configurations of the model.
+
+        Raises
+        ------
+        UnknownModelArgumentError
+            If any key of `remaining` is not a setting of the `model_name` model.
+        """
+        settings_signature = self.get_model_signature(model_name).parameters
+        for name in remaining:
+            if name not in settings_signature:
+                raise UnknownModelArgumentError(name, model_name, self)
+
+    def _build_model_data(self, model: dict, configuration_kwargs: dict) -> ModelData:
+        """
+        Builds the `ModelData` for a model from already-selected configuration options.
+
+        Parameters
+        ----------
+        model
+            The raw data of the model whose `ModelData` to build.
+        configuration_kwargs
+            The chosen :term:`option` for each :term:`configuration` of the model, by
+            configuration name. Configurations not present use their default option.
+
+        Returns
+        -------
+        model_data
+            The data associated with the model.
+
+        Raises
+        ------
+        InvalidConfigurationError
+            If a value provided for a configuration is not one of its options.
+        """
         configurations = []
-        for configuration_name, options in available_configurations.items():
-            kwarg = kwargs.pop(configuration_name, None)
-            if kwarg is None:
-                kwarg = options['default_option']
-            elif kwarg not in self._get_options(options):
-                raise InvalidConfigurationError(configuration_name, model_name, self, option=kwarg)
+        for configuration_name, options in model['configurations'].items():
+            option = configuration_kwargs.get(configuration_name, options['default_option'])
+            if option not in self._get_options(options):
+                raise InvalidConfigurationError(configuration_name, model['function'], self, option=option)
 
-            configurations.append(options[kwarg])
+            configurations.append(options[option])
 
         model_class = MODELS[model['function']]
-        model = model_class.data_class(function=model['function'],
-                                       citation=model['citation'],
-                                       **ChainMap(*configurations, model['parameters']))
-        return model, model_name
+        return model_class.data_class(function=model['function'],
+                                      citation=model['citation'],
+                                      **ChainMap(*configurations, model['parameters']))
 
     def _resolve_model(self, model_name: str) -> tuple[dict, str]:
         """
@@ -601,18 +646,13 @@ class Instrument:
         """
         model, model_name = self._resolve_model(model_name if model_name is not None
                                                 else self.default_model)
-        configuration_names = set(model['configurations'])
-        configuration_kwargs = {name: kwargs.pop(name) for name in configuration_names
-                                if name in kwargs}
-        setting_names = set(self.get_model_signature(model_name).parameters)
-        for name in kwargs:
-            if name not in setting_names:
-                raise UnknownModelArgumentError(name, model_name, self)
+        configuration_kwargs, settings = self._partition_kwargs(model, kwargs)
+        self._reject_unknown_settings(model_name, settings)
 
-        model_data, model_name = self._get_model_data(model_name, **configuration_kwargs)
+        model_data = self._build_model_data(model, configuration_kwargs)
         model_class = MODELS[model_data.function]
 
-        return model_class(model_data, **kwargs)
+        return model_class(model_data, **settings)
 
     def get_model_signature(self, model_name: Optional[str] = None) -> Signature:
         """
@@ -668,7 +708,9 @@ class Instrument:
         from inspect import signature, Signature, Parameter
         from typing import Annotated, Literal
 
-        model_data, model_name = self._get_model_data(model_name)
+        model, model_name = self._resolve_model(model_name if model_name is not None
+                                                else self.default_model)
+        model_data = self._build_model_data(model, {})
         model_class = MODELS[model_data.function]
 
         signature = signature(model_class)
@@ -680,7 +722,7 @@ class Instrument:
                                     annotation=Optional[str])
         }
 
-        for configuration_name, options in self._models[model_name]['configurations'].items():
+        for configuration_name, options in model['configurations'].items():
             option_names = self._get_options(options)
             params[configuration_name] = Parameter(configuration_name,
                                                    Parameter.KEYWORD_ONLY,

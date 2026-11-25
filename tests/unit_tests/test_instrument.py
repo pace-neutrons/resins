@@ -217,34 +217,6 @@ def test_get_file_invalid(patch_instrument_map, patch_importlib_files):
         i.Instrument._get_file('INVALID_INSTRUMENT')
 
 
-def test_private_get_model_data(instrument, version1_mock_v3_data_nondefault, mock_models, mocker):
-    mocker.patch('resins.instrument.MODELS', mock_models)
-
-    actual_model, actual_name = instrument._get_model_data(model_name='mock_v3', config1='C', config2='Y')
-
-    assert actual_name == 'mock_v3'
-    assert isinstance(actual_model, MockModelData)
-    assert actual_model == version1_mock_v3_data_nondefault
-
-
-def test_private_get_model_data_default(instrument,
-                                        version1_mock_v3_data_default,
-                                        mock_models,
-                                        mocker):
-    mocker.patch('resins.instrument.MODELS', mock_models)
-
-    actual_model, actual_name = instrument._get_model_data()
-
-    assert actual_name == 'mock_v3'
-    assert isinstance(actual_model, MockModelData)
-    assert actual_model == version1_mock_v3_data_default
-
-
-def test_private_get_model_data_invalid_model(test_instrument):
-    with pytest.raises(i.InvalidModelError):
-        test_instrument._get_model_data(model_name='invalid_model')
-
-
 def test_get_model_data(instrument, version1_mock_v3_data_nondefault, mock_models, mocker):
     mocker.patch('resins.instrument.MODELS', mock_models)
 
@@ -252,6 +224,15 @@ def test_get_model_data(instrument, version1_mock_v3_data_nondefault, mock_model
 
     assert isinstance(actual_model, MockModelData)
     assert actual_model == version1_mock_v3_data_nondefault
+
+
+def test_get_model_data_default(instrument, version1_mock_v3_data_default, mock_models, mocker):
+    mocker.patch('resins.instrument.MODELS', mock_models)
+
+    actual_model = instrument.get_model_data()
+
+    assert isinstance(actual_model, MockModelData)
+    assert actual_model == version1_mock_v3_data_default
 
 
 def test_get_model_data_invalid_type_no_error(instrument,

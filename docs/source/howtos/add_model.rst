@@ -228,10 +228,6 @@ Next, the ``__init__`` method should be defined. The function signature:
   :term:`settings<setting>`, but may be others).
 * *Must not* expect the independent variables (i.e. the variables that the
   model is a function of such as energy transfer or momentum).
-* *Must* take only its own :term:`settings<setting>` as keyword arguments (plus
-  ``model_data``). It *must not* take a catch-all ``**kwargs``, so that a misspelled
-  setting raises an error rather than being ignored. It *must* forward only
-  appropriate arguments to ``super().__init__``.
 
 The body of ``__init__()``:
 
