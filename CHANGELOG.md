@@ -8,11 +8,9 @@
 
 ### Changed
 
-- **Breaking:** reject unknown or misspelled keyword arguments to
-  `Instrument.get_resolution_function()` and `Instrument.get_model_data()` instead of silently
-  ignoring them. An invalid configuration name or option value now raises
-  `InvalidConfigurationError`, and an unknown setting now raises `UnknownModelArgumentError`
-  (a `TypeError` subclass listing the accepted arguments).
+- **Breaking:** reject unknown keyword arguments to `Instrument.get_resolution_function()` and
+  `Instrument.get_model_data()`. An invalid configuration name or value now raises
+  `InvalidConfigurationError`, and an unknown setting now raises `UnknownModelArgumentError`.
 - **Breaking:** removed the `**_` catch-all from `InstrumentModel.__init__` and its subclasses, so a
   custom model must take only its own settings and forward only appropriate arguments to
   `super().__init__`.

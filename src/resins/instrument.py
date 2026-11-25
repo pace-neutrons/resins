@@ -453,8 +453,8 @@ class Instrument:
         available_models : List of models available for this instrument
         possible_configurations_for_model : List of configurations that can be chosen for this model
         """
-        model, model_name = self._resolve_model(model_name if model_name is not None
-                                                else self.default_model)
+        model, model_name = self._resolve_model(
+            model_name if model_name is not None else self.default_model)
         configuration_kwargs, remaining = self._partition_kwargs(model, kwargs)
         if remaining:
             raise InvalidConfigurationError(next(iter(remaining)), model_name, self)
@@ -464,7 +464,7 @@ class Instrument:
     @staticmethod
     def _partition_kwargs(model: dict, kwargs: dict) -> tuple[dict, dict]:
         """
-        Splits keyword arguments into configuration arguments and the remaining arguments.
+        Split keyword arguments into known configurations and other options.
 
         Parameters
         ----------
