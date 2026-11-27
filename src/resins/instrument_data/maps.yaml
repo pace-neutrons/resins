@@ -77,7 +77,7 @@ version:
                     <<: *maps_constants
                 configurations: *maps_configurations
 #            PyChop_tau:
-#                function: "2d_tau"
+#                form: "2d_tau"
 #                parameters:
 #                    imod: 2
 #                    measured_width: # Table of measured moderator time widths in microseconds. If present will override imod and mod_pars
