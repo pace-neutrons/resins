@@ -24,7 +24,7 @@ version:
                 #     applies below about 3.1 meV;
                 #   - Mantid >= 6.15 (mantidproject/mantid#40229) replaces the energy cutoff with a
                 #     resolution floor, as implemented in AbINS_v2.
-                function: "discontinuous_polynomial"
+                form: "discontinuous_polynomial"
                 citation: ["Mantid (2013): Manipulation and Analysis Toolkit for Instrument Data.; Mantid Project. http://dx.doi.org/10.5286/SOFTWARE/MANTID6.10"]
                 parameters:
                     defaults: {}
@@ -47,7 +47,7 @@ version:
                             #ei_range: [4.5, 20]  # meV
                             fit: [0.4]  # meV
             AbINS_v2:
-                function: "floored_polynomial"
+                form: "floored_polynomial"
                 citation:
                     - "Mantid (2013): Manipulation and Analysis Toolkit for Instrument Data.; Mantid Project. http://dx.doi.org/10.5286/SOFTWARE/MANTID6.15"
                     - "Mantid pull request mantidproject/mantid#40229 (Abins Lagrange resolution floor). https://github.com/mantidproject/mantid/pull/40229"

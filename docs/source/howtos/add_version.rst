@@ -49,7 +49,7 @@ which the new :term:`version` can be placed. This can be done in two ways:
     **data loss**.
 
 With an instrument file present, all that is required is to add the data for
-the new :term:`version` to the the YAML file, which can be done by adding a new
+the new :term:`version` to the YAML file, which can be done by adding a new
 key to the ``version`` dictionary of the YAML file. The corresponding value to
 this key should be a dictionary containing the data for the :term:`version`. See
 :doc:`../dev/yaml_spec` for more information on how to structure the YAML data

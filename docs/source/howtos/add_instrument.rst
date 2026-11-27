@@ -58,7 +58,7 @@ dictionary still **must** follow the :doc:`data file spec<../dev/yaml_spec>`
 >>> new_instrument_name = 'name'
 >>> new_instrument_version = 'v1'
 >>> new_instrument_default_model = 'AbINS'
->>> new_instrument_data = {'AbINS: 'AbINS_v1', 'AbINS_v1': {'function': 'polynomial_1d', 'citation': [''], 'parameters': [0, 2], 'settings': {}}}
+>>> new_instrument_data = {'AbINS': 'AbINS_v1', 'AbINS_v1': {'form': 'polynomial_1d', 'citation': [''], 'parameters': [0, 2], 'settings': {}}}
 >>> new_instrument = Instrument(new_instrument_name, new_instrument_version, new_instrument_data, new_instrument_default_model)
 >>> print(new_instrument)
 Instrument(name=name, version=v1)

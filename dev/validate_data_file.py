@@ -168,11 +168,11 @@ def validate_model(model: dict, header: str) -> None:
     header
         The header to prepend to error messages.
     """
-    if 'function' not in model:
-        raise ValidationError(f'{header}the "function" key is missing.')
-    elif not isinstance(model['function'], str):
-        raise ValidationError(f'{header}the "function" must be a str (is a '
-                              f'{type(model["function"])})')
+    if 'form' not in model:
+        raise ValidationError(f'{header}the "form" key is missing.')
+    elif not isinstance(model['form'], str):
+        raise ValidationError(f'{header}the "form" must be a str (is a '
+                              f'{type(model["form"])})')
 
     if 'citation' not in model:
         raise ValidationError(f'{header}the "citation" key is missing.')

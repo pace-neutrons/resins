@@ -6,7 +6,7 @@ The :term:`instrument`/:term:`model` data used by ResINS is available in the
 via the YAML files in ``resins/instrument_data``. However,
 one may also obtain the data programmatically at runtime; this could be useful
 when accessing ResINS through other software to ensure the information is
-up-to-date with the code. This guide shows how to to this:
+up-to-date with the code. This guide shows how to do this:
 
 .. contents::
     :backlinks: entry

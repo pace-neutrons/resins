@@ -18,7 +18,7 @@ version:
         models:
             vision: "vision_v1"
             vision_v1:
-                function: "vision_paper"
+                form: "vision_paper"
                 citation: ["P. A. Seeger, L. L. Daemen, and J. Z. Larese, Nucl. Instrum. Methods Phys. Res., Sect. A, 2009, 604, 3, 719-728. https://doi.org/10.1016/j.nima.2009.03.204"]
                 parameters:
                     <<: *vision_constants

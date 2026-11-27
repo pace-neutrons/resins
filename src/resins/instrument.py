@@ -557,12 +557,12 @@ class Instrument:
         for configuration_name, options in model['configurations'].items():
             option = configuration_kwargs.get(configuration_name, options['default_option'])
             if option not in self._get_options(options):
-                raise InvalidConfigurationError(configuration_name, model['function'], self, option=option)
+                raise InvalidConfigurationError(configuration_name, model['form'], self, option=option)
 
             configurations.append(options[option])
 
-        model_class = MODELS[model['function']]
-        return model_class.data_class(function=model['function'],
+        model_class = MODELS[model['form']]
+        return model_class.data_class(form=model['form'],
                                       citation=model['citation'],
                                       **ChainMap(*configurations, model['parameters']))
 
@@ -671,7 +671,7 @@ class Instrument:
         self._reject_unknown_settings(model_name, settings)
 
         model_data = self._build_model_data(model, configuration_kwargs)
-        model_class = MODELS[model_data.function]
+        model_class = MODELS[model_data.form]
 
         return model_class(model_data, **settings)
 
@@ -732,7 +732,7 @@ class Instrument:
         model, model_name = self._resolve_model(model_name if model_name is not None
                                                 else self.default_model)
         model_data = self._build_model_data(model, {})
-        model_class = MODELS[model_data.function]
+        model_class = MODELS[model_data.form]
 
         signature = signature(model_class)
 

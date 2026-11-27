@@ -20,7 +20,7 @@ The data must be stored in a YAML format file with the following structure:
             :ref:`models<spec-models>`\ :iref:target:`:<spec-models-targ>`
                 model1: "model1_v1"
                 model1_v1:
-                    :ref:`function<spec-function>`: :iref:target:`"model_function_name"<spec-function-targ>`
+                    :ref:`form<spec-form>`: :iref:target:`"model_form_name"<spec-form-targ>`
                     :ref:`citation<spec-citation>`: ["citation1", :iref:target:`"citation2"<spec-citation-targ>`]
                     :ref:`parameters<spec-parameters>`\ :iref:target:`:<spec-parameters-targ>`
                         :ref:`defaults<spec-defaults>`\ :iref:target:`:<spec-defaults-targ>`
@@ -167,7 +167,7 @@ correctly formatted data for a :term:`model` in the form of a (YAML) dictionary.
 That said, though, this inner dictionary has less strict specification - the
 only requirement is that it *must* contain the following keys:
 
-* :ref:`function<spec-function>`
+* :ref:`form<spec-form>`
 * :ref:`citation<spec-citation>`
 * :ref:`parameters<spec-parameters>`
 * :ref:`configurations<spec-configurations>`
@@ -176,12 +176,12 @@ Otherwise, other entries for the dictionary are not defined and may similarly
 be used for storing shared data (see :ref:`spec-yaml-magic`), so long as they do
 not clash with the names above.
 
-.. _spec-function:
+.. _spec-form:
 
-function
-^^^^^^^^
+form
+^^^^
 
-This key (:iref:ref:`see in spec<spec-function-targ>`), found inside the (YAML)
+This key (:iref:ref:`see in spec<spec-form-targ>`), found inside the (YAML)
 dictionary corresponding to a particular :term:`model`, (see the
 :ref:`model key<spec-models>`), specifies the exact ResINS :term:`model` object
 that will be instantiated when a user wants to use the particular :term:`model`.
@@ -229,7 +229,7 @@ The only intrinsic restrictions on this dictionary are that it must contain the
 :ref:`defaults<spec-defaults>` and :ref:`restrictions<spec-restrictions>`
 key-value pairs. Otherwise, the only requirement is that it must contain
 **exactly** the parameters required by the ResINS model specified by the
-:ref:`function value<spec-function>`. There can be no missing or extra
+:ref:`form value<spec-form>`. There can be no missing or extra
 parameters, though please note that some of the parameters required by the model
 may be stored in the :ref:`configurations dictionary<spec-configurations>`. The
 values must match the arguments expected by the associated ``ModelData``
@@ -414,14 +414,14 @@ Example
             models:
                 model3: "model3_v1"
                 model3_v1:
-                    function: "model3_function"
+                    form: "model3_function"
                     citation: ["https://mantid.org/docs/relevant-page.html"]
                     parameters:
                         fit: [0.6546, 2.10548, -9.5, -0.00004]
                     configurations: {}
                 old_model: "old_model_v1"
                 old_model_v1:
-                    function: "old_function"
+                    form: "old_function"
                     citation: ["A. Doof et. al., Sci. Mag., 1975, 1, 1-6."]
                     parameters:
                         distance: 1.5
@@ -485,17 +485,17 @@ Example
             models:
                 model1: "model1_v3"
                 model1_v1:
-                    function: "model1_function"
+                    form: "model1_function"
                     citation: ["A. Yi, H. Wells, and Y. Li, Sci. Mag., 2009, 42, 700-706. https://doi.org/164648"]
                     parameters: *version1_constants
                     configurations: *version1_configurations
                 model1_v2:
-                    function: "model1_function_modified"
+                    form: "model1_function_modified"
                     citation: ["A. Yi, H. Wells, and Y. Li, Sci. Mag., 2010, 44, 700-706. https://doi.org/164648"]
                     parameters: *version1_constants
                     configurations: *version1_configurations
                 model1_v3:
-                    function: "model1_function_modified"
+                    form: "model1_function_modified"
                     citation: ["A. Yi, H. Wells, and Y. Li, Sci. Mag., 2015, 69, 700-706. https://doi.org/164648"]
                     parameters:
                         <<: *version1_constants
@@ -503,13 +503,13 @@ Example
                     configurations: *version1_configurations
                 model2: "model2_v1"
                 model2_v1:
-                    function: "model2_function"
+                    form: "model2_function"
                     citation: ["Z. Zun et. al., Book On The Topic, Publisher, 1999. ISBN 000-000-000-0", "J. Adams et. al., Sci. Mag., 2000, 27, 1-12."]
                     parameters: *version1_constants
                     configurations: {}
                 model3: "model3_v1"
                 model3_v1:
-                    function: "model3_function"
+                    form: "model3_function"
                     citation: ["https://mantid.org/docs/relevant-page.html"]
                     parameters:
                         fit: [1.6546, 0.10548, -99.5, 0.00004]

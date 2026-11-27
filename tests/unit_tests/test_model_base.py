@@ -22,7 +22,7 @@ class MockModel(InstrumentModel):
 
 
 class MockModelData:
-    function = ''
+    form = ''
     citation = ['']
 
     def __init__(self, defaults, restrictions):

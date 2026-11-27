@@ -88,7 +88,7 @@ def instrument(data):
 def version1_mock_v3_data_default(data):
     model = data['version']['VERSION1']['models']['mock_v3']
     return MockModelData(
-        function=model['function'],
+        form=model['form'],
         citation=model['citation'],
         **model['parameters'],
         **model['configurations']['config1']['A'],
@@ -100,7 +100,7 @@ def version1_mock_v3_data_default(data):
 def version1_mock_v3_data_nondefault(data):
     model = data['version']['VERSION1']['models']['mock_v3']
     return MockModelData(
-        function=model['function'],
+        form=model['form'],
         citation=model['citation'],
         **model['parameters'],
         **model['configurations']['config1']['C'],

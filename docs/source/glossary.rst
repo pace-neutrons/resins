@@ -58,12 +58,22 @@ Most relevant terms
         :term:`model`.
 
     model
-        A method to represent the :term:`resolution function`. There are different ways of
-        approximating the :term:`resolution function`, each taking into account different levels of
-        detail. The same model can often be used to describe multiple similar
-        :term:`instruments<instrument>` or multiple :term:`versions<version>` of an
-        :term:`instrument`, but in the context of this package, a model can only be accessed through
-        a particular :term:`version` of an :term:`instrument`.
+        An implementation of the :term:`resolution function` of a
+        particular :term:`instrument` :term:`version`. For a given
+        :term:`instrument` :term:`version` there may be multiple models
+        implemented e.g. to use different levels of detail or include
+        corrected data.
+
+        In code, a model is a :term:`form` bound to its data: an instance
+        of a form class.
+
+    form
+        A generic implementation of :term:`resolution function` which is
+        combined with data to construct a specific :term:`model`.
+        Each form is a class such as ``PolynomialModel1D``, mapped to a
+        string key in ``resins.models.MODELS``. Typically a form can
+        describe multiple similar instruments by constructing it with
+        different data.
 
 
 Neutron terminology
@@ -112,7 +122,7 @@ Neutron terminology
         exposed to the neutron :term:`beam` and therefore shouldn't affect the :term:`resolution`.
 
     detector
-        A device used used to detect the presence of a neutron. These are placed at various
+        A device used to detect the presence of a neutron. These are placed at various
         positions around the :term:`sample` to determine the energies and momenta of the neutrons
         scattered from the sample under investigation.
 

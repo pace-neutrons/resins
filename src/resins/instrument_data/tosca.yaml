@@ -29,7 +29,7 @@ version:
         models:
             book: "book_v1"
             book_v1:
-                function: "tosca_book"
+                form: "tosca_book"
                 citation: ["PCH Mitchell, SF Parker, AJ Ramirez-Cuesta, and J Tomkinson, Vibrational Spectroscopy with Neutrons, World Scientific, Singapore, 2005. ISBN 981-256-013-0"]
                 parameters: *tfxa_constants
                 configurations: *tfxa_configurations
@@ -60,7 +60,7 @@ version:
         models:
             book: "book_v1"
             book_v1:
-                function: "tosca_book"
+                form: "tosca_book"
                 citation: ["PCH Mitchell, SF Parker, AJ Ramirez-Cuesta, and J Tomkinson, Vibrational Spectroscopy with Neutrons, World Scientific, Singapore, 2005. ISBN 981-256-013-0"]
                 parameters: *tosca1_constants
                 configurations: *tosca1_configurations
@@ -91,7 +91,7 @@ version:
                 # TOSCA parameters for resolution function
                 # sigma = tosca_a * omega * omega + tosca_b * omega + tosca_c
                 # where sigma is width of Gaussian function
-                function: "polynomial_1d"
+                form: "polynomial_1d"
                 citation: [
                     "K. Dymkowski, S. F. Parker, F. Fernandez-Alonso, S. Mukhopadhyay, Phys. B: Condens. Matter, 2018, 551, 443-448. https://doi.org/10.1016/j.physb.2018.02.034.",
                     "Y. Q. Cheng, L. L. Daemen, A. I. Kolesnikov, and A. J. Ramirez-Cuesta, J. Chem. Theory Comput., 2019, 15, 1974-1982. https://doi.org/10.1021/acs.jctc.8b01250"]
@@ -103,7 +103,7 @@ version:
                 configurations: {}
             book: "book_v1"
             book_v1:
-                function: "tosca_book"
+                form: "tosca_book"
                 citation: ["PCH Mitchell, SF Parker, AJ Ramirez-Cuesta, and J Tomkinson, Vibrational Spectroscopy with Neutrons, World Scientific, Singapore, 2005. ISBN 981-256-013-0"]
                 parameters:
                     <<: *tosca_constants
@@ -127,7 +127,7 @@ version:
                             change_average_bragg_angle_graphite: 17.59374274222979
             vision: "vision_v1"
             vision_v1:
-                function: "vision_paper"
+                form: "vision_paper"
                 citation: ["P. A. Seeger, L. L. Daemen, and J. Z. Larese, Nucl. Instrum. Methods Phys. Res., Sect. A, 2009, 604, 3, 719-728. https://doi.org/10.1016/j.nima.2009.03.204"]
                 parameters:
                     <<: *tosca_constants

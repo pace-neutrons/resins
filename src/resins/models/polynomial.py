@@ -27,8 +27,8 @@ class PolynomialModelData(ModelData):
 
     Attributes
     ----------
-    function
-        The name of the function, i.e. the alias for `PolynomialModel1D`.
+    form
+        The name of the :term:`model` form, i.e. the alias for `PolynomialModel1D`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
     restrictions
@@ -115,8 +115,8 @@ class FlooredPolynomialModelData(ModelData):
 
     Attributes
     ----------
-    function
-        The name of the function, i.e. the alias for `FlooredPolynomialModel1D`.
+    form
+        The name of the :term:`model` form, i.e. the alias for `FlooredPolynomialModel1D`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
     restrictions
@@ -210,8 +210,8 @@ class DiscontinuousPolynomialModelData(ModelData):
 
     Attributes
     ----------
-    function
-        The name of the function, i.e. the alias for `DiscontinuousPolynomialModel1D`.
+    form
+        The name of the :term:`model` form, i.e. the alias for `DiscontinuousPolynomialModel1D`.
     citation
         The citation for the model. Please use this to look up more details and cite the model.
     restrictions

@@ -15,7 +15,7 @@ FIT = [-1.0, 1.0]  # sigma = E - 1, negative below 1 meV
 def floored(fit=FIT, minimum_sigma=0.5) -> FlooredPolynomialModel1D:
     return FlooredPolynomialModel1D(
         FlooredPolynomialModelData(
-            function="floored_polynomial",
+            form="floored_polynomial",
             citation=[""],
             defaults={},
             restrictions={},
@@ -45,7 +45,7 @@ def test_floor_below_polynomial_matches_polynomial_1d():
     energies = np.linspace(2, 50, 25)
     plain = PolynomialModel1D(
         PolynomialModelData(
-            function="polynomial_1d",
+            form="polynomial_1d",
             citation=[""],
             defaults={},
             restrictions={},
@@ -58,7 +58,7 @@ def test_floor_below_polynomial_matches_polynomial_1d():
 def test_missing_minimum_sigma_rejected():
     with pytest.raises(TypeError):
         FlooredPolynomialModelData(
-            function="floored_polynomial",
+            form="floored_polynomial",
             citation=[""],
             defaults={},
             restrictions={},
