@@ -142,7 +142,7 @@ class UnknownModelArgumentError(TypeError):
             name for name in signature.parameters if name != 'model_name'
         )
 
-        names = f'{', '.join(f'"{name}"' for name in sorted(provided_names))}'
+        names = ', '.join(f'"{name}"' for name in sorted(provided_names))
         agreement = (
             'is not a configuration or setting' if len(provided_names) == 1
             else 'are not configurations or settings')
