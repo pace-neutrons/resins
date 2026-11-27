@@ -481,7 +481,8 @@ class Instrument:
             All the other keyword arguments, in their original order.
         """
         configurations = {
-            name: kwargs[name] for name in model['configurations'] if name in kwargs
+            name: value for name, value in kwargs.items()
+            if name in model['configurations']
         }
         remaining = {
             name: value for name, value in kwargs.items()
