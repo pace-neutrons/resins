@@ -964,8 +964,7 @@ class PyChopModelFermi(PyChopModel):
                  model_data: PyChopModelDataFermi,
                  e_init: Optional[float] = None,
                  chopper_frequency: Optional[int] = None,
-                 fitting_order: int = 4,
-                 **_):
+                 fitting_order: int = 4):
         super().__init__(model_data)
 
         settings = self._validate_settings(model_data,
@@ -1275,8 +1274,7 @@ class PyChopModelCNCS(PyChopModelNonFermi):
                  e_init: Optional[float] = None,
                  resolution_disk_frequency: Optional[int] = None,
                  fermi_frequency: Optional[int] = None,
-                 fitting_order: int = 4,
-                 **_):
+                 fitting_order: int = 4):
         super().__init__(model_data)
 
         settings = {'e_init': e_init,
@@ -1357,8 +1355,7 @@ class PyChopModelLET(PyChopModelNonFermi):
                  e_init: Optional[float] = None,
                  resolution_frequency: Optional[int] = None,
                  pulse_remover_frequency: Optional[int] = None,
-                 fitting_order: int = 4,
-                 **_):
+                 fitting_order: int = 4):
         super().__init__(model_data)
 
         settings = {'e_init': e_init,

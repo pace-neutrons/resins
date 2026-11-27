@@ -228,7 +228,6 @@ Next, the ``__init__`` method should be defined. The function signature:
   :term:`settings<setting>`, but may be others).
 * *Must not* expect the independent variables (i.e. the variables that the
   model is a function of such as energy transfer or momentum).
-* *Must* take ``**kwargs``.
 
 The body of ``__init__()``:
 
@@ -252,7 +251,7 @@ For example:
     from resins.models.model_base import InstrumentModel, InvalidInputError
 
     class TestModel(InstrumentModel):
-        def __init__(self, model_data: TestModelData, e_init: float | None = None, **_):
+        def __init__(self, model_data: TestModelData, e_init: float | None = None):
             super().__init__(model_data)
 
             if e_init is None:

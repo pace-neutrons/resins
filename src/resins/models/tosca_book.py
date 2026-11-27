@@ -115,7 +115,7 @@ class ToscaBookModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMode
 
     REDUCED_PLANCK_SQUARED = 4.18019
 
-    def __init__(self, model_data: ToscaBookModelData, **_):
+    def __init__(self, model_data: ToscaBookModelData):
         super().__init__(model_data)
         da = model_data.average_secondary_flight_path * np.sin(np.deg2rad(model_data.average_bragg_angle_graphite))
 

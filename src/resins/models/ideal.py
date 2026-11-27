@@ -119,7 +119,7 @@ class GenericBoxcar1DModel(
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, width: float = 1.0, **_):
+    def __init__(self, model_data: ModelData, width: float = 1.0):
         super().__init__(model_data)
         self.width = width
 
@@ -226,7 +226,7 @@ class GenericTriangle1DModel(
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, fwhm: float = 1.0, **_):
+    def __init__(self, model_data: ModelData, fwhm: float = 1.0):
         super().__init__(model_data)
         self.fwhm = fwhm
 
@@ -340,7 +340,6 @@ class GenericTrapezoid1DModel(
         model_data: ModelData,
         long_base: float = 1.0,
         short_base: float = 0.5,
-        **_,
     ):
         super().__init__(model_data)
         self.long_base = long_base
@@ -453,7 +452,7 @@ class GenericGaussian1DModel(
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, sigma: float = 1.0, **_):
+    def __init__(self, model_data: ModelData, sigma: float = 1.0):
         super().__init__(model_data)
         self.sigma = sigma
 
@@ -518,7 +517,7 @@ class GenericLorentzian1DModel(SimpleBroaden1DMixin, InstrumentModel):
 
     data_class = ModelData
 
-    def __init__(self, model_data: ModelData, fwhm: float = 1.0, **_):
+    def __init__(self, model_data: ModelData, fwhm: float = 1.0):
         super().__init__(model_data)
         self.fwhm = fwhm
 

@@ -23,7 +23,7 @@ programmatically:
 >>> maps.available_models
 ['PyChop_fit']
 >>> maps.get_model_signature('PyChop_fit')
-<Signature (model_name: Optional[str] = 'PyChop_fit_v1', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4, _) -> resins.models.pychop.PyChopModelFermi>
+<Signature (model_name: Optional[str] = 'PyChop_fit_v1', *, chopper_package: Literal['A', 'B', 'S'] = 'A', e_init: Annotated[ForwardRef('Optional[float]'), 'restriction=[0, 2000]'] = 500, chopper_frequency: Annotated[ForwardRef('Optional[int]'), 'restriction=[50, 601, 50]'] = 400, fitting_order: 'int' = 4) -> resins.models.pychop.PyChopModelFermi>
 
 With this, it is possible to make the choices and obtain the resolution function
 via the

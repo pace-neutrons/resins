@@ -168,7 +168,7 @@ class InstrumentModel(ABC):
 
     data_class: ClassVar[type[ModelData]]
 
-    def __init__(self, model_data: ModelData, **_):
+    def __init__(self, model_data: ModelData):
         self._citation = model_data.citation
 
     @abstractmethod

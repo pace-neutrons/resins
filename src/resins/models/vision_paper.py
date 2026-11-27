@@ -103,7 +103,7 @@ class VisionPaperModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentMo
     REDUCED_PLANCK = 1.054571817e-34  # J s
     NEUTRON_MASS = 1.67492749804e-27  # kg
 
-    def __init__(self, model_data: VisionPaperModelData, **_):
+    def __init__(self, model_data: VisionPaperModelData):
         super().__init__(model_data)
 
         self.l1 = model_data.primary_flight_path

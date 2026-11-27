@@ -96,7 +96,7 @@ class PantherAbINSModel(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
 
     data_class = PantherAbINSModelData
 
-    def __init__(self, model_data: PantherAbINSModelData, e_init: float | None = None, **_):
+    def __init__(self, model_data: PantherAbINSModelData, e_init: float | None = None):
         super().__init__(model_data)
 
         settings = self._validate_settings(model_data, {'e_init': e_init})

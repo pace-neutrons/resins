@@ -8,6 +8,12 @@
 
 ### Changed
 
+- **Breaking:** reject unknown keyword arguments to `Instrument.get_resolution_function()` and
+  `Instrument.get_model_data()`. An invalid configuration name or value now raises
+  `InvalidConfigurationError`, and an unknown setting now raises `UnknownModelArgumentError`.
+- **Breaking:** removed the `**_` catch-all from `InstrumentModel.__init__` and its subclasses, so a
+  custom model must take only its own settings and forward only appropriate arguments to
+  `super().__init__`.
 - **Breaking:** changed the Lagrange default model and `AbINS` alias from `AbINS_v1` to `AbINS_v2`,
   changing Cu(220) widths below 34.5 meV.
 - **Breaking:** changed `DiscontinuousPolynomialModel1D` (`discontinuous_polynomial`) to take `fit`

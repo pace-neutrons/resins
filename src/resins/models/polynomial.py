@@ -74,7 +74,7 @@ class PolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, InstrumentM
 
     data_class: ClassVar[type[PolynomialModelData]] = PolynomialModelData
 
-    def __init__(self, model_data: PolynomialModelData, **_):
+    def __init__(self, model_data: PolynomialModelData):
         super().__init__(model_data)
         self.polynomial = Polynomial(model_data.fit)
 
@@ -168,7 +168,7 @@ class FlooredPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin, Inst
 
     data_class: ClassVar[type[FlooredPolynomialModelData]] = FlooredPolynomialModelData
 
-    def __init__(self, model_data: FlooredPolynomialModelData, **_):
+    def __init__(self, model_data: FlooredPolynomialModelData):
         super().__init__(model_data)
         self.polynomial = Polynomial(model_data.fit)
         self.minimum_sigma = model_data.minimum_sigma
@@ -290,7 +290,7 @@ class DiscontinuousPolynomialModel1D(GaussianKernel1DMixin, SimpleBroaden1DMixin
 
     data_class: ClassVar[type[DiscontinuousPolynomialModelData]] = DiscontinuousPolynomialModelData
 
-    def __init__(self, model_data: DiscontinuousPolynomialModelData, **_):
+    def __init__(self, model_data: DiscontinuousPolynomialModelData):
         super().__init__(model_data)
 
         self.polynomial = Polynomial(model_data.fit)
