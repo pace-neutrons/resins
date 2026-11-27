@@ -15,8 +15,9 @@ from typing import Iterator, Iterable, Optional, Union, TYPE_CHECKING
 from .models import MODELS
 
 if TYPE_CHECKING:
-    from .models.model_base import ModelData, InstrumentModel
+    from collections.abc import Collection
     from inspect import Signature
+    from .models.model_base import ModelData, InstrumentModel
 
 INSTRUMENT_MAP: dict[str, tuple[str, None | str]] = {
     'ARCS': ('arcs.yaml', None),
@@ -117,22 +118,42 @@ class UnknownModelArgumentError(TypeError):
 
     Parameters
     ----------
-    provided_name
-        The unknown keyword argument the user provided.
+    provided_names
+        Unknown keyword arguments the user provided.
     model_name
-        The name of the model for which the `provided_name` was provided.
+        The name of the model for which `provided_names` were given.
     instrument
-        The instance of the `Instrument` object in which the `provided_name` was used.
+        The instance of the `Instrument` object in which `provided_names` were used.
     """
-    def __init__(self, provided_name: str, model_name: str, instrument: Instrument):
+    def __init__(
+        self, provided_names: Collection[str], model_name: str, instrument: Instrument
+    ) -> None:
+        if not provided_names:
+            raise ValueError(
+                "UnknownModelArgumentError should not be raised with empty "
+                "provided_names")
+
+        if isinstance(provided_names, str):
+            raise TypeError(
+                "provided_names should be a collection object such as {'name'}.")
+
         signature = instrument.get_model_signature(model_name)
-        accepted = ', '.join(name for name in signature.parameters if name != 'model_name')
+        accepted = ', '.join(
+            name for name in signature.parameters if name != 'model_name'
+        )
+
+        names = f'{', '.join(f'"{name}"' for name in sorted(provided_names))}'
+        agreement = (
+            'is not a configuration or setting' if len(provided_names) == 1
+            else 'are not configurations or settings')
+        kwargs = (
+            f'This model accepts the following keyword arguments: {accepted}.'
+            if accepted else 'This model accepts no keyword arguments.')
 
         message = (
-            f'"{provided_name}" is not a configuration or setting of the {model_name} model '
-            f'of the {instrument.version} version of the {instrument.name} instrument. '
-            'This may be a misspelling. This model accepts the following keyword '
-            f'arguments: {accepted}.')
+            f'{names} {agreement} of the {model_name} model of the '
+            f'{instrument.version} version of the {instrument.name} instrument. '
+            f'There may be a misspelling. {kwargs}')
 
         super().__init__(message)
 
@@ -506,10 +527,9 @@ class Instrument:
         UnknownModelArgumentError
             If any key of `remaining` is not a setting of the `model_name` model.
         """
-        settings_signature = self.get_model_signature(model_name).parameters
-        for name in remaining:
-            if name not in settings_signature:
-                raise UnknownModelArgumentError(name, model_name, self)
+        unknown = remaining.keys() - set(self.get_model_signature(model_name).parameters)
+        if unknown:
+            raise UnknownModelArgumentError(unknown, model_name, self)
 
     def _build_model_data(self, model: dict, configuration_kwargs: dict) -> ModelData:
         """

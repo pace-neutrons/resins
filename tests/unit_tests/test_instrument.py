@@ -294,6 +294,106 @@ def test_get_resolution_function_invalid_kwargs(instrument, mock_models, mocker,
         instrument.get_resolution_function('mock_v3', arg1=1, **kwargs)
 
 
+def test_unknown_model_argument_error_single_name(instrument, mock_models, mocker):
+    mocker.patch('resins.instrument.MODELS', mock_models)
+
+    with pytest.raises(i.UnknownModelArgumentError) as exc:
+        instrument.get_resolution_function('mock_v3', arg1=1, bogus=2)
+
+    message = str(exc.value)
+
+    assert '"bogus" is not a configuration or setting' in message
+    assert 'are not configurations or settings' not in message
+
+
+def test_unknown_model_argument_error_multiple_names(instrument, mock_models, mocker):
+    mocker.patch('resins.instrument.MODELS', mock_models)
+
+    with pytest.raises(i.UnknownModelArgumentError) as exc:
+        # Deliberately unsorted insertion order: the message must not depend on it.
+        instrument.get_resolution_function('mock_v3', arg1=1, zeta=2, alpha=3)
+
+    message = str(exc.value)
+
+    assert '"alpha", "zeta" are not configurations or settings' in message
+    assert 'is not a configuration or setting' not in message
+
+
+def test_unknown_model_argument_error_names_are_sorted(instrument, mock_models, mocker):
+    mocker.patch('resins.instrument.MODELS', mock_models)
+
+    with pytest.raises(i.UnknownModelArgumentError) as exc:
+        instrument.get_resolution_function('mock_v3', arg1=1, zeta=2, alpha=3, mu=4)
+
+    message = str(exc.value)
+
+    assert message.index('"alpha"') < message.index('"mu"') < message.index('"zeta"')
+
+
+def test_unknown_model_argument_error_lists_accepted_arguments(instrument, mock_models,
+                                                               mocker):
+    mocker.patch('resins.instrument.MODELS', mock_models)
+
+    with pytest.raises(i.UnknownModelArgumentError) as exc:
+        instrument.get_resolution_function('mock_v3', arg1=1, bogus=2)
+
+    message = str(exc.value)
+
+    assert 'This model accepts the following keyword arguments: ' in message
+    assert 'arg1' in message
+    assert 'kwarg1' in message
+    assert 'kwarg2' in message
+    # The placeholder must have been interpolated, not left in the message.
+    assert '{accepted}' not in message
+    assert 'model_name' not in message
+    assert 'accepts no keyword arguments' not in message
+
+
+def test_unknown_model_argument_error_no_settings(instrument):
+    """A model with no settings must not produce a dangling colon."""
+    signature = inspect.Signature(
+        [inspect.Parameter('model_name', inspect.Parameter.POSITIONAL_OR_KEYWORD)])
+
+    class SettingsFreeInstrument:
+        name = instrument.name
+        version = instrument.version
+
+        @staticmethod
+        def get_model_signature(model_name):
+            return signature
+
+    error = i.UnknownModelArgumentError({'bogus'}, 'mock_v3', SettingsFreeInstrument())
+
+    message = str(error)
+
+    assert 'This model accepts no keyword arguments.' in message
+    assert 'accepts the following keyword arguments' not in message
+    assert 'arguments: .' not in message
+
+
+def test_unknown_model_argument_error_no_settings_real_model():
+    """VISION's only model takes no settings, so this is the user-facing message."""
+    vision = i.Instrument.from_default('VISION')
+
+    with pytest.raises(i.UnknownModelArgumentError) as exc:
+        vision.get_resolution_function(bogus=1)
+
+    message = str(exc.value)
+
+    assert 'This model accepts no keyword arguments.' in message
+    assert 'arguments: .' not in message
+
+
+def test_unknown_model_argument_error_empty_names(instrument):
+    with pytest.raises(ValueError, match='should not be raised with empty'):
+        i.UnknownModelArgumentError(set(), 'mock_v3', instrument)
+
+
+def test_unknown_model_argument_error_rejects_bare_str(instrument):
+    with pytest.raises(TypeError, match='should be a collection object'):
+        i.UnknownModelArgumentError('bogus', 'mock_v3', instrument)
+
+
 def test_get_model_data_unknown_configuration(instrument, mock_models, mocker):
     mocker.patch('resins.instrument.MODELS', mock_models)
 
