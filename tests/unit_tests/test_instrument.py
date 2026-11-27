@@ -294,35 +294,31 @@ def test_get_resolution_function_invalid_kwargs(instrument, mock_models, mocker,
         instrument.get_resolution_function('mock_v3', arg1=1, **kwargs)
 
 
-def test_unknown_model_argument_error_single_name(instrument, mock_models, mocker):
+@pytest.mark.parametrize("extra_kwargs,expected_names,expected_agreement",
+                         [({'bogus': 2}, '"bogus"',
+                           'is not a configuration or setting'),
+                          ({'zeta': 2, 'alpha': 3}, '"alpha", "zeta"',
+                           'are not configurations or settings')],
+                         ids=['single', 'multiple_sorted'])
+def test_unknown_model_argument_error_names(instrument, mock_models, mocker,
+                                            extra_kwargs, expected_names,
+                                            expected_agreement):
     mocker.patch('resins.instrument.MODELS', mock_models)
 
     with pytest.raises(i.UnknownModelArgumentError) as exc:
-        instrument.get_resolution_function('mock_v3', arg1=1, bogus=2)
+        instrument.get_resolution_function('mock_v3', arg1=1, **extra_kwargs)
 
     message = str(exc.value)
 
-    assert '"bogus" is not a configuration or setting' in message
-    assert 'are not configurations or settings' not in message
+    assert f'{expected_names} {expected_agreement}' in message
 
 
-def test_unknown_model_argument_error_multiple_names(instrument, mock_models, mocker):
+def test_unknown_model_argument_error_multiple_names_are_sorted(instrument, mock_models,
+                                                                mocker):
     mocker.patch('resins.instrument.MODELS', mock_models)
 
     with pytest.raises(i.UnknownModelArgumentError) as exc:
         # Deliberately unsorted insertion order: the message must not depend on it.
-        instrument.get_resolution_function('mock_v3', arg1=1, zeta=2, alpha=3)
-
-    message = str(exc.value)
-
-    assert '"alpha", "zeta" are not configurations or settings' in message
-    assert 'is not a configuration or setting' not in message
-
-
-def test_unknown_model_argument_error_names_are_sorted(instrument, mock_models, mocker):
-    mocker.patch('resins.instrument.MODELS', mock_models)
-
-    with pytest.raises(i.UnknownModelArgumentError) as exc:
         instrument.get_resolution_function('mock_v3', arg1=1, zeta=2, alpha=3, mu=4)
 
     message = str(exc.value)
